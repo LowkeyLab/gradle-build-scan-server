@@ -27,10 +27,8 @@ common --noslim_profile
 common --experimental_profile_include_primary_output
 common --experimental_profile_include_target_label
 
-
-
-
-
+# To output something for xargs
+run:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
 
 common:lint --aspects=//tools/lint:linters.bzl%clippy
 
