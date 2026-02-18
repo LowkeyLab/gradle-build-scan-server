@@ -5,5 +5,9 @@ user.bazelrc
 # Symlinks created by Bazel into the output tree
 /bazel-*
 
+# Eclipse project files
+.settings
+.classpath
+.project
 
-
+bin
