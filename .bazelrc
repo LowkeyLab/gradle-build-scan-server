@@ -16,6 +16,15 @@ common --downloader_config=tools/downloader.cfg
 common --@rules_python//python/config_settings:bootstrap_impl=script
 common --workspace_status_command=githooks/check-config.sh
 
+# BuildBuddy remote cache
+common --bes_results_url=https://app.buildbuddy.io/invocation/
+common --bes_backend=grpcs://remote.buildbuddy.io
+common --remote_cache=grpcs://remote.buildbuddy.io
+common --remote_cache_compression
+common --noslim_profile
+common --experimental_profile_include_primary_output
+common --experimental_profile_include_target_label
+
 
 
 
