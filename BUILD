@@ -1,6 +1,6 @@
 """Targets in the repository root"""
 
-load("@gazelle//:def.bzl", "gazelle")
+load("@gazelle//:def.bzl", "DEFAULT_LANGUAGES", "gazelle", "gazelle_binary")
 
 exports_files(
     [
@@ -9,16 +9,15 @@ exports_files(
     visibility = ["//:__subpackages__"],
 )
 
-# We prefer BUILD instead of BUILD.bazel
-# gazelle:build_file_name BUILD
-# gazelle:exclude githooks/*
+gazelle_binary(
+    name = "gazelle_bin",
+    languages = DEFAULT_LANGUAGES + [
+        "@bazel_skylib_gazelle_plugin//bzl",
+        "@gazelle_rust//rust_language",
+    ],
+)
 
 gazelle(
     name = "gazelle",
-    env = {
-        "ENABLE_LANGUAGES": ",".join([
-            "starlark",
-        ]),
-    },
-    gazelle = "@multitool//tools/gazelle",
+    gazelle = ":gazelle_bin",
 )
