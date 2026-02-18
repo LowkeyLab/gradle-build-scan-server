@@ -17,6 +17,8 @@ gazelle_binary(
     ],
 )
 
+# gazelle:rust_cargo_lockfile Cargo.lock
+# gazelle:rust_crates_prefix @crates//:
 gazelle(
     name = "gazelle",
     gazelle = ":gazelle_bin",
