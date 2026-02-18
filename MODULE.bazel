@@ -16,6 +16,15 @@ bazel_dep(name = "bazelrc-preset.bzl", version = "1.8.0")
 bazel_dep(name = "rules_python", version = "1.8.1")
 bazel_dep(name = "gazelle", version = "0.47.0")
 
+# Dev dependencies
+bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.9.0", dev_dependency = True)
+bazel_dep(name = "gazelle_rust", dev_dependency = True)
+git_override(
+    module_name = "gazelle_rust",
+    commit = "47fbd90383fb504460e75ff208f0bce4ca5861c1",
+    remote = "https://github.com/Calsign/gazelle_rust.git",
+)
+
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
 multitool.hub(lockfile = "//tools:tools.lock.json")
 use_repo(multitool, "multitool")
