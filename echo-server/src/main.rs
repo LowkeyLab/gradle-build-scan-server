@@ -1,10 +1,4 @@
-use axum::{
-    body::Body,
-    extract::Request,
-    response::Response,
-    routing::any,
-    Router,
-};
+use axum::{Router, body::Body, extract::Request, response::Response, routing::any};
 use chrono::Utc;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -84,7 +78,7 @@ async fn shutdown_signal() {
 async fn echo_handler(request: Request<Body>) -> Response<Body> {
     let method = request.method().clone();
     let uri = request.uri().clone();
-    
+
     let headers: Vec<_> = request
         .headers()
         .iter()
@@ -125,10 +119,10 @@ async fn echo_handler(request: Request<Body>) -> Response<Body> {
                 .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
         }
     };
-    
+
     let config = Config::from_env();
     let dir = config.payload_dir;
-    
+
     if let Err(e) = std::fs::create_dir_all(&dir) {
         eprintln!("Failed to create directory {:?}: {}", dir, e);
         return Response::builder()
@@ -136,7 +130,7 @@ async fn echo_handler(request: Request<Body>) -> Response<Body> {
             .body(Body::from("Internal server error"))
             .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
     }
-    
+
     let path = dir.join(&filename);
     if let Err(e) = std::fs::write(&path, &payload_str) {
         eprintln!("Failed to write payload: {}", e);
@@ -145,7 +139,7 @@ async fn echo_handler(request: Request<Body>) -> Response<Body> {
             .body(Body::from("Internal server error"))
             .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
     }
-    
+
     println!("Saved payload to: {:?}", path);
 
     Response::builder()

@@ -36,8 +36,8 @@ bazel_dep(name = "rules_rs", version = "0.0.26")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
-    edition = "2021",
-    versions = ["1.85.0"],
+    edition = "2024",
+    versions = ["1.93.1"],
 )
 
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
@@ -53,5 +53,11 @@ crate.from_cargo(
     ],
 )
 use_repo(crate, "crates")
+
+### Rust project generation
+alias(
+    name = "gen_rust_project",
+    actual = "@rules_rust//tools/rust_analyzer:gen_rust_project",
+)
 
 register_toolchains("//tools/toolchains:all")
