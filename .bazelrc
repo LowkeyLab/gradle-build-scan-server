@@ -5,6 +5,7 @@ try-import %workspace%/tools/java17.bazelrc
 
 # https://github.com/aspect-build/rules_lint/issues/741
 common:lint --nobuild_event_binary_file_path_conversion
+common:ci --remote_download_toplevel
 
 # BuildBuddy remote cache
 common --bes_results_url=https://app.buildbuddy.io/invocation/
