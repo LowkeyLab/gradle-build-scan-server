@@ -11,6 +11,6 @@ package(default_visibility = ["//:__subpackages__"])
 
 format_multirun(
     name = "format",
-    rust = "@rules_rust//tools/rustfmt:upstream_rustfmt",
+    rust = "@rules_rust//tools/upstream_wrapper:rustfmt",
     starlark = "@buildifier_prebuilt//:buildifier",
 )

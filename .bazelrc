@@ -3,6 +3,21 @@ try-import %workspace%/tools/java17.bazelrc
 
 ### YOUR PROJECT SPECIFIC OPTIONS GO HERE ###
 
+# https://github.com/aspect-build/rules_lint/issues/741
+common:lint --nobuild_event_binary_file_path_conversion
+
+# BuildBuddy remote cache
+common --bes_results_url=https://app.buildbuddy.io/invocation/
+common --bes_backend=grpcs://remote.buildbuddy.io
+common --remote_cache=grpcs://remote.buildbuddy.io
+common --remote_cache_compression
+common --noslim_profile
+common --experimental_profile_include_primary_output
+common --experimental_profile_include_target_label
+
+# To output something for xargs
+run:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
+
 # Disable skymeld; see https://github.com/bazelbuild/bazel/issues/23743
 # fixes src/main/tools/process-wrapper-legacy.cc:80: "execvp(external/++toolchains+coreutils_linux_amd64/coreutils, ...)": No such file or directory
 common --noexperimental_merged_skyframe_analysis_execution
@@ -17,18 +32,6 @@ common --downloader_config=tools/downloader.cfg
 # NB: some tools run py_binary targets even if the user didn't select to add Python to their project
 common --@rules_python//python/config_settings:bootstrap_impl=script
 common --workspace_status_command=githooks/check-config.sh
-
-# BuildBuddy remote cache
-common --bes_results_url=https://app.buildbuddy.io/invocation/
-common --bes_backend=grpcs://remote.buildbuddy.io
-common --remote_cache=grpcs://remote.buildbuddy.io
-common --remote_cache_compression
-common --noslim_profile
-common --experimental_profile_include_primary_output
-common --experimental_profile_include_target_label
-
-# To output something for xargs
-run:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
 
 common:lint --aspects=//tools/lint:linters.bzl%clippy
 
