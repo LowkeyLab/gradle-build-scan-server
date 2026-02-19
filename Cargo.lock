@@ -1066,7 +1066,6 @@ dependencies = [
  "axum",
  "chrono",
  "serde",
- "serde_core",
  "serde_json",
  "tokio",
  "tower",
