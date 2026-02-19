@@ -1,20 +1,23 @@
-use axum::{Router, body::Body, extract::Request, response::Response, routing::any};
-use chrono::Utc;
+use axum::{Router, body::Body, extract::Request, extract::State, response::Response};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::signal;
-use uuid::Uuid;
-
-const MAX_BODY_SIZE: usize = 10 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 struct Config {
     port: u16,
     payload_dir: PathBuf,
+    upstream_url: String,
 }
 
 impl Config {
     fn from_env() -> Self {
+        let upstream_url =
+            std::env::var("UPSTREAM_URL").expect("UPSTREAM_URL environment variable is required");
+
+        // Strip trailing slash for consistent URL joining
+        let upstream_url = upstream_url.trim_end_matches('/').to_string();
+
         Self {
             port: std::env::var("PORT")
                 .ok()
@@ -24,15 +27,34 @@ impl Config {
                 .ok()
                 .map(PathBuf::from)
                 .unwrap_or_else(|| PathBuf::from("/tmp/gradle-payloads")),
+            upstream_url,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+struct AppState {
+    config: Config,
+    client: reqwest::Client,
 }
 
 #[tokio::main]
 async fn main() {
     let config = Config::from_env();
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    let app = Router::new().route("/", any(echo_handler));
+
+    let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .expect("Failed to create HTTP client");
+
+    let state = AppState {
+        config: config.clone(),
+        client,
+    };
+
+    let app = Router::new().fallback(proxy_handler).with_state(state);
 
     let listener = match tokio::net::TcpListener::bind(addr).await {
         Ok(l) => l,
@@ -41,7 +63,10 @@ async fn main() {
             std::process::exit(1);
         }
     };
-    println!("Echo server listening on http://{}", addr);
+    println!(
+        "Proxy server listening on http://{}, forwarding to {}",
+        addr, config.upstream_url
+    );
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
@@ -75,76 +100,12 @@ async fn shutdown_signal() {
     println!("Shutting down server...");
 }
 
-async fn echo_handler(request: Request<Body>) -> Response<Body> {
-    let method = request.method().clone();
-    let uri = request.uri().clone();
-
-    let headers: Vec<_> = request
-        .headers()
-        .iter()
-        .filter_map(|(k, v)| v.to_str().ok().map(|v| (k.to_string(), v.to_string())))
-        .collect();
-
-    let body_bytes = match axum::body::to_bytes(request.into_body(), MAX_BODY_SIZE).await {
-        Ok(b) => b,
-        Err(e) => {
-            eprintln!("Failed to read request body: {}", e);
-            return Response::builder()
-                .status(413)
-                .body(Body::from("Payload too large"))
-                .unwrap_or_else(|_| Response::new(Body::from("Payload too large")));
-        }
-    };
-    let body_str = String::from_utf8_lossy(&body_bytes);
-
-    let timestamp = Utc::now().format("%Y%m%d_%H%M%S%.3f").to_string();
-    let uuid = Uuid::new_v4();
-    let filename = format!("{}-{}.json", timestamp, uuid);
-
-    let payload = serde_json::json!({
-        "timestamp": timestamp,
-        "method": method.to_string(),
-        "uri": uri.to_string(),
-        "headers": headers,
-        "body": body_str,
-    });
-
-    let payload_str = match serde_json::to_string_pretty(&payload) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Failed to serialize payload: {}", e);
-            return Response::builder()
-                .status(500)
-                .body(Body::from("Internal server error"))
-                .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
-        }
-    };
-
-    let config = Config::from_env();
-    let dir = config.payload_dir;
-
-    if let Err(e) = std::fs::create_dir_all(&dir) {
-        eprintln!("Failed to create directory {:?}: {}", dir, e);
-        return Response::builder()
-            .status(500)
-            .body(Body::from("Internal server error"))
-            .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
-    }
-
-    let path = dir.join(&filename);
-    if let Err(e) = std::fs::write(&path, &payload_str) {
-        eprintln!("Failed to write payload: {}", e);
-        return Response::builder()
-            .status(500)
-            .body(Body::from("Internal server error"))
-            .unwrap_or_else(|_| Response::new(Body::from("Internal server error")));
-    }
-
-    println!("Saved payload to: {:?}", path);
-
+async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) -> Response<Body> {
+    // TODO: implement proxy logic in next task
+    let _ = state;
+    let _ = request;
     Response::builder()
-        .status(200)
-        .header("Content-Type", "application/json")
-        .body(Body::from(body_str.to_string()))
-        .unwrap_or_else(|_| Response::new(Body::from(body_str.to_string())))
+        .status(501)
+        .body(Body::from("Not implemented"))
+        .unwrap()
 }

@@ -5,9 +5,7 @@ rust_binary(
     srcs = ["main.rs"],
     deps = [
         "@crates//:axum",
-        "@crates//:chrono",
-        "@crates//:serde_json",
+        "@crates//:reqwest",
         "@crates//:tokio",
-        "@crates//:uuid",
     ],
 )
