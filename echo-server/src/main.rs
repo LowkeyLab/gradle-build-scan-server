@@ -106,6 +106,7 @@ async fn shutdown_signal() {
 
 const HOP_BY_HOP_HEADERS: &[&str] = &[
     "connection",
+    "host",
     "keep-alive",
     "proxy-authenticate",
     "proxy-authorization",
@@ -116,7 +117,9 @@ const HOP_BY_HOP_HEADERS: &[&str] = &[
 ];
 
 fn is_hop_by_hop(name: &str) -> bool {
-    HOP_BY_HOP_HEADERS.contains(&name.to_lowercase().as_str())
+    HOP_BY_HOP_HEADERS
+        .iter()
+        .any(|h| h.eq_ignore_ascii_case(name))
 }
 
 async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) -> Response<Body> {
@@ -162,11 +165,25 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
         }
     }
 
+    // Set Host header to the upstream host
+    if let Ok(upstream) = reqwest::Url::parse(&upstream_url) {
+        if let Some(host) = upstream.host_str() {
+            let host_value = match upstream.port() {
+                Some(p) => format!("{}:{}", host, p),
+                None => host.to_string(),
+            };
+            if let Ok(hv) = reqwest::header::HeaderValue::from_str(&host_value) {
+                upstream_headers.insert(reqwest::header::HOST, hv);
+            }
+        }
+    }
+
     // Forward request upstream
     let upstream_result = state
         .client
         .request(
-            reqwest::Method::from_bytes(method.as_str().as_bytes()).unwrap_or(reqwest::Method::GET),
+            reqwest::Method::from_bytes(method.as_str().as_bytes())
+                .expect("HTTP method should always be valid"),
             &upstream_url,
         )
         .headers(upstream_headers)
@@ -238,7 +255,7 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
         "timestamp": timestamp,
         "request": {
             "method": method.to_string(),
-            "uri": uri.to_string(),
+            "uri": path_and_query,
             "headers": request_headers,
             "body": body_str,
         },
@@ -246,14 +263,14 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
     });
 
     let dir = &state.config.payload_dir;
-    if let Err(e) = std::fs::create_dir_all(dir) {
+    if let Err(e) = tokio::fs::create_dir_all(dir).await {
         eprintln!("Failed to create directory {:?}: {}", dir, e);
     } else {
         let filename = format!("{}-{}.json", timestamp, request_id);
         let path = dir.join(&filename);
         match serde_json::to_string_pretty(&payload) {
             Ok(s) => {
-                if let Err(e) = std::fs::write(&path, &s) {
+                if let Err(e) = tokio::fs::write(&path, &s).await {
                     eprintln!("Failed to write payload: {}", e);
                 } else {
                     println!("Saved payload to: {:?}", path);
