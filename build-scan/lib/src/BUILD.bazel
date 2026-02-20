@@ -19,6 +19,7 @@ rust_library(
     srcs = ["parser.rs"],
     visibility = ["//build-scan:__subpackages__"],
     deps = [
+        ":decompress",
         ":error",
         ":models",
         ":primitives",
@@ -32,7 +33,6 @@ rust_library(
     deps = [
         ":error",
         "@crates//:chrono",
-        "@crates//:flate2",
     ],
 )
 

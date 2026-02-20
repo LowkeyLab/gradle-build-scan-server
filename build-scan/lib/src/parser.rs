@@ -1,3 +1,4 @@
+use decompress::Decompressor;
 use error::ParseError;
 use models::BuildScanPayload;
 use primitives::{Primitive, StreamDecoder};
@@ -20,7 +21,7 @@ impl PayloadBuilder {
     }
 
     pub fn build(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
-        let decompressed = StreamDecoder::decompress(data)?;
+        let decompressed = Decompressor::decompress(data)?;
         let mut decoder = StreamDecoder::new(&decompressed);
         let payload = BuildScanPayload::default();
 

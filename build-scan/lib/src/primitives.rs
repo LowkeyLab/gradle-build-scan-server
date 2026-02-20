@@ -1,6 +1,4 @@
 use chrono::{DateTime, Utc};
-use flate2::read::GzDecoder;
-use std::io::Read;
 
 use error::ParseError;
 
@@ -20,24 +18,6 @@ pub struct StreamDecoder<'a> {
 impl<'a> StreamDecoder<'a> {
     pub fn new(data: &'a [u8]) -> Self {
         Self { data, offset: 0 }
-    }
-
-    pub fn decompress(raw_data: &[u8]) -> Result<Vec<u8>, ParseError> {
-        let mut start_idx = 0;
-        for i in 0..raw_data.len().saturating_sub(2) {
-            if raw_data[i] == 0x1f && raw_data[i + 1] == 0x8b && raw_data[i + 2] == 0x08 {
-                start_idx = i;
-                break;
-            }
-        }
-
-        let mut decoder = GzDecoder::new(&raw_data[start_idx..]);
-        let mut decompressed = Vec::new();
-        decoder
-            .read_to_end(&mut decompressed)
-            .map_err(|_| ParseError::InvalidGzip)?;
-
-        Ok(decompressed)
     }
 
     pub fn read_leb128(&mut self) -> Result<u64, ParseError> {
