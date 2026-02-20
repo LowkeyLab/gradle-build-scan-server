@@ -12,6 +12,8 @@ pub enum ParseError {
     UnexpectedPrimitive { expected: &'static str },
     #[error("Unknown or unhandled event schema ID: {0}")]
     UnknownEventSchema(u32),
+    #[error("Unknown Event ID encountered: {id}")]
+    UnknownEvent { id: u64 },
     #[error("Invalid string reference: index {0} not found in dictionary")]
     InvalidStringRef(u32),
     #[error("Unexpected End Of File")]
