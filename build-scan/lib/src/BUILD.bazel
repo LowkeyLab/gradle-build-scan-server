@@ -50,4 +50,25 @@ rust_test(
 rust_library(
     name = "lib",
     srcs = ["lib.rs"],
+    deps = [
+        ":decompress",
+        ":error",
+        ":models",
+        ":parser",
+        ":primitives",
+    ],
+)
+
+rust_library(
+    name = "decompress",
+    srcs = ["decompress.rs"],
+    deps = [
+        ":error",
+        "@crates//:flate2",
+    ],
+)
+
+rust_test(
+    name = "decompress_test",
+    crate = ":decompress",
 )
