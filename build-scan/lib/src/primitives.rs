@@ -77,7 +77,11 @@ impl<'a> StreamDecoder<'a> {
     }
 
     pub fn read_bytes(&mut self, len: usize) -> Result<&'a [u8], ParseError> {
-        if self.offset + len > self.data.len() {
+        if self
+            .offset
+            .checked_add(len)
+            .map_or(true, |end| end > self.data.len())
+        {
             return Err(ParseError::UnexpectedEof);
         }
         let bytes = &self.data[self.offset..self.offset + len];

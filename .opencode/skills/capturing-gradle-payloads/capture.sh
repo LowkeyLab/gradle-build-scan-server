@@ -16,10 +16,10 @@ mkdir -p "$PAYLOAD_DIR"
 
 echo "Building echo-server..."
 cd "$WORKSPACE_DIR"
-bazel build //echo-server/src:main
+bazel build //proxy/src:main
 
 echo "Starting echo-server proxy to $UPSTREAM_URL on port $PORT..."
-UPSTREAM_URL="$UPSTREAM_URL" PORT="$PORT" PAYLOAD_DIR="$PAYLOAD_DIR" "$WORKSPACE_DIR/bazel-bin/echo-server/src/main" >echo-server-output.log 2>&1 &
+UPSTREAM_URL="$UPSTREAM_URL" PORT="$PORT" PAYLOAD_DIR="$PAYLOAD_DIR" "$WORKSPACE_DIR/bazel-bin/proxy/src/main" >echo-server-output.log 2>&1 &
 SERVER_PID=$!
 
 echo "Waiting for server to start..."

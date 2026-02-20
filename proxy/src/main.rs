@@ -141,22 +141,24 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
             && let (Ok(hn), Ok(hv)) = (
                 reqwest::header::HeaderName::from_bytes(name.as_bytes()),
                 reqwest::header::HeaderValue::from_str(value),
-            ) {
-                upstream_headers.insert(hn, hv);
-            }
+            )
+        {
+            upstream_headers.insert(hn, hv);
+        }
     }
 
     // Set Host header to the upstream host
     if let Ok(upstream) = reqwest::Url::parse(&upstream_url)
-        && let Some(host) = upstream.host_str() {
-            let host_value = match upstream.port() {
-                Some(p) => format!("{}:{}", host, p),
-                None => host.to_string(),
-            };
-            if let Ok(hv) = reqwest::header::HeaderValue::from_str(&host_value) {
-                upstream_headers.insert(reqwest::header::HOST, hv);
-            }
+        && let Some(host) = upstream.host_str()
+    {
+        let host_value = match upstream.port() {
+            Some(p) => format!("{}:{}", host, p),
+            None => host.to_string(),
+        };
+        if let Ok(hv) = reqwest::header::HeaderValue::from_str(&host_value) {
+            upstream_headers.insert(reqwest::header::HOST, hv);
         }
+    }
 
     // Forward request upstream
     let upstream_result = state

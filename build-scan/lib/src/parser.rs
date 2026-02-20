@@ -49,10 +49,11 @@ impl PayloadBuilder {
                     let s = decoder.read_string()?;
                     if let Primitive::String(st) = s {
                         self.dictionary.push(st);
+                    } else {
+                        return Err(ParseError::UnexpectedPrimitive { expected: "String" });
                     }
                 }
                 _ => {
-                    eprintln!("Unknown Event ID encountered: {}", event_id);
                     return Err(ParseError::UnknownEvent { id: event_id });
                 }
             }
