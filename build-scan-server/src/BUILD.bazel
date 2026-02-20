@@ -6,11 +6,6 @@ rust_library(
     deps = ["@crates//:thiserror"],
 )
 
-rust_binary(
-    name = "main",
-    srcs = ["main.rs"],
-)
-
 rust_library(
     name = "models",
     srcs = ["models.rs"],

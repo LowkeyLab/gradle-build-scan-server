@@ -23,3 +23,4 @@ ibazel run //path/to:target
 - **Formatting:** Run `bazel run //tools/format` before committing
 - **Verification:** Run `aspect build //...` to verify changes compile
 - **Security:** NEVER hardcode secrets; use environment variables
+- Use Bazel and Aspect commands to run builds and tests, not direct language-specific tools (e.g., `cargo`, `gradle`)

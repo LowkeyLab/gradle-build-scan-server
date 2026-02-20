@@ -1,8 +1,4 @@
-pub mod error;
-pub mod models;
-pub mod parser;
-pub mod primitives;
-
+/// Dummy main.rs so that Cargo resovles correctly
 fn main() {
     println!("Hello, world!");
 }
