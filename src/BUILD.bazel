@@ -6,5 +6,8 @@ rust_binary(
         "error.rs",
         "main.rs",
     ],
-    deps = ["@crates//:thiserror"],
+    deps = [
+        "@crates//:flate2",  # keep
+        "@crates//:thiserror",
+    ],
 )
