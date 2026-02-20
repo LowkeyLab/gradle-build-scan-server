@@ -91,8 +91,7 @@ impl<'a> Iterator for StreamDecoder<'a> {
             Some(Ok(Primitive::StringRef(shifted as u32)))
         } else {
             // Heuristic for String: 2 <= len <= 500, and we have enough bytes
-            if shifted >= 2 && shifted <= 500 && self.offset + (shifted as usize) <= self.data.len()
-            {
+            if (2..=500).contains(&shifted) && self.offset + (shifted as usize) <= self.data.len() {
                 let len = shifted as usize;
                 let str_bytes = &self.data[self.offset..self.offset + len];
                 if let Ok(string) = std::str::from_utf8(str_bytes) {
@@ -101,12 +100,11 @@ impl<'a> Iterator for StreamDecoder<'a> {
                 }
             }
 
-            if val >= 1_600_000_000_000 && val <= 1_900_000_000_000 {
-                if let Some(dt) =
+            if (1_600_000_000_000..=1_900_000_000_000).contains(&val)
+                && let Some(dt) =
                     DateTime::from_timestamp((val / 1000) as i64, ((val % 1000) * 1_000_000) as u32)
-                {
-                    return Some(Ok(Primitive::Timestamp(dt)));
-                }
+            {
+                return Some(Ok(Primitive::Timestamp(dt)));
             }
 
             Some(Ok(Primitive::Varint(val)))

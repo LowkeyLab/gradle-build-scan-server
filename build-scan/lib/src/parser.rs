@@ -6,6 +6,12 @@ pub struct PayloadBuilder {
     pub dictionary: Vec<String>,
 }
 
+impl Default for PayloadBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PayloadBuilder {
     pub fn new() -> Self {
         Self {
@@ -18,7 +24,7 @@ impl PayloadBuilder {
         let mut decoder = StreamDecoder::new(&decompressed);
         let payload = BuildScanPayload::default();
 
-        while let Some(prim_res) = decoder.next() {
+        for prim_res in decoder {
             let prim = prim_res?;
             match prim {
                 Primitive::String(s) => {

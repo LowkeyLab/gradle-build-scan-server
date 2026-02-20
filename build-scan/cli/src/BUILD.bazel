@@ -5,7 +5,7 @@ rust_binary(
     srcs = ["main.rs"],
     deps = [
         "//build-scan/lib/src:parser",
-        "//echo-server/format/src:format",
+        "//proxy/format/src:format",
         "@crates//:anyhow",
         "@crates//:base64",
         "@crates//:clap",

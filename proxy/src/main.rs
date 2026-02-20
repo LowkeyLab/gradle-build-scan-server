@@ -137,19 +137,18 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
     // Build upstream request, forwarding non-hop-by-hop headers
     let mut upstream_headers = reqwest::header::HeaderMap::new();
     for (name, value) in &request_headers {
-        if !is_hop_by_hop(name) {
-            if let (Ok(hn), Ok(hv)) = (
+        if !is_hop_by_hop(name)
+            && let (Ok(hn), Ok(hv)) = (
                 reqwest::header::HeaderName::from_bytes(name.as_bytes()),
                 reqwest::header::HeaderValue::from_str(value),
             ) {
                 upstream_headers.insert(hn, hv);
             }
-        }
     }
 
     // Set Host header to the upstream host
-    if let Ok(upstream) = reqwest::Url::parse(&upstream_url) {
-        if let Some(host) = upstream.host_str() {
+    if let Ok(upstream) = reqwest::Url::parse(&upstream_url)
+        && let Some(host) = upstream.host_str() {
             let host_value = match upstream.port() {
                 Some(p) => format!("{}:{}", host, p),
                 None => host.to_string(),
@@ -158,7 +157,6 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
                 upstream_headers.insert(reqwest::header::HOST, hv);
             }
         }
-    }
 
     // Forward request upstream
     let upstream_result = state
