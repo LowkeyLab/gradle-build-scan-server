@@ -1,0 +1,48 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+rust_library(
+    name = "error",
+    srcs = ["error.rs"],
+    deps = ["@crates//:thiserror"],
+)
+
+rust_binary(
+    name = "main",
+    srcs = ["main.rs"],
+)
+
+rust_library(
+    name = "models",
+    srcs = ["models.rs"],
+    deps = ["@crates//:serde"],
+)
+
+rust_library(
+    name = "parser",
+    srcs = ["parser.rs"],
+    deps = [
+        ":error",
+        ":models",
+        ":primitives",
+    ],
+)
+
+rust_library(
+    name = "primitives",
+    srcs = ["primitives.rs"],
+    deps = [
+        ":error",
+        "@crates//:chrono",
+        "@crates//:flate2",
+    ],
+)
+
+rust_test(
+    name = "parser_test",
+    crate = ":parser",
+)
+
+rust_test(
+    name = "primitives_test",
+    crate = ":primitives",
+)
