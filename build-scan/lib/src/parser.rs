@@ -21,8 +21,7 @@ impl PayloadBuilder {
     }
 
     pub fn build(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
-        let decompressed = Decompressor::decompress(data)?;
-        let mut decoder = StreamDecoder::new(&decompressed);
+        let mut decoder = StreamDecoder::new(data);
         let payload = BuildScanPayload::default();
 
         loop {
@@ -61,6 +60,11 @@ impl PayloadBuilder {
         }
 
         Ok(payload)
+    }
+
+    pub fn build_from_compressed(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
+        let decompressed = Decompressor::decompress(data)?;
+        self.build(&decompressed)
     }
 }
 
@@ -105,7 +109,7 @@ mod tests {
 
         let payload = gzip_compress(&raw_data);
 
-        let result = builder.build(&payload);
+        let result = builder.build_from_compressed(&payload);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result.err());
         assert_eq!(builder.dictionary, vec!["test_string".to_string()]);
     }
@@ -150,7 +154,7 @@ mod tests {
 
         let payload = gzip_compress(&raw_data);
 
-        let result = builder.build(&payload);
+        let result = builder.build_from_compressed(&payload);
 
         match result {
             Err(ParseError::UnknownEvent { id }) => assert_eq!(id, 99),
