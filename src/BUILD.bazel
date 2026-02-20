@@ -6,6 +6,7 @@ rust_binary(
         "error.rs",
         "main.rs",
         "models.rs",
+        "parser.rs",
         "primitives.rs",
     ],
     deps = [
