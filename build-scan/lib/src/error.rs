@@ -16,4 +16,8 @@ pub enum ParseError {
     InvalidStringRef(u32),
     #[error("Unexpected End Of File")]
     UnexpectedEof,
+    #[error("Invalid UTF-8 sequence")]
+    InvalidUtf8,
+    #[error("Invalid timestamp")]
+    InvalidTimestamp,
 }

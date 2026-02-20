@@ -1,6 +1,6 @@
 use error::ParseError;
 use models::BuildScanPayload;
-use primitives::{Primitive, StreamDecoder};
+use primitives::StreamDecoder;
 
 pub struct PayloadBuilder {
     pub dictionary: Vec<String>,
@@ -21,20 +21,12 @@ impl PayloadBuilder {
 
     pub fn build(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
         let decompressed = StreamDecoder::decompress(data)?;
-        let mut decoder = StreamDecoder::new(&decompressed);
+        let mut _decoder = StreamDecoder::new(&decompressed);
         let payload = BuildScanPayload::default();
 
-        for prim_res in decoder {
-            let prim = prim_res?;
-            match prim {
-                Primitive::String(s) => {
-                    self.dictionary.push(s);
-                }
-                // Implement state machine logic here based on heuristics
-                // For example, if we hit a known Event ID varint, consume next N primitives
-                _ => {}
-            }
-        }
+        // Implement state machine logic here based on exact primitives
+        // For example, decode strings or varints manually as per context
+
         Ok(payload)
     }
 }

@@ -68,47 +68,46 @@ impl<'a> StreamDecoder<'a> {
 
         Ok(result)
     }
-}
+    pub fn read_raw_varint(&mut self) -> Result<u64, ParseError> {
+        self.read_leb128()
+    }
 
-impl<'a> Iterator for StreamDecoder<'a> {
-    type Item = Result<Primitive, ParseError>;
+    pub fn read_varint(&mut self) -> Result<Primitive, ParseError> {
+        self.read_raw_varint().map(Primitive::Varint)
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.offset >= self.data.len() {
-            return None;
+    pub fn read_bytes(&mut self, len: usize) -> Result<&'a [u8], ParseError> {
+        if self.offset + len > self.data.len() {
+            return Err(ParseError::UnexpectedEof);
         }
+        let bytes = &self.data[self.offset..self.offset + len];
+        self.offset += len;
+        Ok(bytes)
+    }
 
-        let val = match self.read_leb128() {
-            Ok(v) => v,
-            Err(e) => return Some(Err(e)),
-        };
-
+    pub fn read_string(&mut self) -> Result<Primitive, ParseError> {
+        let val = self.read_raw_varint()?;
         let bit = val & 1;
         let shifted = val >> 1;
 
         if bit == 1 {
-            // String ref
-            Some(Ok(Primitive::StringRef(shifted as u32)))
+            Ok(Primitive::StringRef(shifted as u32))
         } else {
-            // Heuristic for String: 2 <= len <= 500, and we have enough bytes
-            if (2..=500).contains(&shifted) && self.offset + (shifted as usize) <= self.data.len() {
-                let len = shifted as usize;
-                let str_bytes = &self.data[self.offset..self.offset + len];
-                if let Ok(string) = std::str::from_utf8(str_bytes) {
-                    self.offset += len;
-                    return Some(Ok(Primitive::String(string.to_string())));
-                }
-            }
-
-            if (1_600_000_000_000..=1_900_000_000_000).contains(&val)
-                && let Some(dt) =
-                    DateTime::from_timestamp((val / 1000) as i64, ((val % 1000) * 1_000_000) as u32)
-            {
-                return Some(Ok(Primitive::Timestamp(dt)));
-            }
-
-            Some(Ok(Primitive::Varint(val)))
+            let len = shifted as usize;
+            let bytes = self.read_bytes(len)?;
+            let s = std::str::from_utf8(bytes).map_err(|_| ParseError::InvalidUtf8)?;
+            Ok(Primitive::String(s.to_string()))
         }
+    }
+
+    pub fn read_timestamp(&mut self) -> Result<Primitive, ParseError> {
+        let val = self.read_raw_varint()?;
+        let dt = chrono::DateTime::from_timestamp(
+            (val / 1000) as i64,
+            ((val % 1000) * 1_000_000) as u32,
+        )
+        .ok_or(ParseError::InvalidTimestamp)?;
+        Ok(Primitive::Timestamp(dt))
     }
 }
 
@@ -124,30 +123,46 @@ mod tests {
     }
 
     #[test]
-    fn test_next_string() {
-        // "hello" -> len 5 -> val = 5 << 1 = 10 (0x0A)
-        let mut data = vec![0x0A];
+    fn test_explicit_string() {
+        let mut data = vec![0x0A]; // length 5, shifted 1 = 10 (0x0A)
         data.extend_from_slice(b"hello");
         let mut decoder = StreamDecoder::new(&data);
         assert_eq!(
-            decoder.next().unwrap().unwrap(),
+            decoder.read_string().unwrap(),
             Primitive::String("hello".to_string())
         );
     }
 
     #[test]
-    fn test_next_string_ref() {
-        // ref 42 -> val = (42 << 1) | 1 = 85 (0x55)
-        let data = vec![0x55];
+    fn test_explicit_string_ref() {
+        let data = vec![0x55]; // ref 42 -> (42 << 1) | 1 = 85 (0x55)
         let mut decoder = StreamDecoder::new(&data);
-        assert_eq!(decoder.next().unwrap().unwrap(), Primitive::StringRef(42));
+        assert_eq!(decoder.read_string().unwrap(), Primitive::StringRef(42));
     }
 
     #[test]
-    fn test_next_varint() {
-        // 0 -> len 0 -> val = 0. Heuristic expects len >= 2. So it should yield Varint(0).
-        let data = vec![0x00];
+    fn test_explicit_timestamp() {
+        let ts_val: u64 = 1771622196842;
+        // encode ts_val as varint bytes
+        let mut data = Vec::new();
+        let mut val = ts_val;
+        loop {
+            let mut byte = (val & 0x7F) as u8;
+            val >>= 7;
+            if val != 0 {
+                byte |= 0x80;
+            }
+            data.push(byte);
+            if val == 0 {
+                break;
+            }
+        }
         let mut decoder = StreamDecoder::new(&data);
-        assert_eq!(decoder.next().unwrap().unwrap(), Primitive::Varint(0));
+        let prim = decoder.read_timestamp().unwrap();
+        if let Primitive::Timestamp(dt) = prim {
+            assert_eq!(dt.timestamp_millis(), ts_val as i64);
+        } else {
+            panic!("Expected Timestamp primitive");
+        }
     }
 }
