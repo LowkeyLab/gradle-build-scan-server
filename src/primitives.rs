@@ -101,6 +101,14 @@ impl<'a> Iterator for StreamDecoder<'a> {
                 }
             }
 
+            if val >= 1_600_000_000_000 && val <= 1_900_000_000_000 {
+                if let Some(dt) =
+                    DateTime::from_timestamp((val / 1000) as i64, ((val % 1000) * 1_000_000) as u32)
+                {
+                    return Some(Ok(Primitive::Timestamp(dt)));
+                }
+            }
+
             Some(Ok(Primitive::Varint(val)))
         }
     }
