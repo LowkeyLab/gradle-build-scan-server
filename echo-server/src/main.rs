@@ -1,4 +1,5 @@
 use axum::{Router, body::Body, extract::Request, extract::State, response::Response};
+use base64::Engine as _;
 use chrono::Utc;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -48,6 +49,9 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let client = reqwest::Client::builder()
+        .no_gzip()
+        .no_brotli()
+        .no_deflate()
         .connect_timeout(std::time::Duration::from_secs(30))
         .timeout(std::time::Duration::from_secs(120))
         .build()
@@ -144,7 +148,12 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
                 .unwrap_or_else(|_| Response::new(Body::from("Payload too large")));
         }
     };
-    let body_str = String::from_utf8_lossy(&body_bytes);
+    let request_body = match String::from_utf8(body_bytes.to_vec()) {
+        Ok(s) => serde_json::json!(s),
+        Err(_) => serde_json::json!({
+            "base64": base64::engine::general_purpose::STANDARD.encode(&body_bytes)
+        }),
+    };
 
     let request_id = Uuid::new_v4().to_string();
     let timestamp = Utc::now().format("%Y%m%d_%H%M%S%.3f").to_string();
@@ -202,14 +211,19 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
                 .collect();
 
             let response_body_bytes = upstream_response.bytes().await.unwrap_or_default();
-            let response_body_str = String::from_utf8_lossy(&response_body_bytes);
+            let response_body = match String::from_utf8(response_body_bytes.to_vec()) {
+                Ok(s) => serde_json::json!(s),
+                Err(_) => serde_json::json!({
+                    "base64": base64::engine::general_purpose::STANDARD.encode(&response_body_bytes)
+                }),
+            };
 
             let response_data = serde_json::json!({
                 "status": status,
                 "headers": response_headers.iter()
                     .filter(|(k, _)| !is_hop_by_hop(k))
                     .collect::<Vec<_>>(),
-                "body": response_body_str,
+                "body": response_body,
             });
 
             // Build HTTP response to return to client
@@ -257,7 +271,7 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
             "method": method.to_string(),
             "uri": path_and_query,
             "headers": request_headers,
-            "body": body_str,
+            "body": request_body,
         },
         "response": response_data,
     });

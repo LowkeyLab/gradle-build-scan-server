@@ -11,3 +11,9 @@ user.bazelrc
 .project
 
 bin
+
+# Cargo build output
+target/
+
+# Captured proxy payloads (may contain secrets)
+echo-server/payloads/
