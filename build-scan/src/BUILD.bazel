@@ -1,4 +1,4 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "error",
@@ -40,4 +40,9 @@ rust_test(
 rust_test(
     name = "primitives_test",
     crate = ":primitives",
+)
+
+rust_library(
+    name = "lib",
+    srcs = ["lib.rs"],
 )
