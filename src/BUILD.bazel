@@ -1,13 +1,20 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
 rust_binary(
     name = "main",
     srcs = [
         "error.rs",
         "main.rs",
+        "primitives.rs",
     ],
     deps = [
+        "@crates//:chrono",  # keep
         "@crates//:flate2",  # keep
         "@crates//:thiserror",
     ],
+)
+
+rust_test(
+    name = "main_test",
+    crate = ":main",
 )
