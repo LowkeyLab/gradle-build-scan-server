@@ -14,7 +14,8 @@ impl PayloadBuilder {
     }
 
     pub fn build(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
-        let mut decoder = StreamDecoder::new(data);
+        let decompressed = StreamDecoder::decompress(data)?;
+        let mut decoder = StreamDecoder::new(&decompressed);
         let payload = BuildScanPayload::default();
 
         while let Some(prim_res) = decoder.next() {
