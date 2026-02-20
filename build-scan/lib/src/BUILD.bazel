@@ -39,6 +39,7 @@ rust_library(
 rust_test(
     name = "parser_test",
     crate = ":parser",
+    deps = ["@crates//:flate2"],
 )
 
 rust_test(

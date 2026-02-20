@@ -120,8 +120,8 @@ mod tests {
 
     #[test]
     fn happy_path_parses_valid_payload() {
-        // Create a minimal gzip blob (content doesn't matter — parser returns default)
-        let compressed = gzip_compress(b"dummy-content");
+        // Create a minimal gzip blob with Event 12, Varint 0
+        let compressed = gzip_compress(&[12, 0]);
         let b64 = base64::engine::general_purpose::STANDARD.encode(&compressed);
 
         let input_path = temp_path("happy_in.json");

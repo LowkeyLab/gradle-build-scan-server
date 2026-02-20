@@ -1,6 +1,6 @@
 use error::ParseError;
 use models::BuildScanPayload;
-use primitives::StreamDecoder;
+use primitives::{Primitive, StreamDecoder};
 
 pub struct PayloadBuilder {
     pub dictionary: Vec<String>,
@@ -37,7 +37,20 @@ impl PayloadBuilder {
             // because we don't know if the next varint is a length for raw bytes.
             // But we will print it to stderr and abort to avoid losing sync.
             match event_id {
-                // TODO: Add actual event mappings here later
+                12 | 3543246354218 | 4 | 10800000 | 1 | 2 | 10 => {
+                    let _val = decoder.read_varint()?;
+                    // Store/Ignore
+                }
+                0 => {
+                    let _ts = decoder.read_timestamp()?;
+                    // Store/Ignore
+                }
+                14 => {
+                    let s = decoder.read_string()?;
+                    if let Primitive::String(st) = s {
+                        self.dictionary.push(st);
+                    }
+                }
                 _ => {
                     eprintln!("Unknown Event ID encountered: {}", event_id);
                     return Err(ParseError::UnknownEvent { id: event_id });
@@ -61,21 +74,85 @@ mod tests {
     }
 
     #[test]
-    fn test_builder_graceful_unknown_events() {
+    fn test_builder_maps_known_events() {
+        use flate2::Compression;
+        use flate2::write::GzEncoder;
+        use std::io::Write;
+
+        fn gzip_compress(data: &[u8]) -> Vec<u8> {
+            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(data).unwrap();
+            encoder.finish().unwrap()
+        }
+
         let mut builder = PayloadBuilder::new();
-        // A dummy payload: Event 99, value 42
-        // 99 = 0x63, 42 = 0x2A
-        // Since we don't handle it, it should just error or skip.
-        // Compressed gzip of [0x63, 0x2A]
-        let payload: [u8; 22] = [
-            31, 139, 8, 0, 0, 0, 0, 0, 2, 255, 75, 214, 2, 0, 77, 227, 178, 212, 2, 0, 0, 0,
-        ];
+        // Construct a dummy payload with known events.
+        // 12 -> Varint (0)
+        // 14 -> String ("test_string" length 11 -> varint 22) + "test_string"
+        let mut raw_data = Vec::new();
+        // Event 12
+        raw_data.push(12);
+        // Varint 0
+        raw_data.push(0);
+
+        // Event 14
+        raw_data.push(14);
+        // String length 11 (22 as varint since bit 0 is string vs stringref flag)
+        raw_data.push(22);
+        raw_data.extend_from_slice(b"test_string");
+
+        let payload = gzip_compress(&raw_data);
+
+        let result = builder.build(&payload);
+        assert!(result.is_ok(), "Expected Ok, got {:?}", result.err());
+        assert_eq!(builder.dictionary, vec!["test_string".to_string()]);
+    }
+
+    #[test]
+    fn test_builder_parses_known_events_and_halts_on_unknown() {
+        use flate2::Compression;
+        use flate2::write::GzEncoder;
+        use std::io::Write;
+
+        fn gzip_compress(data: &[u8]) -> Vec<u8> {
+            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(data).unwrap();
+            encoder.finish().unwrap()
+        }
+
+        let mut builder = PayloadBuilder::new();
+        // Construct a payload with known events, then halt on unknown:
+        // Event 12 -> Varint (0)
+        // Event 14 -> String ("test" -> 8 as varint + "test")
+        // Event 0 -> Timestamp (1771622196842 -> varint + something, let's just use 0 -> 0)
+        // Actually event 0 expects a timestamp. A timestamp is just a varint.
+        // Event 99 -> unknown
+        let mut raw_data = Vec::new();
+        // Event 12
+        raw_data.push(12);
+        // Varint 0
+        raw_data.push(0);
+
+        // Event 14
+        raw_data.push(14);
+        raw_data.push(8); // length 4 * 2
+        raw_data.extend_from_slice(b"test");
+
+        // Event 0
+        raw_data.push(0);
+        raw_data.push(0); // timestamp 0
+
+        // Unknown Event 99
+        raw_data.push(99);
+        raw_data.push(42);
+
+        let payload = gzip_compress(&raw_data);
 
         let result = builder.build(&payload);
 
         match result {
             Err(ParseError::UnknownEvent { id }) => assert_eq!(id, 99),
-            _ => panic!("Expected UnknownEvent error, got {:?}", result),
+            _ => panic!("Expected UnknownEvent error for 99, got {:?}", result),
         }
     }
 }
