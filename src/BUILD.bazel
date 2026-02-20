@@ -5,11 +5,13 @@ rust_binary(
     srcs = [
         "error.rs",
         "main.rs",
+        "models.rs",
         "primitives.rs",
     ],
     deps = [
         "@crates//:chrono",  # keep
         "@crates//:flate2",  # keep
+        "@crates//:serde",  # keep
         "@crates//:thiserror",
     ],
 )
