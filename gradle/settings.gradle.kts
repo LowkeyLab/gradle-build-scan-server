@@ -17,5 +17,13 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+develocity {
+    server = "http://localhost:8080"
+    buildScan {
+        publishing.onlyIf { true }
+        uploadInBackground = false
+    }
+}
+
 rootProject.name = "gradle"
 include("app", "list", "utilities")
