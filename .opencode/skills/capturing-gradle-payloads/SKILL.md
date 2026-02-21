@@ -30,7 +30,7 @@ The process is fully automated by a bash script bundled with this skill.
 1. Cleans the temporary payload directory (`/tmp/gradle-payloads`).
 2. Builds `//echo-server/src:main` using Bazel.
 3. Spawns the `echo-server` in the background (proxying to `https://scans.gradle.com` on port `8080`).
-4. Executes `./gradlew build --scan --no-build-cache` in the `gradle/` directory.
+4. Executes `./gradlew build --scan --no-build-cache` in the `gradle/` directory with `DEVELOCITY_SERVER_URL` pointing to the local proxy.
 5. Terminates the `echo-server` background process.
 6. Aggregates all captured JSON payloads and execution logs into `./captured-output/`.
 
@@ -40,6 +40,7 @@ The process is fully automated by a bash script bundled with this skill.
 |---------|------------|
 | Leaving the server running | The `capture.sh` script automatically tracks and kills the background PID. Don't run it manually if possible to avoid zombie processes. |
 | Missing `UPSTREAM_URL` | The server requires this env var. The script injects it automatically. |
+| Missing `DEVELOCITY_SERVER_URL` | The Gradle build only points to the local proxy if this env var is set. The script injects it automatically. |
 | Forgetting `--no-build-cache` | Gradle might skip the scan entirely if everything is cached. The script ensures a full run. |
 
 ## Quick Reference

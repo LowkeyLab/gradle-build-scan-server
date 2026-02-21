@@ -18,7 +18,7 @@ plugins {
 }
 
 develocity {
-    server = "http://localhost:8080"
+    System.getenv("DEVELOCITY_SERVER_URL")?.let { server = it }
     buildScan {
         publishing.onlyIf { true }
         uploadInBackground = false

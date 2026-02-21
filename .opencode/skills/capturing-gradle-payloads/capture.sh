@@ -28,7 +28,7 @@ sleep 3
 echo "Running gradle build in $WORKSPACE_DIR/gradle..."
 cd "$WORKSPACE_DIR/gradle"
 # Using Gradle configuration cache, skip tasks if needed to trigger scan
-./gradlew build --scan --no-build-cache >"$WORKSPACE_DIR/gradle-build-output.log" 2>&1 || true
+DEVELOCITY_SERVER_URL="http://localhost:$PORT" ./gradlew build --scan --no-build-cache >"$WORKSPACE_DIR/gradle-build-output.log" 2>&1 || true
 
 echo "Killing echo-server (PID: $SERVER_PID)..."
 kill $SERVER_PID || true
