@@ -3,6 +3,13 @@ use error::ParseError;
 use models::BuildScanPayload;
 use primitives::{Primitive, StreamDecoder};
 
+const EVENT_TIMESTAMP: u64 = 0;
+const EVENT_USER_HOST_INFO: u64 = 2;
+const EVENT_JVM_INFO: u64 = 3;
+const EVENT_OS_INFO: u64 = 8;
+const EVENT_DICTIONARY_ADD: u64 = 14;
+const EVENT_TASK_EXECUTION: u64 = 58;
+
 pub struct PayloadBuilder {
     pub dictionary: Vec<String>,
 }
@@ -37,26 +44,22 @@ impl PayloadBuilder {
             // because we don't know if the next varint is a length for raw bytes.
             // But we will print it to stderr and abort to avoid losing sync.
             match event_id {
-                12 | 3543246354218 | 3543269142742 | 4 | 10800000 | 1 | 10 => {
-                    let _val = decoder.read_varint()?;
-                    // Store/Ignore
-                }
-                2 => {
+                EVENT_USER_HOST_INFO => {
                     let _user = decoder.read_string()?;
                     let _host = decoder.read_string()?;
                 }
-                58 => {
+                EVENT_TASK_EXECUTION => {
                     let _task_path = decoder.read_string()?;
                 }
-                8 | 3 => {
+                EVENT_OS_INFO | EVENT_JVM_INFO => {
                     let len = decoder.read_raw_varint()?;
                     let _payload = decoder.read_bytes(len as usize)?;
                 }
-                0 => {
+                EVENT_TIMESTAMP => {
                     let _ts = decoder.read_timestamp()?;
                     // Store/Ignore
                 }
-                14 => {
+                EVENT_DICTIONARY_ADD => {
                     let s = decoder.read_string()?;
                     if let Primitive::String(st) = s {
                         self.dictionary.push(st);
@@ -104,11 +107,11 @@ mod tests {
 
         let mut builder = PayloadBuilder::new();
         // Construct a dummy payload with known events.
-        // 12 -> Varint (0)
+        // 0 -> Timestamp (0)
         // 14 -> String ("test_string" length 11 -> varint 22) + "test_string"
         let mut raw_data = Vec::new();
-        // Event 12
-        raw_data.push(12);
+        // Event 0
+        raw_data.push(0);
         // Varint 0
         raw_data.push(0);
 
@@ -139,14 +142,14 @@ mod tests {
 
         let mut builder = PayloadBuilder::new();
         // Construct a payload with known events, then halt on unknown:
-        // Event 12 -> Varint (0)
+        // Event 0 -> Timestamp (0)
         // Event 14 -> String ("test" -> 8 as varint + "test")
         // Event 0 -> Timestamp (1771622196842 -> varint + something, let's just use 0 -> 0)
         // Actually event 0 expects a timestamp. A timestamp is just a varint.
         // Event 99 -> unknown
         let mut raw_data = Vec::new();
-        // Event 12
-        raw_data.push(12);
+        // Event 0
+        raw_data.push(0);
         // Varint 0
         raw_data.push(0);
 
