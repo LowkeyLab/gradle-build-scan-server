@@ -75,10 +75,28 @@ impl PayloadBuilder {
 
         Ok(payload)
     }
+}
 
-    pub fn build_from_compressed(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
+pub struct BuildScanParser {
+    pub builder: PayloadBuilder,
+}
+
+impl Default for BuildScanParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BuildScanParser {
+    pub fn new() -> Self {
+        Self {
+            builder: PayloadBuilder::new(),
+        }
+    }
+
+    pub fn parse_compressed(&mut self, data: &[u8]) -> Result<BuildScanPayload, ParseError> {
         let decompressed = Decompressor::decompress(data)?;
-        self.build(&decompressed)
+        self.builder.build(&decompressed)
     }
 }
 
@@ -95,16 +113,6 @@ mod tests {
 
     #[test]
     fn test_builder_maps_known_events() {
-        use flate2::Compression;
-        use flate2::write::GzEncoder;
-        use std::io::Write;
-
-        fn gzip_compress(data: &[u8]) -> Vec<u8> {
-            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-            encoder.write_all(data).unwrap();
-            encoder.finish().unwrap()
-        }
-
         let mut builder = PayloadBuilder::new();
         // Construct a dummy payload with known events.
         // 0 -> Timestamp (0)
@@ -121,25 +129,13 @@ mod tests {
         raw_data.push(22);
         raw_data.extend_from_slice(b"test_string");
 
-        let payload = gzip_compress(&raw_data);
-
-        let result = builder.build_from_compressed(&payload);
+        let result = builder.build(&raw_data);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result.err());
         assert_eq!(builder.dictionary, vec!["test_string".to_string()]);
     }
 
     #[test]
     fn test_builder_parses_known_events_and_halts_on_unknown() {
-        use flate2::Compression;
-        use flate2::write::GzEncoder;
-        use std::io::Write;
-
-        fn gzip_compress(data: &[u8]) -> Vec<u8> {
-            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-            encoder.write_all(data).unwrap();
-            encoder.finish().unwrap()
-        }
-
         let mut builder = PayloadBuilder::new();
         // Construct a payload with known events, then halt on unknown:
         // Event 0 -> Timestamp (0)
@@ -166,13 +162,35 @@ mod tests {
         raw_data.push(99);
         raw_data.push(42);
 
-        let payload = gzip_compress(&raw_data);
-
-        let result = builder.build_from_compressed(&payload);
+        let result = builder.build(&raw_data);
 
         match result {
             Err(ParseError::UnknownEvent { id }) => assert_eq!(id, 99),
             _ => panic!("Expected UnknownEvent error for 99, got {:?}", result),
         }
+    }
+
+    #[test]
+    fn test_build_scan_parser_parses_compressed() {
+        use flate2::Compression;
+        use flate2::write::GzEncoder;
+        use std::io::Write;
+
+        fn gzip_compress(data: &[u8]) -> Vec<u8> {
+            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(data).unwrap();
+            encoder.finish().unwrap()
+        }
+
+        let mut raw_data = Vec::new();
+        // Event 0 (Timestamp)
+        raw_data.push(0);
+        raw_data.push(0);
+
+        let compressed = gzip_compress(&raw_data);
+
+        let mut parser = BuildScanParser::new();
+        let result = parser.parse_compressed(&compressed);
+        assert!(result.is_ok());
     }
 }

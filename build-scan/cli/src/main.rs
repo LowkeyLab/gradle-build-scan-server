@@ -57,9 +57,9 @@ fn run_parse(input: &Path, output: &Path) -> Result<()> {
         .context("Failed to decode base64 body")?;
 
     // 5. Parse build scan
-    let mut builder = parser::PayloadBuilder::new();
-    let build_scan = builder
-        .build_from_compressed(&raw_bytes)
+    let mut parser = parser::BuildScanParser::new();
+    let build_scan = parser
+        .parse_compressed(&raw_bytes)
         .context("Failed to parse build scan payload")?;
 
     // 6. Serialize to JSON
