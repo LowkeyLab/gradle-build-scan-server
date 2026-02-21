@@ -4,7 +4,6 @@ import base64
 import glob
 import gzip
 import json
-import sys
 
 
 def load_payload(filepath=None):
@@ -61,11 +60,11 @@ def parse_payload(args):
     print(f"Header 2: {d.read_varint()}")
     print(f"Header 3: {d.read_varint()}")
 
-    while d.pos < 300:  # Limit for now as in parser_test2.py
+    while d.pos < len(d.data):
         start_pos = d.pos
         try:
             event = d.read_varint()
-        except:
+        except IndexError:
             break
 
         if event == 0:
