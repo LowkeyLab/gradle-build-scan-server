@@ -1,0 +1,119 @@
+{
+  "request_id": "571360ea-e2c7-4477-aa66-b98e87588f4f",
+  "timestamp": "20260221_004252.110",
+  "request": {
+    "method": "POST",
+    "uri": "/scans/publish/gradle/4.3.2/token",
+    "headers": [
+      [
+        "x-request-id",
+        "0a022078-8cf8-4f8f-bc4d-cfdec63b0eeb"
+      ],
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "content-type",
+        "application/vnd.gradle.scan-token-request+json"
+      ],
+      [
+        "cache-control",
+        "no-cache"
+      ],
+      [
+        "pragma",
+        "no-cache"
+      ],
+      [
+        "user-agent",
+        "Java/25.0.2"
+      ],
+      [
+        "host",
+        "localhost:8080"
+      ],
+      [
+        "accept",
+        "*/*"
+      ],
+      [
+        "connection",
+        "close"
+      ],
+      [
+        "content-length",
+        "148"
+      ]
+    ],
+    "body": "{\"buildToolType\":\"gradle\",\"buildToolVersion\":\"9.3.1\",\"buildAgentVersion\":\"4.3.2\",\"providedBuildId\":\"gjerpla64bfy7ip5upk2mpm6im\",\"payloadSize\":63883}"
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "date",
+        "Sat, 21 Feb 2026 00:42:52 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.gradle.scan-ack+json"
+      ],
+      [
+        "cf-ray",
+        "9d1234cbb93bd8f8-LHR"
+      ],
+      [
+        "cache-control",
+        "no-cache, no-store, must-revalidate"
+      ],
+      [
+        "pragma",
+        "no-cache"
+      ],
+      [
+        "expires",
+        "0"
+      ],
+      [
+        "x-content-type-options",
+        "nosniff"
+      ],
+      [
+        "x-frame-options",
+        "deny"
+      ],
+      [
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains; preload"
+      ],
+      [
+        "x-xss-protection",
+        "1; mode=block"
+      ],
+      [
+        "content-encoding",
+        "gzip"
+      ],
+      [
+        "x-envoy-upstream-service-time",
+        "17"
+      ],
+      [
+        "vary",
+        "accept-encoding"
+      ],
+      [
+        "cf-cache-status",
+        "DYNAMIC"
+      ],
+      [
+        "server",
+        "cloudflare"
+      ]
+    ],
+    "body": {
+      "base64": "H4sIAAAAAAAAAGzMTQ6DIBQE4LuwbnwJiCaeoz3AE0RQRCpgJU3vXvqzadLtzHxzJ0aSjrCpjihiw/h2UHIiQaC7bLY0OkYfOoBxQ2mHSqwLBPg793ZF+UHwCgL41FsT9NdCXbGKQnrvftB5nQdXWDbOMMRecKR7uh0933350GHCViuO09U045xlVkpm2y5qcUgeTwAAAP//AwDJNXZXwwAAAA=="
+    }
+  }
+}
