@@ -17,5 +17,13 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+develocity {
+    System.getenv("DEVELOCITY_SERVER_URL")?.let { server = it }
+    buildScan {
+        publishing.onlyIf { true }
+        uploadInBackground = false
+    }
+}
+
 rootProject.name = "gradle"
 include("app", "list", "utilities")

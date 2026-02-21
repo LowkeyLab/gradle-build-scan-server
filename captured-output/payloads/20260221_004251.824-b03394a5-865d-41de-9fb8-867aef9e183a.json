@@ -1,0 +1,119 @@
+{
+  "request_id": "b03394a5-865d-41de-9fb8-867aef9e183a",
+  "timestamp": "20260221_004251.824",
+  "request": {
+    "method": "GET",
+    "uri": "/usage/users/check",
+    "headers": [
+      [
+        "x-request-id",
+        "87610536-6c45-4cd7-97d4-27655fd525c0"
+      ],
+      [
+        "accept-encoding",
+        "gzip"
+      ],
+      [
+        "x-gradle-client-descriptor",
+        "Develocity Gradle Plugin/4.3.2"
+      ],
+      [
+        "cache-control",
+        "no-cache"
+      ],
+      [
+        "pragma",
+        "no-cache"
+      ],
+      [
+        "user-agent",
+        "Java/25.0.2"
+      ],
+      [
+        "host",
+        "localhost:8080"
+      ],
+      [
+        "accept",
+        "*/*"
+      ],
+      [
+        "connection",
+        "close"
+      ]
+    ],
+    "body": ""
+  },
+  "response": {
+    "status": 200,
+    "headers": [
+      [
+        "date",
+        "Sat, 21 Feb 2026 00:42:51 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.gradle.user-count-check-response+json"
+      ],
+      [
+        "cf-ray",
+        "9d1234ca3ea6d8f8-LHR"
+      ],
+      [
+        "cache-control",
+        "no-cache, no-store, must-revalidate"
+      ],
+      [
+        "pragma",
+        "no-cache"
+      ],
+      [
+        "expires",
+        "0"
+      ],
+      [
+        "x-content-type-options",
+        "nosniff"
+      ],
+      [
+        "x-frame-options",
+        "deny"
+      ],
+      [
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains; preload"
+      ],
+      [
+        "x-xss-protection",
+        "1; mode=block"
+      ],
+      [
+        "content-encoding",
+        "gzip"
+      ],
+      [
+        "x-proxy-cache",
+        "MISS"
+      ],
+      [
+        "x-envoy-upstream-service-time",
+        "3"
+      ],
+      [
+        "vary",
+        "accept-encoding"
+      ],
+      [
+        "cf-cache-status",
+        "DYNAMIC"
+      ],
+      [
+        "server",
+        "cloudflare"
+      ]
+    ],
+    "body": {
+      "base64": "H4sIAAAAAAAAAKpWyivNTUot8k9zSawsVrIyqAUAAAD//wMAwiCgRhIAAAA="
+    }
+  }
+}

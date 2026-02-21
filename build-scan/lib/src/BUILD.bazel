@@ -1,0 +1,74 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "error",
+    srcs = ["error.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = ["@crates//:thiserror"],
+)
+
+rust_library(
+    name = "models",
+    srcs = ["models.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = ["@crates//:serde"],
+)
+
+rust_library(
+    name = "parser",
+    srcs = ["parser.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":decompress",
+        ":error",
+        ":models",
+        ":primitives",
+    ],
+)
+
+rust_library(
+    name = "primitives",
+    srcs = ["primitives.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        "@crates//:chrono",
+    ],
+)
+
+rust_test(
+    name = "parser_test",
+    crate = ":parser",
+    deps = ["@crates//:flate2"],
+)
+
+rust_test(
+    name = "primitives_test",
+    crate = ":primitives",
+)
+
+rust_library(
+    name = "lib",
+    srcs = ["lib.rs"],
+    deps = [
+        ":decompress",
+        ":error",
+        ":models",
+        ":parser",
+        ":primitives",
+    ],
+)
+
+rust_library(
+    name = "decompress",
+    srcs = ["decompress.rs"],
+    deps = [
+        ":error",
+        "@crates//:flate2",
+    ],
+)
+
+rust_test(
+    name = "decompress_test",
+    crate = ":decompress",
+)

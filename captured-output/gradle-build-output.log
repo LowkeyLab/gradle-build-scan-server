@@ -1,0 +1,73 @@
+Calculating task graph as configuration cache cannot be reused because environment variable 'DEVELOCITY_SERVER_URL' has changed.
+> Task :build-logic:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :build-logic:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :build-logic:compilePluginsBlocks UP-TO-DATE
+> Task :build-logic:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :build-logic:generateScriptPluginAdapters UP-TO-DATE
+
+> Task :build-logic:compileKotlin UP-TO-DATE
+Kotlin does not yet support 25 JDK target, falling back to Kotlin JVM_24 JVM target
+
+> Task :build-logic:compileJava NO-SOURCE
+> Task :build-logic:pluginDescriptors UP-TO-DATE
+> Task :build-logic:processResources UP-TO-DATE
+> Task :build-logic:classes UP-TO-DATE
+> Task :build-logic:jar UP-TO-DATE
+
+> Configure project :app
+Kotlin does not yet support 25 JDK target, falling back to Kotlin JVM_24 JVM target
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :list:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :utilities:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :list:processTestResources NO-SOURCE
+> Task :utilities:processTestResources NO-SOURCE
+> Task :utilities:processResources NO-SOURCE
+> Task :list:processResources NO-SOURCE
+> Task :app:processResources NO-SOURCE
+> Task :app:processTestResources NO-SOURCE
+> Task :list:compileKotlin UP-TO-DATE
+> Task :list:compileJava NO-SOURCE
+> Task :list:classes UP-TO-DATE
+> Task :list:jar UP-TO-DATE
+> Task :list:assemble UP-TO-DATE
+> Task :utilities:compileKotlin UP-TO-DATE
+> Task :utilities:compileJava NO-SOURCE
+> Task :utilities:classes UP-TO-DATE
+> Task :list:compileTestKotlin UP-TO-DATE
+> Task :utilities:jar UP-TO-DATE
+> Task :list:compileTestJava NO-SOURCE
+> Task :list:testClasses UP-TO-DATE
+> Task :utilities:assemble UP-TO-DATE
+> Task :utilities:compileTestKotlin NO-SOURCE
+> Task :utilities:compileTestJava NO-SOURCE
+> Task :app:compileKotlin UP-TO-DATE
+> Task :utilities:testClasses UP-TO-DATE
+> Task :list:test UP-TO-DATE
+> Task :list:check UP-TO-DATE
+> Task :app:compileJava NO-SOURCE
+> Task :utilities:test NO-SOURCE
+> Task :list:build UP-TO-DATE
+> Task :utilities:check UP-TO-DATE
+> Task :app:classes UP-TO-DATE
+> Task :utilities:build UP-TO-DATE
+> Task :app:jar UP-TO-DATE
+> Task :app:startScripts UP-TO-DATE
+> Task :app:distTar UP-TO-DATE
+> Task :app:distZip UP-TO-DATE
+> Task :app:assemble UP-TO-DATE
+> Task :app:compileTestKotlin UP-TO-DATE
+> Task :app:compileTestJava NO-SOURCE
+> Task :app:testClasses UP-TO-DATE
+> Task :app:test UP-TO-DATE
+> Task :app:check UP-TO-DATE
+> Task :app:build UP-TO-DATE
+
+BUILD SUCCESSFUL in 718ms
+22 actionable tasks: 22 up-to-date
+
+Publishing Build Scan to Develocity...
+https://gradle.com/s/3j4tact635rx2
+
+Configuration cache entry stored.
