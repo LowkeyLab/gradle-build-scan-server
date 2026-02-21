@@ -110,6 +110,14 @@ def parse_payload(args):
             break
 
 
+def dump_payload(args):
+    data = load_payload(args.file)
+    start = args.offset
+    end = start + args.length
+    print(f"Dump from {start} to {end}:")
+    print(data[start:end].hex(" "))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Gradle Build Scan Payload Analyzer")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -119,6 +127,14 @@ def main():
         "--file", help="Specific payload file to parse (defaults to latest)"
     )
     parse_parser.set_defaults(func=parse_payload)
+
+    dump_parser = subparsers.add_parser("dump", help="Hex dump the payload")
+    dump_parser.add_argument("--file", help="Specific payload file")
+    dump_parser.add_argument("--offset", type=int, default=0, help="Start offset")
+    dump_parser.add_argument(
+        "--length", type=int, default=64, help="Number of bytes to dump"
+    )
+    dump_parser.set_defaults(func=dump_payload)
 
     args = parser.parse_args()
 
