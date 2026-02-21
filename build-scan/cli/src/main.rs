@@ -59,7 +59,7 @@ fn run_parse(input: &Path, output: &Path) -> Result<()> {
     // 5. Parse build scan
     let mut builder = parser::PayloadBuilder::new();
     let build_scan = builder
-        .build(&raw_bytes)
+        .build_from_compressed(&raw_bytes)
         .context("Failed to parse build scan payload")?;
 
     // 6. Serialize to JSON
