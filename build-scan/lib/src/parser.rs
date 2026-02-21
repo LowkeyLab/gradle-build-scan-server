@@ -37,9 +37,20 @@ impl PayloadBuilder {
             // because we don't know if the next varint is a length for raw bytes.
             // But we will print it to stderr and abort to avoid losing sync.
             match event_id {
-                12 | 3543246354218 | 4 | 10800000 | 1 | 2 | 10 => {
+                12 | 3543246354218 | 3543269142742 | 4 | 10800000 | 1 | 10 => {
                     let _val = decoder.read_varint()?;
                     // Store/Ignore
+                }
+                2 => {
+                    let _user = decoder.read_string()?;
+                    let _host = decoder.read_string()?;
+                }
+                58 => {
+                    let _task_path = decoder.read_string()?;
+                }
+                8 | 3 => {
+                    let len = decoder.read_raw_varint()?;
+                    let _payload = decoder.read_bytes(len as usize)?;
                 }
                 0 => {
                     let _ts = decoder.read_timestamp()?;
