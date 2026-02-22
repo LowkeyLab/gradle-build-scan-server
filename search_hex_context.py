@@ -1,18 +1,39 @@
 import sys
 
 
+def encode_leb128(value):
+    result = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        if value != 0:
+            byte |= 0x80
+        result.append(byte)
+        if value == 0:
+            break
+    return bytes(result)
+
+
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python3 search_hex_context.py <file.bin> <string_to_search>")
+        print("Usage: python3 search_hex_context.py <file.bin> <target> [--varint]")
         sys.exit(1)
 
     file_path = sys.argv[1]
-    target_string = sys.argv[2]
+    target_raw = sys.argv[2]
+    is_varint = "--varint" in sys.argv
 
     with open(file_path, "rb") as f:
         data = f.read()
 
-    target_bytes = target_string.encode("utf-8")
+    if is_varint:
+        target_bytes = encode_leb128(int(target_raw))
+        print(
+            f"Searching for LEB128 encoded value: {' '.join(f'{b:02x}' for b in target_bytes)}"
+        )
+    else:
+        target_bytes = target_raw.encode("utf-8")
+
     idx = 0
     matches = 0
     while True:
@@ -32,7 +53,7 @@ def main():
         matches += 1
 
     if matches == 0:
-        print(f"String '{target_string}' not found.")
+        print(f"Target not found.")
 
 
 if __name__ == "__main__":
