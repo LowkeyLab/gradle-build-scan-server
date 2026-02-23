@@ -63,7 +63,8 @@ impl DecoderRegistry {
             decoders: HashMap::new(),
         };
         registry.register(117, Box::new(task_identity::TaskIdentityDecoder));
-        // task_started and task_finished will be registered in Tasks 8 and 9
+        registry.register(1563, Box::new(task_started::TaskStartedDecoder));
+        // task_finished will be registered in Task 9
         registry
     }
 
