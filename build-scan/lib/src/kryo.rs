@@ -43,9 +43,33 @@ pub fn read_flags_byte(data: &[u8], pos: &mut usize) -> Result<u8, ParseError> {
     Ok(varint::read_unsigned_varint(data, pos)? as u8)
 }
 
-/// Read flags as unsigned varint, return as u16 (for <= 16 fields)
-pub fn read_flags_short(data: &[u8], pos: &mut usize) -> Result<u16, ParseError> {
-    Ok(varint::read_unsigned_varint(data, pos)? as u16)
+/// Read flags as fixed big-endian u16 (2 bytes, for TaskFinished-style bodies)
+pub fn read_flags_u16_be(data: &[u8], pos: &mut usize) -> Result<u16, ParseError> {
+    if *pos + 2 > data.len() {
+        return Err(ParseError::UnexpectedEof { offset: *pos });
+    }
+    let flags = u16::from_be_bytes([data[*pos], data[*pos + 1]]);
+    *pos += 2;
+    Ok(flags)
+}
+
+/// Read a task identity/correlation id as a fixed little-endian i64 (8 bytes)
+pub fn read_task_id(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    if *pos + 8 > data.len() {
+        return Err(ParseError::UnexpectedEof { offset: *pos });
+    }
+    let id = i64::from_le_bytes([
+        data[*pos],
+        data[*pos + 1],
+        data[*pos + 2],
+        data[*pos + 3],
+        data[*pos + 4],
+        data[*pos + 5],
+        data[*pos + 6],
+        data[*pos + 7],
+    ]);
+    *pos += 8;
+    Ok(id)
 }
 
 /// Inverted: bit=0 means field IS present
@@ -137,5 +161,47 @@ mod tests {
             read_byte_array(&data, &mut pos).unwrap(),
             vec![0xAA, 0xBB, 0xCC]
         );
+    }
+
+    #[test]
+    fn test_read_flags_u16_be() {
+        // 0x1FF8 big-endian = [0x1F, 0xF8]
+        let data = [0x1F, 0xF8, 0x00];
+        let mut pos = 0;
+        assert_eq!(read_flags_u16_be(&data, &mut pos).unwrap(), 0x1FF8);
+        assert_eq!(pos, 2);
+    }
+
+    #[test]
+    fn test_read_flags_u16_be_eof() {
+        let data = [0x1F];
+        let mut pos = 0;
+        assert!(read_flags_u16_be(&data, &mut pos).is_err());
+    }
+
+    #[test]
+    fn test_read_task_id() {
+        // 1i64 in little-endian
+        let id_bytes = 1i64.to_le_bytes();
+        let mut pos = 0;
+        assert_eq!(read_task_id(&id_bytes, &mut pos).unwrap(), 1i64);
+        assert_eq!(pos, 8);
+    }
+
+    #[test]
+    fn test_read_task_id_negative() {
+        // -6048516917597647557i64 in little-endian (from reference payload)
+        let id: i64 = -6048516917597647557;
+        let id_bytes = id.to_le_bytes();
+        let mut pos = 0;
+        assert_eq!(read_task_id(&id_bytes, &mut pos).unwrap(), id);
+        assert_eq!(pos, 8);
+    }
+
+    #[test]
+    fn test_read_task_id_eof() {
+        let data = [0x01, 0x02, 0x03]; // only 3 bytes, need 8
+        let mut pos = 0;
+        assert!(read_task_id(&data, &mut pos).is_err());
     }
 }

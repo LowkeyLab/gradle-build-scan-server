@@ -11,7 +11,7 @@ impl BodyDecoder for TaskIdentityDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            varint::read_zigzag_i64(body, &mut pos)?
+            kryo::read_task_id(body, &mut pos)?
         } else {
             0
         };
@@ -40,9 +40,10 @@ mod tests {
 
     #[test]
     fn test_decode_all_fields_present() {
-        // flags=0x00 (all present), id=zigzag(1)=2, buildPath=":", taskPath=":app:build"
+        // flags=0x00 (all present), id=1 as fixed 8-byte LE, buildPath=":", taskPath=":app:build"
         let mut data = vec![0x00]; // flags: all present
-        data.push(0x02); // id: zigzag(1)=2
+        // id: 1i64 as little-endian 8 bytes
+        data.extend_from_slice(&1i64.to_le_bytes());
         // buildPath ":"  → zigzag(1)=2, then char ':'=58
         data.push(0x02);
         data.push(58);

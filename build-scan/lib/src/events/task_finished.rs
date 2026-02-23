@@ -7,11 +7,11 @@ pub struct TaskFinishedDecoder;
 impl BodyDecoder for TaskFinishedDecoder {
     fn decode(&self, body: &[u8]) -> Result<DecodedEvent, ParseError> {
         let mut pos = 0;
-        let flags = kryo::read_flags_short(body, &mut pos)?;
+        let flags = kryo::read_flags_u16_be(body, &mut pos)?;
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags, 0) {
-            varint::read_zigzag_i64(body, &mut pos)?
+            kryo::read_task_id(body, &mut pos)?
         } else {
             0
         };
@@ -114,13 +114,13 @@ mod tests {
     fn test_decode_success_not_cacheable() {
         // bits that are ABSENT (=1): 3,4,5,6,7,8,9,10,11,12
         // bits that are PRESENT (=0): 0,1,2
-        // flags = 0b0001_1111_1111_1000 = 0x1FF8
+        // flags = 0b0001_1111_1111_1000 = 0x1FF8, encoded as fixed 2-byte BE u16
         let mut data = vec![];
-        // flags as unsigned varint: 0x1FF8 = 8184
-        // LEB128: 8184 & 0x7F = 0x78 | 0x80 = 0xF8, 8184 >> 7 = 63 = 0x3F
+        // flags as fixed big-endian u16: 0x1FF8
+        data.push(0x1F);
         data.push(0xF8);
-        data.push(0x3F);
-        data.push(0x02); // id: zigzag(1)=2
+        // id: 1i64 as fixed 8-byte LE
+        data.extend_from_slice(&1i64.to_le_bytes());
         // path ":app:build" → zigzag(10)=20
         data.push(0x14);
         for &c in b":app:build" {

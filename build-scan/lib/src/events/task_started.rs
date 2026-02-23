@@ -11,7 +11,7 @@ impl BodyDecoder for TaskStartedDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            varint::read_zigzag_i64(body, &mut pos)?
+            kryo::read_task_id(body, &mut pos)?
         } else {
             0
         };
@@ -59,7 +59,8 @@ mod tests {
     fn test_decode_without_parent() {
         // flags=0x10 (bit4=1 → parent absent, bits 0-3 = 0 → present)
         let mut data = vec![0x10]; // flags
-        data.push(0x02); // id: zigzag(1)=2
+        // id: 1i64 as fixed 8-byte LE
+        data.extend_from_slice(&1i64.to_le_bytes());
         data.push(0x02);
         data.push(58); // buildPath ":"
         // path ":app:compileKotlin" (18 chars) → zigzag(18)=36
