@@ -88,3 +88,16 @@ rust_test(
         "@crates//:proptest",
     ],
 )
+
+rust_library(
+    name = "outer_header",
+    srcs = ["outer_header.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [":error"],
+)
+
+rust_test(
+    name = "outer_header_test",
+    crate = ":outer_header",
+    deps = [":error"],
+)
