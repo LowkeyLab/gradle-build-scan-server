@@ -101,3 +101,23 @@ rust_test(
     crate = ":outer_header",
     deps = [":error"],
 )
+
+rust_library(
+    name = "framing",
+    srcs = ["framing.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        ":varint",
+    ],
+)
+
+rust_test(
+    name = "framing_test",
+    crate = ":framing",
+    deps = [
+        ":error",
+        ":varint",
+        "@crates//:hex",
+    ],
+)

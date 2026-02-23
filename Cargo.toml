@@ -25,3 +25,4 @@ flate2 = "1.0"
 
 [dev-dependencies]
 proptest = "1.0"
+hex = "0.4"
