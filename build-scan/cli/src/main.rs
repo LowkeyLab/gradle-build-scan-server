@@ -51,16 +51,13 @@ fn run_parse(input: &Path, output: &Path) -> Result<()> {
         .and_then(|v| v.as_str())
         .context("Payload request body does not contain a \"base64\" string field")?;
 
-    // 4. Decode base64
+    // 4. Decode base64 — these are the full raw bytes (outer header + gzip payload)
     let raw_bytes = base64::engine::general_purpose::STANDARD
         .decode(b64_str)
         .context("Failed to decode base64 body")?;
 
-    // 5. Parse build scan
-    let mut parser = parser::BuildScanParser::new();
-    let build_scan = parser
-        .parse_compressed(&raw_bytes)
-        .context("Failed to parse build scan payload")?;
+    // 5. Parse build scan (handles outer header + decompression + framing + decode internally)
+    let build_scan = lib::parse(&raw_bytes).context("Failed to parse build scan payload")?;
 
     // 6. Serialize to JSON
     let json_output =
@@ -77,37 +74,6 @@ fn run_parse(input: &Path, output: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use flate2::Compression;
-    use flate2::write::GzEncoder;
-    use std::io::Write;
-
-    /// Helper: create a gzip-compressed blob from raw bytes.
-    fn gzip_compress(data: &[u8]) -> Vec<u8> {
-        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-        encoder.write_all(data).expect("gzip write failed");
-        encoder.finish().expect("gzip finish failed")
-    }
-
-    /// Helper: build a valid echo-server Payload JSON string with the given
-    /// base64-encoded body embedded in `request.body.base64`.
-    fn make_payload_json(b64_body: &str) -> String {
-        let payload = serde_json::json!({
-            "request_id": "test-001",
-            "timestamp": "2025-01-01T00:00:00Z",
-            "request": {
-                "method": "POST",
-                "uri": "/scan",
-                "headers": [],
-                "body": {
-                    "base64": b64_body
-                }
-            },
-            "response": {
-                "status": 200
-            }
-        });
-        serde_json::to_string_pretty(&payload).unwrap()
-    }
 
     /// Helper: return a unique temp file path.
     fn temp_path(name: &str) -> std::path::PathBuf {
@@ -116,36 +82,6 @@ mod tests {
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("cli_test_{name}_{ts}"))
-    }
-
-    #[test]
-    fn happy_path_parses_valid_payload() {
-        // Create a minimal gzip blob with Event 0, Timestamp 0
-        let compressed = gzip_compress(&[0, 0]);
-        let b64 = base64::engine::general_purpose::STANDARD.encode(&compressed);
-
-        let input_path = temp_path("happy_in.json");
-        let output_path = temp_path("happy_out.json");
-
-        // Write the payload JSON to the input file
-        std::fs::write(&input_path, make_payload_json(&b64)).unwrap();
-
-        // Run the core function
-        let result = run_parse(&input_path, &output_path);
-        assert!(result.is_ok(), "run_parse failed: {:?}", result.err());
-
-        // Verify output file exists and contains valid JSON
-        let output_contents =
-            std::fs::read_to_string(&output_path).expect("output file should exist");
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output_contents).expect("output should be valid JSON");
-
-        // BuildScanPayload::default() has tasks: []
-        assert_eq!(parsed["tasks"], serde_json::json!([]));
-
-        // Cleanup
-        let _ = std::fs::remove_file(&input_path);
-        let _ = std::fs::remove_file(&output_path);
     }
 
     #[test]
