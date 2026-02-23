@@ -34,6 +34,18 @@ The process is fully automated by a bash script bundled with this skill.
 5. Terminates the `echo-server` background process.
 6. Aggregates all captured JSON payloads and execution logs into `./captured-output/`.
 
+## Inspecting the Published Build Scan
+
+After capturing payloads, the Gradle output log contains a URL to the published build scan (e.g., `https://scans.gradle.com/s/...`). Use browser automation to open and inspect the published scan page — extract the URL, navigate to it, take a snapshot, and capture page content or screenshots.
+
+### Monitoring Network Traffic via Browser
+
+If you need to observe the network requests the build scan page itself makes (as opposed to the Gradle client payloads captured by the echo-server), use browser profiling to capture a network trace while the page loads.
+
+### Routing Browser Traffic Through the Echo-Server Proxy
+
+You can route browser traffic through the local echo-server proxy (on port `8080`) to capture browser-originated requests. Start the echo-server first (the `capture.sh` script does this automatically), then open a browser session with the proxy set to `http://localhost:8080`.
+
 ## Common Mistakes
 
 | Mistake | Correction |
@@ -42,6 +54,7 @@ The process is fully automated by a bash script bundled with this skill.
 | Missing `UPSTREAM_URL` | The server requires this env var. The script injects it automatically. |
 | Missing `DEVELOCITY_SERVER_URL` | The Gradle build only points to the local proxy if this env var is set. The script injects it automatically. |
 | Forgetting `--no-build-cache` | Gradle might skip the scan entirely if everything is cached. The script ensures a full run. |
+| Not closing browser sessions | Always close your browser session when done to avoid leaked processes. |
 
 ## Quick Reference
 - **Script Location**: `./.opencode/skills/capturing-gradle-payloads/capture.sh`
