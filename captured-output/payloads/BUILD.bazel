@@ -1,0 +1,7 @@
+"""Build targets for captured payload files."""
+
+filegroup(
+    name = "reference_payload",
+    srcs = ["20260222_115121.815-7df62a0f-bf22-4eb7-9fdc-84c238df73c6.json"],
+    visibility = ["//build-scan:__subpackages__"],
+)
