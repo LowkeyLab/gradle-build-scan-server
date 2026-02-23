@@ -121,3 +121,22 @@ rust_test(
         "@crates//:hex",
     ],
 )
+
+rust_library(
+    name = "kryo",
+    srcs = ["kryo.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        ":varint",
+    ],
+)
+
+rust_test(
+    name = "kryo_test",
+    crate = ":kryo",
+    deps = [
+        ":error",
+        ":varint",
+    ],
+)

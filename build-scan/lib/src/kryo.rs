@@ -1,0 +1,141 @@
+use error::ParseError;
+
+pub struct StringInternTable {
+    strings: Vec<String>,
+}
+
+impl StringInternTable {
+    pub fn new() -> Self {
+        Self {
+            strings: Vec::new(),
+        }
+    }
+
+    /// ZigZag varint: >= 0 = new string (char count), < 0 = back-ref (index = -1 - value)
+    /// Characters: unsigned LEB128 varints (ASCII = 1 byte each)
+    /// Scope: per-event body (fresh table per decode call)
+    pub fn read_string(&mut self, data: &[u8], pos: &mut usize) -> Result<String, ParseError> {
+        let raw = varint::read_zigzag_i32(data, pos)?;
+        if raw < 0 {
+            // Back-reference: index = -1 - raw
+            let index = (-1 - raw) as usize;
+            self.strings
+                .get(index)
+                .cloned()
+                .ok_or(ParseError::InvalidStringRef { index })
+        } else {
+            // New string: raw = character count
+            let char_count = raw as usize;
+            let mut s = String::with_capacity(char_count);
+            for _ in 0..char_count {
+                let ch = varint::read_unsigned_varint(data, pos)? as u32;
+                let c = char::from_u32(ch).ok_or(ParseError::InvalidUtf8)?;
+                s.push(c);
+            }
+            self.strings.push(s.clone());
+            Ok(s)
+        }
+    }
+}
+
+/// Read flags as unsigned varint, return as u8 (for <= 8 fields)
+pub fn read_flags_byte(data: &[u8], pos: &mut usize) -> Result<u8, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as u8)
+}
+
+/// Read flags as unsigned varint, return as u16 (for <= 16 fields)
+pub fn read_flags_short(data: &[u8], pos: &mut usize) -> Result<u16, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as u16)
+}
+
+/// Inverted: bit=0 means field IS present
+pub fn is_field_present(flags: u16, bit: u8) -> bool {
+    (flags >> bit) & 1 == 0
+}
+
+/// Read enum ordinal as unsigned varint
+pub fn read_enum_ordinal(data: &[u8], pos: &mut usize) -> Result<u64, ParseError> {
+    varint::read_unsigned_varint(data, pos)
+}
+
+/// Read a byte array: unsigned varint length, then that many bytes
+pub fn read_byte_array(data: &[u8], pos: &mut usize) -> Result<Vec<u8>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    if *pos + len > data.len() {
+        return Err(ParseError::UnexpectedEof { offset: *pos });
+    }
+    let bytes = data[*pos..*pos + len].to_vec();
+    *pos += len;
+    Ok(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_flags_inverted() {
+        assert!(is_field_present(0x00, 0));
+        assert!(is_field_present(0x00, 1));
+        assert!(!is_field_present(0x01, 0));
+        assert!(is_field_present(0x01, 1));
+    }
+
+    #[test]
+    fn test_string_intern_new_ascii() {
+        // ZigZag(3) = 6, then chars 'f'=102, 'o'=111, 'o'=111
+        let data = [0x06, 0x66, 0x6f, 0x6f];
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "foo");
+        assert_eq!(pos, 4);
+    }
+
+    #[test]
+    fn test_string_intern_back_reference() {
+        // First: write "foo" (zigzag(3)=6, then chars)
+        // Then: back-ref to index 0 → zigzag(-1) = 1
+        let data = [0x06, 0x66, 0x6f, 0x6f, 0x01];
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "foo");
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "foo");
+        assert_eq!(pos, 5);
+    }
+
+    #[test]
+    fn test_string_intern_empty_string() {
+        // ZigZag(0) = 0, no chars follow
+        let data = [0x00];
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "");
+    }
+
+    #[test]
+    fn test_string_intern_multiple_refs() {
+        // "abc" then "xyz" then ref(0) then ref(1)
+        let data = [
+            0x06, 97, 98, 99, // "abc"
+            0x06, 120, 121, 122,  // "xyz"
+            0x01, // ref(0) = "abc"
+            0x03, // ref(1) = "xyz"
+        ];
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "abc");
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "xyz");
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "abc");
+        assert_eq!(table.read_string(&data, &mut pos).unwrap(), "xyz");
+    }
+
+    #[test]
+    fn test_read_byte_array() {
+        let data = [0x03, 0xAA, 0xBB, 0xCC];
+        let mut pos = 0;
+        assert_eq!(
+            read_byte_array(&data, &mut pos).unwrap(),
+            vec![0xAA, 0xBB, 0xCC]
+        );
+    }
+}
