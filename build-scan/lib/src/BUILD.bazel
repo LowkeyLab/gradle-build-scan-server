@@ -72,3 +72,19 @@ rust_test(
     name = "decompress_test",
     crate = ":decompress",
 )
+
+rust_library(
+    name = "varint",
+    srcs = ["varint.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [":error"],
+)
+
+rust_test(
+    name = "varint_test",
+    crate = ":varint",
+    deps = [
+        ":error",
+        "@crates//:proptest",
+    ],
+)
