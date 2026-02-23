@@ -140,3 +140,27 @@ rust_test(
         ":varint",
     ],
 )
+
+rust_library(
+    name = "assembly",
+    srcs = ["assembly.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        ":framing",
+        ":models",
+        "//build-scan/lib/src/events",
+    ],
+)
+
+rust_test(
+    name = "assembly_test",
+    crate = ":assembly",
+    deps = [
+        ":error",
+        ":framing",
+        ":models",
+        ":varint",
+        "//build-scan/lib/src/events",
+    ],
+)
