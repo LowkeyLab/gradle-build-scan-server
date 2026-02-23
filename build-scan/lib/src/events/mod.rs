@@ -64,7 +64,7 @@ impl DecoderRegistry {
         };
         registry.register(117, Box::new(task_identity::TaskIdentityDecoder));
         registry.register(1563, Box::new(task_started::TaskStartedDecoder));
-        // task_finished will be registered in Task 9
+        registry.register(2074, Box::new(task_finished::TaskFinishedDecoder));
         registry
     }
 
