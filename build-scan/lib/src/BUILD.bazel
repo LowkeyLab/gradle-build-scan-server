@@ -15,47 +15,17 @@ rust_library(
 )
 
 rust_library(
-    name = "parser",
-    srcs = ["parser.rs"],
-    visibility = ["//build-scan:__subpackages__"],
-    deps = [
-        ":decompress",
-        ":error",
-        ":models",
-        ":primitives",
-    ],
-)
-
-rust_library(
-    name = "primitives",
-    srcs = ["primitives.rs"],
-    visibility = ["//build-scan:__subpackages__"],
-    deps = [
-        ":error",
-        "@crates//:chrono",
-    ],
-)
-
-rust_test(
-    name = "parser_test",
-    crate = ":parser",
-    deps = ["@crates//:flate2"],
-)
-
-rust_test(
-    name = "primitives_test",
-    crate = ":primitives",
-)
-
-rust_library(
     name = "lib",
     srcs = ["lib.rs"],
+    visibility = ["//build-scan:__subpackages__"],
     deps = [
+        ":assembly",
         ":decompress",
         ":error",
+        ":framing",
         ":models",
-        ":parser",
-        ":primitives",
+        ":outer_header",
+        "//build-scan/lib/src/events",
     ],
 )
 
@@ -83,10 +53,7 @@ rust_library(
 rust_test(
     name = "varint_test",
     crate = ":varint",
-    deps = [
-        ":error",
-        "@crates//:proptest",
-    ],
+    deps = ["@crates//:proptest"],
 )
 
 rust_library(
@@ -99,7 +66,6 @@ rust_library(
 rust_test(
     name = "outer_header_test",
     crate = ":outer_header",
-    deps = [":error"],
 )
 
 rust_library(
@@ -115,11 +81,7 @@ rust_library(
 rust_test(
     name = "framing_test",
     crate = ":framing",
-    deps = [
-        ":error",
-        ":varint",
-        "@crates//:hex",
-    ],
+    deps = ["@crates//:hex"],
 )
 
 rust_library(
@@ -135,10 +97,6 @@ rust_library(
 rust_test(
     name = "kryo_test",
     crate = ":kryo",
-    deps = [
-        ":error",
-        ":varint",
-    ],
 )
 
 rust_library(
@@ -146,7 +104,6 @@ rust_library(
     srcs = ["assembly.rs"],
     visibility = ["//build-scan:__subpackages__"],
     deps = [
-        ":error",
         ":framing",
         ":models",
         "//build-scan/lib/src/events",
@@ -156,11 +113,4 @@ rust_library(
 rust_test(
     name = "assembly_test",
     crate = ":assembly",
-    deps = [
-        ":error",
-        ":framing",
-        ":models",
-        ":varint",
-        "//build-scan/lib/src/events",
-    ],
 )

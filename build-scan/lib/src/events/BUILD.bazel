@@ -21,9 +21,4 @@ rust_library(
 rust_test(
     name = "events_test",
     crate = ":events",
-    deps = [
-        "//build-scan/lib/src:error",
-        "//build-scan/lib/src:kryo",
-        "//build-scan/lib/src:varint",
-    ],
 )
