@@ -16,13 +16,4 @@ pub enum ParseError {
     InvalidHeader { reason: &'static str },
     #[error("Invalid string intern reference: index {index}")]
     InvalidStringRef { index: usize },
-    #[error("Invalid enum ordinal {ordinal} for {enum_name}")]
-    InvalidEnumOrdinal {
-        ordinal: u64,
-        enum_name: &'static str,
-    },
-    #[error("Unknown wire ID {wire_id}: body stored as raw bytes")]
-    UnknownWireId { wire_id: u16 },
-    #[error("Task ID {id} referenced but no identity event found")]
-    OrphanTaskEvent { id: i64 },
 }

@@ -22,6 +22,8 @@ pub struct Task {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub caching_disabled_explanation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_build_cache_key: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub actionable: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub started_at: Option<i64>,

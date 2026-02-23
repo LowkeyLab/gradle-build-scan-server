@@ -29,6 +29,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         cacheable: e.cacheable,
                         caching_disabled_reason: e.caching_disabled_reason_category.clone(),
                         caching_disabled_explanation: e.caching_disabled_explanation.clone(),
+                        origin_build_cache_key: e.origin_build_cache_key.clone(),
                         actionable: e.actionable,
                         timestamp: frame.timestamp,
                     },
@@ -63,6 +64,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 caching_disabled_reason: fin.and_then(|f| f.caching_disabled_reason.clone()),
                 caching_disabled_explanation: fin
                     .and_then(|f| f.caching_disabled_explanation.clone()),
+                origin_build_cache_key: fin.and_then(|f| f.origin_build_cache_key.clone()),
                 actionable: fin.and_then(|f| f.actionable),
                 started_at,
                 finished_at,
@@ -87,6 +89,7 @@ struct FinishedInfo {
     cacheable: Option<bool>,
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
+    origin_build_cache_key: Option<Vec<u8>>,
     actionable: Option<bool>,
     timestamp: i64,
 }
