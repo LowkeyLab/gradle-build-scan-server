@@ -1,0 +1,127 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "error",
+    srcs = ["error.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = ["@crates//:thiserror"],
+)
+
+rust_library(
+    name = "models",
+    srcs = ["models.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = ["@crates//:serde"],
+)
+
+rust_library(
+    name = "lib",
+    srcs = ["lib.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":assembly",
+        ":decompress",
+        ":error",
+        ":framing",
+        ":models",
+        ":outer_header",
+        "//build-scan/lib/src/events",
+    ],
+)
+
+rust_library(
+    name = "decompress",
+    srcs = ["decompress.rs"],
+    deps = [
+        ":error",
+        "@crates//:flate2",
+    ],
+)
+
+rust_test(
+    name = "decompress_test",
+    crate = ":decompress",
+)
+
+rust_library(
+    name = "varint",
+    srcs = ["varint.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [":error"],
+)
+
+rust_test(
+    name = "varint_test",
+    crate = ":varint",
+    deps = ["@crates//:proptest"],
+)
+
+rust_library(
+    name = "outer_header",
+    srcs = ["outer_header.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [":error"],
+)
+
+rust_test(
+    name = "outer_header_test",
+    crate = ":outer_header",
+)
+
+rust_library(
+    name = "framing",
+    srcs = ["framing.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        ":varint",
+    ],
+)
+
+rust_test(
+    name = "framing_test",
+    crate = ":framing",
+    deps = ["@crates//:hex"],
+)
+
+rust_library(
+    name = "kryo",
+    srcs = ["kryo.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":error",
+        ":varint",
+    ],
+)
+
+rust_test(
+    name = "kryo_test",
+    crate = ":kryo",
+)
+
+rust_library(
+    name = "assembly",
+    srcs = ["assembly.rs"],
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        ":framing",
+        ":models",
+        "//build-scan/lib/src/events",
+    ],
+)
+
+rust_test(
+    name = "assembly_test",
+    crate = ":assembly",
+)
+
+rust_test(
+    name = "integration_test",
+    srcs = ["integration_test.rs"],
+    data = ["//captured-output/payloads:reference_payload"],
+    deps = [
+        ":lib",
+        "@crates//:base64",
+        "@crates//:serde_json",
+    ],
+)

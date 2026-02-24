@@ -1,0 +1,19 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+
+rust_binary(
+    name = "cli",
+    srcs = ["main.rs"],
+    deps = [
+        "//build-scan/lib/src:lib",
+        "//proxy/format/src:format",
+        "@crates//:anyhow",
+        "@crates//:base64",
+        "@crates//:clap",
+        "@crates//:serde_json",
+    ],
+)
+
+rust_test(
+    name = "cli_test",
+    crate = ":cli",
+)

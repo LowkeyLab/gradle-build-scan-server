@@ -4,6 +4,8 @@ rust_binary(
     name = "main",
     srcs = ["main.rs"],
     deps = [
+        "//proxy/config/src:config",
+        "//proxy/format/src:format",
         "@crates//:axum",
         "@crates//:base64",
         "@crates//:chrono",

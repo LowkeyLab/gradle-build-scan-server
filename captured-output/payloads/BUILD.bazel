@@ -1,0 +1,7 @@
+"""Build targets for captured payload files."""
+
+filegroup(
+    name = "reference_payload",
+    srcs = glob(["*.json"]),
+    visibility = ["//build-scan:__subpackages__"],
+)

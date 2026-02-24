@@ -1,0 +1,24 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "events",
+    srcs = [
+        "mod.rs",
+        "task_finished.rs",
+        "task_identity.rs",
+        "task_started.rs",
+    ],
+    crate_name = "events",
+    crate_root = "mod.rs",
+    visibility = ["//build-scan:__subpackages__"],
+    deps = [
+        "//build-scan/lib/src:error",
+        "//build-scan/lib/src:kryo",
+        "//build-scan/lib/src:varint",
+    ],
+)
+
+rust_test(
+    name = "events_test",
+    crate = ":events",
+)

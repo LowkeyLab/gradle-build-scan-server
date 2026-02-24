@@ -1,0 +1,5 @@
+Proxy server listening on http://0.0.0.0:8080, forwarding to https://scans.gradle.com
+Saved payload to: "/tmp/gradle-payloads/20260221_004251.824-b03394a5-865d-41de-9fb8-867aef9e183a.json"
+Saved payload to: "/tmp/gradle-payloads/20260221_004252.110-571360ea-e2c7-4477-aa66-b98e87588f4f.json"
+Saved payload to: "/tmp/gradle-payloads/20260221_004252.268-647fee21-bb6f-4519-a2e4-d26be9447b97.json"
+Shutting down server...

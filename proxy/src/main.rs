@@ -2,40 +2,13 @@ use axum::{Router, body::Body, extract::Request, extract::State, response::Respo
 use base64::Engine as _;
 use chrono::Utc;
 use std::net::SocketAddr;
-use std::path::PathBuf;
 use tokio::signal;
 use uuid::Uuid;
 
+use config::Config;
+use format::{Payload, RequestData, ResponseData};
+
 const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10 MB
-
-#[derive(Debug, Clone)]
-struct Config {
-    port: u16,
-    payload_dir: PathBuf,
-    upstream_url: String,
-}
-
-impl Config {
-    fn from_env() -> Self {
-        let upstream_url =
-            std::env::var("UPSTREAM_URL").expect("UPSTREAM_URL environment variable is required");
-
-        // Strip trailing slash for consistent URL joining
-        let upstream_url = upstream_url.trim_end_matches('/').to_string();
-
-        Self {
-            port: std::env::var("PORT")
-                .ok()
-                .and_then(|p| p.parse().ok())
-                .unwrap_or(8080),
-            payload_dir: std::env::var("PAYLOAD_DIR")
-                .ok()
-                .map(PathBuf::from)
-                .unwrap_or_else(|| PathBuf::from("/tmp/gradle-payloads")),
-            upstream_url,
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -164,26 +137,26 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
     // Build upstream request, forwarding non-hop-by-hop headers
     let mut upstream_headers = reqwest::header::HeaderMap::new();
     for (name, value) in &request_headers {
-        if !is_hop_by_hop(name) {
-            if let (Ok(hn), Ok(hv)) = (
+        if !is_hop_by_hop(name)
+            && let (Ok(hn), Ok(hv)) = (
                 reqwest::header::HeaderName::from_bytes(name.as_bytes()),
                 reqwest::header::HeaderValue::from_str(value),
-            ) {
-                upstream_headers.insert(hn, hv);
-            }
+            )
+        {
+            upstream_headers.insert(hn, hv);
         }
     }
 
     // Set Host header to the upstream host
-    if let Ok(upstream) = reqwest::Url::parse(&upstream_url) {
-        if let Some(host) = upstream.host_str() {
-            let host_value = match upstream.port() {
-                Some(p) => format!("{}:{}", host, p),
-                None => host.to_string(),
-            };
-            if let Ok(hv) = reqwest::header::HeaderValue::from_str(&host_value) {
-                upstream_headers.insert(reqwest::header::HOST, hv);
-            }
+    if let Ok(upstream) = reqwest::Url::parse(&upstream_url)
+        && let Some(host) = upstream.host_str()
+    {
+        let host_value = match upstream.port() {
+            Some(p) => format!("{}:{}", host, p),
+            None => host.to_string(),
+        };
+        if let Ok(hv) = reqwest::header::HeaderValue::from_str(&host_value) {
+            upstream_headers.insert(reqwest::header::HOST, hv);
         }
     }
 
@@ -218,13 +191,18 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
                 }),
             };
 
-            let response_data = serde_json::json!({
-                "status": status,
-                "headers": response_headers.iter()
-                    .filter(|(k, _)| !is_hop_by_hop(k))
-                    .collect::<Vec<_>>(),
-                "body": response_body,
-            });
+            let response_data = ResponseData {
+                status: Some(status),
+                headers: Some(
+                    response_headers
+                        .iter()
+                        .filter(|(k, _)| !is_hop_by_hop(k))
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect::<Vec<_>>(),
+                ),
+                body: Some(response_body),
+                error: None,
+            };
 
             // Build HTTP response to return to client
             let mut builder = Response::builder().status(status);
@@ -246,10 +224,12 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
         }
         Err(e) => {
             eprintln!("Upstream request failed: {}", e);
-            let response_data = serde_json::json!({
-                "error": e.to_string(),
-                "status": null,
-            });
+            let response_data = ResponseData {
+                error: Some(e.to_string()),
+                status: None,
+                headers: None,
+                body: None,
+            };
             let http_response = Response::builder()
                 .status(502)
                 .header("Content-Type", "application/json")
@@ -264,17 +244,17 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
     };
 
     // Save payload (best-effort)
-    let payload = serde_json::json!({
-        "request_id": request_id,
-        "timestamp": timestamp,
-        "request": {
-            "method": method.to_string(),
-            "uri": path_and_query,
-            "headers": request_headers,
-            "body": request_body,
+    let payload = Payload {
+        request_id: request_id.clone(),
+        timestamp: timestamp.clone(),
+        request: RequestData {
+            method: method.to_string(),
+            uri: path_and_query.to_string(),
+            headers: request_headers,
+            body: request_body,
         },
-        "response": response_data,
-    });
+        response: response_data,
+    };
 
     let dir = &state.config.payload_dir;
     if let Err(e) = tokio::fs::create_dir_all(dir).await {

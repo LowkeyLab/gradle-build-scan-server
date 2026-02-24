@@ -17,3 +17,6 @@ target/
 
 # Captured proxy payloads (may contain secrets)
 echo-server/payloads/
+
+# Rust
+rust-project.json
