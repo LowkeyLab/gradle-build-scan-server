@@ -262,7 +262,10 @@ mod tests {
     fn test_read_list_of_byte_arrays_empty() {
         let data = [0x00]; // length = 0
         let mut pos = 0;
-        assert_eq!(read_list_of_byte_arrays(&data, &mut pos).unwrap(), Vec::<Vec<u8>>::new());
+        assert_eq!(
+            read_list_of_byte_arrays(&data, &mut pos).unwrap(),
+            Vec::<Vec<u8>>::new()
+        );
     }
 
     #[test]

@@ -9,8 +9,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut started: HashMap<i64, (String, Option<String>, i64)> = HashMap::new();
     let mut finished: HashMap<i64, FinishedInfo> = HashMap::new();
     let mut raw_counts: HashMap<u16, usize> = HashMap::new();
-    let mut property_names_map: HashMap<i64, events::TaskInputsPropertyNamesEvent> =
-        HashMap::new();
+    let mut property_names_map: HashMap<i64, events::TaskInputsPropertyNamesEvent> = HashMap::new();
     let mut implementation_map: HashMap<i64, events::TaskInputsImplementationEvent> =
         HashMap::new();
     let mut value_properties_map: HashMap<i64, events::TaskInputsValuePropertiesEvent> =
@@ -108,81 +107,82 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 (Some(s), Some(f)) => Some(f - s),
                 _ => None,
             };
-            let inputs = {
-                let pn = property_names_map.remove(&id).map(|e| {
-                    models::TaskInputsPropertyNamesData {
-                        value_inputs: e.value_inputs,
-                        file_inputs: e.file_inputs,
-                        outputs: e.outputs,
-                    }
-                });
-                let imp = implementation_map.remove(&id).map(|e| {
-                    models::TaskInputsImplementationData {
-                        class_loader_hash: e.class_loader_hash,
-                        action_class_loader_hashes: e.action_class_loader_hashes,
-                        action_class_names: e.action_class_names,
-                    }
-                });
-                let vp = value_properties_map
-                    .remove(&id)
-                    .map(|e| models::TaskInputsValuePropertiesData { hashes: e.hashes });
-                let fpr = file_property_roots_map
-                    .remove(&id)
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|e| models::TaskInputsFilePropertyRootData {
-                        file_root: e.file.root,
-                        file_path: e.file.path,
-                        root_hash: e.root_hash,
-                        children: e
-                            .children
-                            .into_iter()
-                            .map(|c| models::FilePropertyRootChildData {
-                                name: c.name,
-                                hash: c.hash,
-                                parent: c.parent,
-                            })
-                            .collect(),
-                    })
-                    .collect::<Vec<_>>();
-                let fp = file_properties_map
-                    .remove(&id)
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(|e| models::TaskInputsFilePropertyData {
-                        attributes: e.attributes,
-                        hash: e.hash,
-                        roots: e.roots,
-                    })
-                    .collect::<Vec<_>>();
-                let sr = snapshotting_finished_map.remove(&id).and_then(|e| {
-                    e.result.map(|r| models::TaskInputsSnapshottingResultData {
-                        hash: r.hash,
-                        implementation: r.implementation,
-                        property_names: r.property_names,
-                        value_inputs: r.value_inputs,
-                        file_inputs: r.file_inputs,
-                    })
-                });
-                if pn.is_some()
-                    || imp.is_some()
-                    || vp.is_some()
-                    || !fpr.is_empty()
-                    || !fp.is_empty()
-                    || sr.is_some()
+            let inputs =
                 {
-                    Some(models::TaskInputs {
-                        property_names: pn,
-                        implementation: imp,
-                        value_properties: vp,
-                        file_property_roots: fpr,
-                        file_properties: fp,
-                        snapshotting_result: sr,
-                    })
-                } else {
-                    None
-                }
-            };
+                    let pn = property_names_map.remove(&id).map(|e| {
+                        models::TaskInputsPropertyNamesData {
+                            value_inputs: e.value_inputs,
+                            file_inputs: e.file_inputs,
+                            outputs: e.outputs,
+                        }
+                    });
+                    let imp = implementation_map.remove(&id).map(|e| {
+                        models::TaskInputsImplementationData {
+                            class_loader_hash: e.class_loader_hash,
+                            action_class_loader_hashes: e.action_class_loader_hashes,
+                            action_class_names: e.action_class_names,
+                        }
+                    });
+                    let vp = value_properties_map
+                        .remove(&id)
+                        .map(|e| models::TaskInputsValuePropertiesData { hashes: e.hashes });
+                    let fpr = file_property_roots_map
+                        .remove(&id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|e| models::TaskInputsFilePropertyRootData {
+                            file_root: e.file.root,
+                            file_path: e.file.path,
+                            root_hash: e.root_hash,
+                            children: e
+                                .children
+                                .into_iter()
+                                .map(|c| models::FilePropertyRootChildData {
+                                    name: c.name,
+                                    hash: c.hash,
+                                    parent: c.parent,
+                                })
+                                .collect(),
+                        })
+                        .collect::<Vec<_>>();
+                    let fp = file_properties_map
+                        .remove(&id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|e| models::TaskInputsFilePropertyData {
+                            attributes: e.attributes,
+                            hash: e.hash,
+                            roots: e.roots,
+                        })
+                        .collect::<Vec<_>>();
+                    let sr = snapshotting_finished_map.remove(&id).and_then(|e| {
+                        e.result.map(|r| models::TaskInputsSnapshottingResultData {
+                            hash: r.hash,
+                            implementation: r.implementation,
+                            property_names: r.property_names,
+                            value_inputs: r.value_inputs,
+                            file_inputs: r.file_inputs,
+                        })
+                    });
+                    if pn.is_some()
+                        || imp.is_some()
+                        || vp.is_some()
+                        || !fpr.is_empty()
+                        || !fp.is_empty()
+                        || sr.is_some()
+                    {
+                        Some(models::TaskInputs {
+                            property_names: pn,
+                            implementation: imp,
+                            value_properties: vp,
+                            file_property_roots: fpr,
+                            file_properties: fp,
+                            snapshotting_result: sr,
+                        })
+                    } else {
+                        None
+                    }
+                };
             Task {
                 id,
                 build_path,
