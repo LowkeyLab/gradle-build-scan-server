@@ -9,6 +9,19 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut started: HashMap<i64, (String, Option<String>, i64)> = HashMap::new();
     let mut finished: HashMap<i64, FinishedInfo> = HashMap::new();
     let mut raw_counts: HashMap<u16, usize> = HashMap::new();
+    let mut property_names_map: HashMap<i64, events::TaskInputsPropertyNamesEvent> = HashMap::new();
+    let mut implementation_map: HashMap<i64, events::TaskInputsImplementationEvent> =
+        HashMap::new();
+    let mut value_properties_map: HashMap<i64, events::TaskInputsValuePropertiesEvent> =
+        HashMap::new();
+    let mut file_property_roots_map: HashMap<i64, Vec<events::TaskInputsFilePropertyRootEvent>> =
+        HashMap::new();
+    let mut file_properties_map: HashMap<i64, Vec<events::TaskInputsFilePropertyEvent>> =
+        HashMap::new();
+    let mut snapshotting_finished_map: HashMap<i64, events::TaskInputsSnapshottingFinishedEvent> =
+        HashMap::new();
+    let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
+    let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
 
     for (frame, decoded) in &events {
         match decoded {
@@ -35,6 +48,46 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                     },
                 );
             }
+            DecodedEvent::TaskInputsPropertyNames(e) => {
+                if let Some(id) = e.id {
+                    property_names_map.insert(id, e.clone());
+                }
+            }
+            DecodedEvent::TaskInputsImplementation(e) => {
+                if let Some(id) = e.id {
+                    implementation_map.insert(id, e.clone());
+                }
+            }
+            DecodedEvent::TaskInputsValueProperties(e) => {
+                if let Some(id) = e.id {
+                    value_properties_map.insert(id, e.clone());
+                }
+            }
+            DecodedEvent::TaskInputsFilePropertyRoot(e) => {
+                if let Some(id) = e.id {
+                    file_property_roots_map
+                        .entry(id)
+                        .or_default()
+                        .push(e.clone());
+                }
+            }
+            DecodedEvent::TaskInputsFileProperty(e) => {
+                if let Some(id) = e.id {
+                    file_properties_map.entry(id).or_default().push(e.clone());
+                }
+            }
+            DecodedEvent::TaskInputsSnapshottingStarted(_) => {}
+            DecodedEvent::TaskInputsSnapshottingFinished(e) => {
+                if let Some(task_id) = e.task {
+                    snapshotting_finished_map.insert(task_id, e.clone());
+                }
+            }
+            DecodedEvent::PlannedNode(e) => {
+                planned_nodes.push(e.clone());
+            }
+            DecodedEvent::TransformExecutionRequest(e) => {
+                transform_requests.push(e.clone());
+            }
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
@@ -54,6 +107,82 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 (Some(s), Some(f)) => Some(f - s),
                 _ => None,
             };
+            let inputs =
+                {
+                    let pn = property_names_map.remove(&id).map(|e| {
+                        models::TaskInputsPropertyNamesData {
+                            value_inputs: e.value_inputs,
+                            file_inputs: e.file_inputs,
+                            outputs: e.outputs,
+                        }
+                    });
+                    let imp = implementation_map.remove(&id).map(|e| {
+                        models::TaskInputsImplementationData {
+                            class_loader_hash: e.class_loader_hash,
+                            action_class_loader_hashes: e.action_class_loader_hashes,
+                            action_class_names: e.action_class_names,
+                        }
+                    });
+                    let vp = value_properties_map
+                        .remove(&id)
+                        .map(|e| models::TaskInputsValuePropertiesData { hashes: e.hashes });
+                    let fpr = file_property_roots_map
+                        .remove(&id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|e| models::TaskInputsFilePropertyRootData {
+                            file_root: e.file.root,
+                            file_path: e.file.path,
+                            root_hash: e.root_hash,
+                            children: e
+                                .children
+                                .into_iter()
+                                .map(|c| models::FilePropertyRootChildData {
+                                    name: c.name,
+                                    hash: c.hash,
+                                    parent: c.parent,
+                                })
+                                .collect(),
+                        })
+                        .collect::<Vec<_>>();
+                    let fp = file_properties_map
+                        .remove(&id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|e| models::TaskInputsFilePropertyData {
+                            attributes: e.attributes,
+                            hash: e.hash,
+                            roots: e.roots,
+                        })
+                        .collect::<Vec<_>>();
+                    let sr = snapshotting_finished_map.remove(&id).and_then(|e| {
+                        e.result.map(|r| models::TaskInputsSnapshottingResultData {
+                            hash: r.hash,
+                            implementation: r.implementation,
+                            property_names: r.property_names,
+                            value_inputs: r.value_inputs,
+                            file_inputs: r.file_inputs,
+                        })
+                    });
+                    if pn.is_some()
+                        || imp.is_some()
+                        || vp.is_some()
+                        || !fpr.is_empty()
+                        || !fp.is_empty()
+                        || sr.is_some()
+                    {
+                        Some(models::TaskInputs {
+                            property_names: pn,
+                            implementation: imp,
+                            value_properties: vp,
+                            file_property_roots: fpr,
+                            file_properties: fp,
+                            snapshotting_result: sr,
+                        })
+                    } else {
+                        None
+                    }
+                };
             Task {
                 id,
                 build_path,
@@ -69,6 +198,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 started_at,
                 finished_at,
                 duration_ms,
+                inputs,
             }
         })
         .collect();
@@ -81,7 +211,32 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         .collect();
     raw_events.sort_by_key(|r| r.wire_id);
 
-    BuildScanPayload { tasks, raw_events }
+    let planned_nodes_data: Vec<models::PlannedNodeData> = planned_nodes
+        .into_iter()
+        .map(|e| models::PlannedNodeData {
+            id: e.id,
+            dependencies: e.dependencies,
+            must_run_after: e.must_run_after,
+            should_run_after: e.should_run_after,
+            finalized_by: e.finalized_by,
+        })
+        .collect();
+
+    let transform_requests_data: Vec<models::TransformExecutionRequestData> = transform_requests
+        .into_iter()
+        .map(|e| models::TransformExecutionRequestData {
+            node_id: e.node_id,
+            identification_id: e.identification_id,
+            execution_id: e.execution_id,
+        })
+        .collect();
+
+    BuildScanPayload {
+        tasks,
+        planned_nodes: planned_nodes_data,
+        transform_execution_requests: transform_requests_data,
+        raw_events,
+    }
 }
 
 struct FinishedInfo {
@@ -152,5 +307,6 @@ mod tests {
         assert_eq!(task.finished_at, Some(3000));
         assert_eq!(task.duration_ms, Some(1000));
         assert!(matches!(task.outcome, Some(TaskOutcome::Success)));
+        assert!(task.inputs.is_none());
     }
 }
