@@ -3,6 +3,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildScanPayload {
     pub tasks: Vec<Task>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub planned_nodes: Vec<PlannedNodeData>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub transform_execution_requests: Vec<TransformExecutionRequestData>,
     pub raw_events: Vec<RawEventSummary>,
 }
 
@@ -31,6 +35,8 @@ pub struct Task {
     pub finished_at: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration_ms: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inputs: Option<TaskInputs>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,4 +69,100 @@ impl TaskOutcome {
 pub struct RawEventSummary {
     pub wire_id: u16,
     pub count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct TaskInputs {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub property_names: Option<TaskInputsPropertyNamesData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub implementation: Option<TaskInputsImplementationData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value_properties: Option<TaskInputsValuePropertiesData>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub file_property_roots: Vec<TaskInputsFilePropertyRootData>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub file_properties: Vec<TaskInputsFilePropertyData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub snapshotting_result: Option<TaskInputsSnapshottingResultData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsPropertyNamesData {
+    pub value_inputs: Vec<String>,
+    pub file_inputs: Vec<String>,
+    pub outputs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsImplementationData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub class_loader_hash: Option<Vec<u8>>,
+    pub action_class_loader_hashes: Vec<Vec<u8>>,
+    pub action_class_names: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsValuePropertiesData {
+    pub hashes: Vec<Vec<u8>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsFilePropertyRootData {
+    pub file_root: Option<u64>,
+    pub file_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub root_hash: Option<Vec<u8>>,
+    pub children: Vec<FilePropertyRootChildData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilePropertyRootChildData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hash: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsFilePropertyData {
+    pub attributes: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hash: Option<Vec<u8>>,
+    pub roots: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskInputsSnapshottingResultData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hash: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub implementation: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub property_names: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value_inputs: Option<i64>,
+    pub file_inputs: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlannedNodeData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    pub dependencies: Vec<i64>,
+    pub must_run_after: Vec<i64>,
+    pub should_run_after: Vec<i64>,
+    pub finalized_by: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransformExecutionRequestData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub identification_id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub execution_id: Option<i64>,
 }
