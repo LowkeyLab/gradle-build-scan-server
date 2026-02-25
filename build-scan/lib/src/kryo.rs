@@ -93,6 +93,40 @@ pub fn read_byte_array(data: &[u8], pos: &mut usize) -> Result<Vec<u8>, ParseErr
     Ok(bytes)
 }
 
+/// Read a list of fixed 8-byte LE i64 values: varint length prefix, then N × 8 bytes
+pub fn read_list_of_i64(data: &[u8], pos: &mut usize) -> Result<Vec<i64>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(len);
+    for _ in 0..len {
+        result.push(read_task_id(data, pos)?);
+    }
+    Ok(result)
+}
+
+/// Read a list of byte arrays: varint length prefix, then N byte arrays
+pub fn read_list_of_byte_arrays(data: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(len);
+    for _ in 0..len {
+        result.push(read_byte_array(data, pos)?);
+    }
+    Ok(result)
+}
+
+/// Read a list of interned strings: varint length prefix, then N interned strings
+pub fn read_list_of_interned_strings(
+    data: &[u8],
+    pos: &mut usize,
+    table: &mut StringInternTable,
+) -> Result<Vec<String>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(len);
+    for _ in 0..len {
+        result.push(table.read_string(data, pos)?);
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -203,5 +237,66 @@ mod tests {
         let data = [0x01, 0x02, 0x03]; // only 3 bytes, need 8
         let mut pos = 0;
         assert!(read_task_id(&data, &mut pos).is_err());
+    }
+
+    #[test]
+    fn test_read_list_of_i64_empty() {
+        let data = [0x00]; // length = 0
+        let mut pos = 0;
+        assert_eq!(read_list_of_i64(&data, &mut pos).unwrap(), vec![]);
+        assert_eq!(pos, 1);
+    }
+
+    #[test]
+    fn test_read_list_of_i64_two_elements() {
+        let mut data = vec![0x02]; // length = 2
+        data.extend_from_slice(&1i64.to_le_bytes());
+        data.extend_from_slice(&(-5i64).to_le_bytes());
+        let mut pos = 0;
+        let result = read_list_of_i64(&data, &mut pos).unwrap();
+        assert_eq!(result, vec![1i64, -5i64]);
+        assert_eq!(pos, 17);
+    }
+
+    #[test]
+    fn test_read_list_of_byte_arrays_empty() {
+        let data = [0x00]; // length = 0
+        let mut pos = 0;
+        assert_eq!(read_list_of_byte_arrays(&data, &mut pos).unwrap(), Vec::<Vec<u8>>::new());
+    }
+
+    #[test]
+    fn test_read_list_of_byte_arrays_one() {
+        let data = [0x01, 0x02, 0xAA, 0xBB]; // 1 array of 2 bytes
+        let mut pos = 0;
+        assert_eq!(
+            read_list_of_byte_arrays(&data, &mut pos).unwrap(),
+            vec![vec![0xAA, 0xBB]]
+        );
+    }
+
+    #[test]
+    fn test_read_list_of_interned_strings_empty() {
+        let data = [0x00]; // length = 0
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        assert_eq!(
+            read_list_of_interned_strings(&data, &mut pos, &mut table).unwrap(),
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn test_read_list_of_interned_strings_with_backrefs() {
+        // 2 strings: "foo" (new), then back-ref to "foo"
+        let data = [
+            0x02, // length = 2
+            0x06, 0x66, 0x6f, 0x6f, // "foo" (zigzag(3)=6, then f,o,o)
+            0x01, // back-ref to index 0
+        ];
+        let mut pos = 0;
+        let mut table = StringInternTable::new();
+        let result = read_list_of_interned_strings(&data, &mut pos, &mut table).unwrap();
+        assert_eq!(result, vec!["foo".to_string(), "foo".to_string()]);
     }
 }
