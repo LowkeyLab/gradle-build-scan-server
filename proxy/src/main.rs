@@ -51,7 +51,10 @@ async fn main() {
             std::process::exit(1);
         }
     };
-    info!("Proxy server listening on http://{}, forwarding to {}", addr, config.upstream_url);
+    info!(
+        "Proxy server listening on http://{}, forwarding to {}",
+        addr, config.upstream_url
+    );
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
