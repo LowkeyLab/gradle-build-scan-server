@@ -127,6 +127,69 @@ pub fn read_list_of_interned_strings(
     Ok(result)
 }
 
+/// Read a zigzag-encoded varint i64 (used by events that encode IDs as zigzag varints)
+pub fn read_zigzag_i64(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    varint::read_zigzag_i64(data, pos)
+}
+
+/// Read an unsigned varint as i64. Matches Kryo's readLong(optimizePositive=true).
+pub fn read_positive_varint_i64(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as i64)
+}
+
+/// Read an unsigned varint as i32. Matches Kryo's readInt(optimizePositive=true). The u64→i32 cast wraps via truncation, correctly recovering negative values encoded as their unsigned 32-bit representation.
+pub fn read_positive_varint_i32(data: &[u8], pos: &mut usize) -> Result<i32, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as i32)
+}
+
+/// Read a list of unsigned varint i32 values: varint length prefix, then N unsigned varints
+pub fn read_list_of_positive_varint_i32(
+    data: &[u8],
+    pos: &mut usize,
+) -> Result<Vec<i32>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(len);
+    for _ in 0..len {
+        result.push(read_positive_varint_i32(data, pos)?);
+    }
+    Ok(result)
+}
+
+pub fn encode_zigzag_i64(n: i64) -> Vec<u8> {
+    let zigzag = ((n << 1) ^ (n >> 63)) as u64;
+    let mut buf = Vec::new();
+    let mut value = zigzag;
+    loop {
+        let mut byte = (value & 0x7F) as u8;
+        value >>= 7;
+        if value != 0 {
+            byte |= 0x80;
+        }
+        buf.push(byte);
+        if value == 0 {
+            break;
+        }
+    }
+    buf
+}
+
+pub fn encode_unsigned_varint(n: u64) -> Vec<u8> {
+    let mut buf = Vec::new();
+    let mut value = n;
+    loop {
+        let mut byte = (value & 0x7F) as u8;
+        value >>= 7;
+        if value != 0 {
+            byte |= 0x80;
+        }
+        buf.push(byte);
+        if value == 0 {
+            break;
+        }
+    }
+    buf
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,5 +364,77 @@ mod tests {
         let mut table = StringInternTable::new();
         let result = read_list_of_interned_strings(&data, &mut pos, &mut table).unwrap();
         assert_eq!(result, vec!["foo".to_string(), "foo".to_string()]);
+    }
+
+    #[test]
+    fn test_read_zigzag_i64_positive() {
+        let data = encode_zigzag_i64(42);
+        let mut pos = 0;
+        assert_eq!(read_zigzag_i64(&data, &mut pos).unwrap(), 42);
+    }
+
+    #[test]
+    fn test_read_zigzag_i64_negative() {
+        let data = encode_zigzag_i64(-100);
+        let mut pos = 0;
+        assert_eq!(read_zigzag_i64(&data, &mut pos).unwrap(), -100);
+    }
+
+    #[test]
+    fn test_read_zigzag_i64_zero() {
+        let data = encode_zigzag_i64(0);
+        let mut pos = 0;
+        assert_eq!(read_zigzag_i64(&data, &mut pos).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_read_positive_varint_i64() {
+        let data = encode_unsigned_varint(12345);
+        let mut pos = 0;
+        assert_eq!(read_positive_varint_i64(&data, &mut pos).unwrap(), 12345);
+    }
+
+    #[test]
+    fn test_read_positive_varint_i64_zero() {
+        let data = encode_unsigned_varint(0);
+        let mut pos = 0;
+        assert_eq!(read_positive_varint_i64(&data, &mut pos).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_read_positive_varint_i32() {
+        let data = encode_unsigned_varint(999);
+        let mut pos = 0;
+        assert_eq!(read_positive_varint_i32(&data, &mut pos).unwrap(), 999);
+    }
+
+    #[test]
+    fn test_read_positive_varint_i32_zero() {
+        let data = encode_unsigned_varint(0);
+        let mut pos = 0;
+        assert_eq!(read_positive_varint_i32(&data, &mut pos).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_read_list_of_positive_varint_i32_empty() {
+        let data = encode_unsigned_varint(0); // length = 0
+        let mut pos = 0;
+        assert_eq!(
+            read_list_of_positive_varint_i32(&data, &mut pos).unwrap(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_read_list_of_positive_varint_i32_multiple() {
+        let mut data = encode_unsigned_varint(3); // length = 3
+        data.extend_from_slice(&encode_unsigned_varint(10));
+        data.extend_from_slice(&encode_unsigned_varint(20));
+        data.extend_from_slice(&encode_unsigned_varint(30));
+        let mut pos = 0;
+        assert_eq!(
+            read_list_of_positive_varint_i32(&data, &mut pos).unwrap(),
+            vec![10, 20, 30]
+        );
     }
 }
