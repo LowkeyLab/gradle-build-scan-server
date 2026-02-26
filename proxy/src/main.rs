@@ -3,6 +3,8 @@ use base64::Engine as _;
 use chrono::Utc;
 use std::net::SocketAddr;
 use tokio::signal;
+use tracing::{error, info};
+use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
 use config::Config;
@@ -18,6 +20,11 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
     let config = Config::from_env();
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
 
@@ -40,14 +47,11 @@ async fn main() {
     let listener = match tokio::net::TcpListener::bind(addr).await {
         Ok(l) => l,
         Err(e) => {
-            eprintln!("Failed to bind to port {}: {}", config.port, e);
+            error!("Failed to bind to port {}: {}", config.port, e);
             std::process::exit(1);
         }
     };
-    println!(
-        "Proxy server listening on http://{}, forwarding to {}",
-        addr, config.upstream_url
-    );
+    info!("Proxy server listening on http://{}, forwarding to {}", addr, config.upstream_url);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
@@ -78,7 +82,7 @@ async fn shutdown_signal() {
         _ = terminate => {},
     }
 
-    println!("Shutting down server...");
+    info!("Shutting down server...");
 }
 
 const HOP_BY_HOP_HEADERS: &[&str] = &[
@@ -114,7 +118,7 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
     let body_bytes = match axum::body::to_bytes(request.into_body(), MAX_BODY_SIZE).await {
         Ok(b) => b,
         Err(e) => {
-            eprintln!("Failed to read request body: {}", e);
+            error!("Failed to read request body: {}", e);
             return Response::builder()
                 .status(413)
                 .body(Body::from("Payload too large"))
@@ -223,7 +227,7 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
             (response_data, http_response)
         }
         Err(e) => {
-            eprintln!("Upstream request failed: {}", e);
+            error!("Upstream request failed: {}", e);
             let response_data = ResponseData {
                 error: Some(e.to_string()),
                 status: None,
@@ -258,19 +262,19 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
 
     let dir = &state.config.payload_dir;
     if let Err(e) = tokio::fs::create_dir_all(dir).await {
-        eprintln!("Failed to create directory {:?}: {}", dir, e);
+        error!("Failed to create directory {:?}: {}", dir, e);
     } else {
         let filename = format!("{}-{}.json", timestamp, request_id);
         let path = dir.join(&filename);
         match serde_json::to_string_pretty(&payload) {
             Ok(s) => {
                 if let Err(e) = tokio::fs::write(&path, &s).await {
-                    eprintln!("Failed to write payload: {}", e);
+                    error!("Failed to write payload: {}", e);
                 } else {
-                    println!("Saved payload to: {:?}", path);
+                    info!("Saved payload to: {:?}", path);
                 }
             }
-            Err(e) => eprintln!("Failed to serialize payload: {}", e),
+            Err(e) => error!("Failed to serialize payload: {}", e),
         }
     }
 
