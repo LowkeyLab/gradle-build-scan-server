@@ -123,5 +123,6 @@ rust_test(
         ":lib",
         "@crates//:base64",
         "@crates//:serde_json",
+        "@crates//:tracing",
     ],
 )

@@ -1,4 +1,5 @@
 use base64::Engine;
+use tracing::info;
 
 fn find_reference_payload() -> Option<std::path::PathBuf> {
     const FILENAME: &str = "20260222_115121.815-7df62a0f-bf22-4eb7-9fdc-84c238df73c6.json";
@@ -38,7 +39,7 @@ fn test_parse_reference_payload() {
     let payload_path = match find_reference_payload() {
         Some(p) => p,
         None => {
-            eprintln!(
+            info!(
                 "Skipping integration test: reference payload not found. \
                  Run under Bazel with data dependency or set TEST_SRCDIR."
             );
@@ -46,7 +47,7 @@ fn test_parse_reference_payload() {
         }
     };
 
-    eprintln!("Loading reference payload from: {}", payload_path.display());
+    info!("Loading reference payload from: {}", payload_path.display());
 
     let contents = std::fs::read_to_string(&payload_path)
         .unwrap_or_else(|e| panic!("Failed to read payload file: {e}"));
@@ -62,18 +63,18 @@ fn test_parse_reference_payload() {
         .decode(b64)
         .expect("base64 must decode cleanly");
 
-    eprintln!("Decoded {} raw bytes", raw_bytes.len());
+    info!("Decoded {} raw bytes", raw_bytes.len());
 
     let result = lib::parse(&raw_bytes).expect("Parser must succeed on reference payload");
 
-    eprintln!(
+    info!(
         "Parsed {} tasks, {} raw event types",
         result.tasks.len(),
         result.raw_events.len()
     );
 
     for task in &result.tasks {
-        eprintln!(
+        info!(
             "  {} ({}) duration={}ms",
             task.task_path,
             task.outcome
