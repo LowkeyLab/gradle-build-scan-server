@@ -127,6 +127,34 @@ pub fn read_list_of_interned_strings(
     Ok(result)
 }
 
+/// Read a zigzag-encoded varint i64 (used by events that encode IDs as zigzag varints)
+pub fn read_zigzag_i64(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    varint::read_zigzag_i64(data, pos)
+}
+
+/// Read an unsigned varint as i64 (positive-optimized, for always-positive values like execution times)
+pub fn read_positive_varint_i64(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as i64)
+}
+
+/// Read an unsigned varint as i32 (positive-optimized, for componentIdentity etc.)
+pub fn read_positive_varint_i32(data: &[u8], pos: &mut usize) -> Result<i32, ParseError> {
+    Ok(varint::read_unsigned_varint(data, pos)? as i32)
+}
+
+/// Read a list of unsigned varint i32 values: varint length prefix, then N unsigned varints
+pub fn read_list_of_positive_varint_i32(
+    data: &[u8],
+    pos: &mut usize,
+) -> Result<Vec<i32>, ParseError> {
+    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(len);
+    for _ in 0..len {
+        result.push(read_positive_varint_i32(data, pos)?);
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

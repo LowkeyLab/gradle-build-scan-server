@@ -88,6 +88,25 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::TransformExecutionRequest(e) => {
                 transform_requests.push(e.clone());
             }
+            DecodedEvent::JavaToolchainUsage(_) => {}
+            DecodedEvent::TransformExecutionStarted(_) => {}
+            DecodedEvent::TransformIdentification(_) => {}
+            DecodedEvent::TransformExecutionFinished(_) => {}
+            DecodedEvent::OutputStyledText(_) => {}
+            DecodedEvent::BuildStarted => {}
+            DecodedEvent::BuildAgent(_) => {}
+            DecodedEvent::BuildRequestedTasks(_) => {}
+            DecodedEvent::BuildFinished(_) => {}
+            DecodedEvent::BuildModes(_) => {}
+            DecodedEvent::DaemonState(_) => {}
+            DecodedEvent::Encoding(_) => {}
+            DecodedEvent::FileRefRoots(_) => {}
+            DecodedEvent::Hardware(_) => {}
+            DecodedEvent::Jvm(_) => {}
+            DecodedEvent::JvmArgs(_) => {}
+            DecodedEvent::Locality(_) => {}
+            DecodedEvent::Os(_) => {}
+            DecodedEvent::ScopeIds(_) => {}
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
