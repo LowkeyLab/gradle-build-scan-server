@@ -1,6 +1,6 @@
 use error::ParseError;
 
-use super::{BodyDecoder, DecodedEvent, BuildRequestedTasksEvent};
+use super::{BodyDecoder, BuildRequestedTasksEvent, DecodedEvent};
 
 pub struct BuildRequestedTasksDecoder;
 
@@ -24,7 +24,10 @@ impl BodyDecoder for BuildRequestedTasksDecoder {
         };
 
         Ok(DecodedEvent::BuildRequestedTasks(
-            BuildRequestedTasksEvent { requested, excluded },
+            BuildRequestedTasksEvent {
+                requested,
+                excluded,
+            },
         ))
     }
 }

@@ -1,6 +1,6 @@
 use error::ParseError;
 
-use super::{BodyDecoder, DecodedEvent, DaemonStateEvent};
+use super::{BodyDecoder, DaemonStateEvent, DecodedEvent};
 
 pub struct DaemonStateDecoder;
 

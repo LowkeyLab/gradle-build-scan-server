@@ -1,6 +1,6 @@
 use error::ParseError;
 
-use super::{BodyDecoder, DecodedEvent, BuildAgentEvent};
+use super::{BodyDecoder, BuildAgentEvent, DecodedEvent};
 
 pub struct BuildAgentDecoder;
 

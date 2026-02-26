@@ -54,6 +54,7 @@ impl BodyDecoder for LocalityDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use kryo::encode_unsigned_varint;
 
     #[test]
     fn test_decode_all_present() {
@@ -84,6 +85,30 @@ mod tests {
             assert_eq!(e.locale_variant, Some("".into()));
             assert_eq!(e.time_zone_id, Some("America/New_York".into()));
             assert_eq!(e.time_zone_offset_millis, Some(0));
+        } else {
+            panic!("expected Locality");
+        }
+    }
+
+    #[test]
+    fn test_decode_negative_timezone_offset() {
+        // UTC-5 = -18000000 ms. Kryo writeInt(optimizePositive=true) encodes
+        // the raw 32-bit pattern as an unsigned varint. The u64→i32 cast in
+        // read_positive_varint_i32 recovers the original negative value.
+        let mut data = vec![0x0F]; // bits 0-3 set (absent), bit 4 clear (present)
+        // -18000000i32 as u32 = 4276967296, encoded as unsigned varint (5 bytes)
+        let raw = (-18000000i32) as u32 as u64;
+        let encoded = encode_unsigned_varint(raw);
+        data.extend_from_slice(&encoded);
+
+        let decoder = LocalityDecoder;
+        let result = decoder.decode(&data).unwrap();
+        if let DecodedEvent::Locality(e) = result {
+            assert_eq!(e.locale_language, None);
+            assert_eq!(e.locale_country, None);
+            assert_eq!(e.locale_variant, None);
+            assert_eq!(e.time_zone_id, None);
+            assert_eq!(e.time_zone_offset_millis, Some(-18000000));
         } else {
             panic!("expected Locality");
         }

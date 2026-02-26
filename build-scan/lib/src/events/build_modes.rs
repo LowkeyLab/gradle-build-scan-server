@@ -1,6 +1,6 @@
 use error::ParseError;
 
-use super::{BodyDecoder, DecodedEvent, BuildModesEvent};
+use super::{BodyDecoder, BuildModesEvent, DecodedEvent};
 
 pub struct BuildModesDecoder;
 

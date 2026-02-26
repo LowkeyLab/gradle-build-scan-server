@@ -88,6 +88,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::TransformExecutionRequest(e) => {
                 transform_requests.push(e.clone());
             }
+            // Decoded for protocol coverage; not yet consumed by assembly.
             DecodedEvent::JavaToolchainUsage(_) => {}
             DecodedEvent::TransformExecutionStarted(_) => {}
             DecodedEvent::TransformIdentification(_) => {}

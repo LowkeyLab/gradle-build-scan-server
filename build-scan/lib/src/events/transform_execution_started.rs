@@ -20,24 +20,7 @@ impl BodyDecoder for TransformExecutionStartedDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn encode_zigzag_i64(n: i64) -> Vec<u8> {
-        let zigzag = ((n << 1) ^ (n >> 63)) as u64;
-        let mut buf = Vec::new();
-        let mut value = zigzag;
-        loop {
-            let mut byte = (value & 0x7F) as u8;
-            value >>= 7;
-            if value != 0 {
-                byte |= 0x80;
-            }
-            buf.push(byte);
-            if value == 0 {
-                break;
-            }
-        }
-        buf
-    }
+    use kryo::encode_zigzag_i64;
 
     #[test]
     fn test_decode_positive_id() {

@@ -18,6 +18,7 @@ pub mod locality;
 pub mod os;
 pub mod output_styled_text_event;
 pub mod planned_node;
+pub mod scope_ids;
 pub mod task_finished;
 pub mod task_identity;
 pub mod task_inputs_file_property;
@@ -27,7 +28,6 @@ pub mod task_inputs_property_names;
 pub mod task_inputs_snapshotting_finished;
 pub mod task_inputs_snapshotting_started;
 pub mod task_inputs_value_properties;
-pub mod scope_ids;
 pub mod task_started;
 pub mod transform_execution_finished;
 pub mod transform_execution_request;
@@ -362,7 +362,10 @@ impl DecoderRegistry {
             decoders: HashMap::new(),
         };
         registry.register(2, Box::new(build_agent::BuildAgentDecoder));
-        registry.register(5, Box::new(build_requested_tasks::BuildRequestedTasksDecoder));
+        registry.register(
+            5,
+            Box::new(build_requested_tasks::BuildRequestedTasksDecoder),
+        );
         registry.register(6, Box::new(build_started::BuildStartedDecoder));
         registry.register(12, Box::new(hardware::HardwareDecoder));
         registry.register(13, Box::new(jvm_args::JvmArgsDecoder));
@@ -392,7 +395,10 @@ impl DecoderRegistry {
             95,
             Box::new(task_inputs_value_properties::TaskInputsValuePropertiesDecoder),
         );
-        registry.register(115, Box::new(java_toolchain_usage::JavaToolchainUsageDecoder));
+        registry.register(
+            115,
+            Box::new(java_toolchain_usage::JavaToolchainUsageDecoder),
+        );
         registry.register(117, Box::new(task_identity::TaskIdentityDecoder));
         registry.register(119, Box::new(planned_node::PlannedNodeDecoder));
         registry.register(

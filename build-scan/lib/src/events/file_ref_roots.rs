@@ -1,6 +1,6 @@
 use error::ParseError;
 
-use super::{BodyDecoder, DecodedEvent, FileRefRootsEvent, FileRefRootEntry};
+use super::{BodyDecoder, DecodedEvent, FileRefRootEntry, FileRefRootsEvent};
 
 pub struct FileRefRootsDecoder;
 
