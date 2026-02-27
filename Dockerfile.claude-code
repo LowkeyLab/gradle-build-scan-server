@@ -1,0 +1,75 @@
+FROM node:20-bookworm
+
+# System dependencies: dev tools + firewall
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    ca-certificates \
+    jq \
+    fzf \
+    less \
+    vim \
+    sudo \
+    direnv \
+    iptables \
+    ipset \
+    iproute2 \
+    dnsutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# Bazelisk (project build tool)
+RUN curl -fsSL https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 \
+      -o /usr/local/bin/bazelisk \
+    && chmod +x /usr/local/bin/bazelisk \
+    && ln -s /usr/local/bin/bazelisk /usr/local/bin/bazel
+
+# Claude Code CLI
+ARG CLAUDE_CODE_VERSION=latest
+WORKDIR /tmp
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+
+# Container environment
+ENV DISABLE_AUTOUPDATER=1
+ENV DEVCONTAINER=true
+
+# Non-root user (node user ships with node:20 image)
+RUN echo "node ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/node
+
+# Firewall init script
+COPY init-firewall.sh /usr/local/bin/init-firewall.sh
+RUN chmod +x /usr/local/bin/init-firewall.sh
+
+# direnv hook
+RUN echo 'eval "$(direnv hook bash)"' >> /home/node/.bashrc
+
+# Claude settings mount points:
+#   ~/.claude/       → settings.json, CLAUDE.md, agents/, rules/, auto-memory
+#   ~/.claude.json   → auth token, MCP server configs
+# Pre-create so Docker bind-mounts don't create them as root-owned
+RUN mkdir -p /home/node/.claude \
+    && touch  /home/node/.claude.json \
+    && chown -R node:node /home/node/.claude /home/node/.claude.json
+VOLUME ["/home/node/.claude", "/home/node/.claude.json"]
+
+USER node
+WORKDIR /workspace
+
+# Default: launch Claude interactively with permissions skipped.
+# Override with: docker run -it <image> bash
+#
+# Mount host settings:
+#   docker run -it \
+#     -v ~/.claude:/home/node/.claude \
+#     -v ~/.claude.json:/home/node/.claude.json \
+#     -v "$(pwd):/workspace" \
+#     --cap-add NET_ADMIN \
+#     claude-code
+CMD ["claude", "--dangerously-skip-permissions"]
