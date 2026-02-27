@@ -3,6 +3,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "events",
     srcs = [
+        "basic_memory_stats.rs",
         "build_agent.rs",
         "build_finished.rs",
         "build_modes.rs",

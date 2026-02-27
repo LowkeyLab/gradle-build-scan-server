@@ -10,6 +10,8 @@ pub struct BuildScanPayload {
     pub raw_events: Vec<RawEventSummary>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_registration_summary: Option<TaskRegistrationSummaryData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub basic_memory_stats: Option<BasicMemoryStatsData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -172,4 +174,33 @@ pub struct TransformExecutionRequestData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskRegistrationSummaryData {
     pub task_count: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BasicMemoryStatsData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub free: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max: Option<i64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub peak_snapshots: Vec<MemoryPoolSnapshotData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gc_time: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryPoolSnapshotData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    pub heap: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub init: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub committed: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max: Option<i64>,
 }

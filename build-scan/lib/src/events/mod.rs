@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use error::ParseError;
 
+pub mod basic_memory_stats;
 pub mod build_agent;
 pub mod build_finished;
 pub mod build_modes;
@@ -73,6 +74,7 @@ pub enum DecodedEvent {
     Os(OsEvent),
     ScopeIds(ScopeIdsEvent),
     TaskRegistrationSummary(TaskRegistrationSummaryEvent),
+    BasicMemoryStats(BasicMemoryStatsEvent),
     Raw(RawEvent),
 }
 
@@ -354,6 +356,25 @@ pub struct TaskRegistrationSummaryEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct BasicMemoryStatsEvent {
+    pub free: Option<i64>,
+    pub total: Option<i64>,
+    pub max: Option<i64>,
+    pub peak_snapshots: Vec<MemoryPoolSnapshotEvent>,
+    pub gc_time: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemoryPoolSnapshotEvent {
+    pub name: Option<String>,
+    pub heap: bool,
+    pub init: Option<i64>,
+    pub used: Option<i64>,
+    pub committed: Option<i64>,
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -432,6 +453,7 @@ impl DecoderRegistry {
             349,
             Box::new(task_inputs_snapshotting_finished::TaskInputsSnapshottingFinishedDecoder),
         );
+        registry.register(257, Box::new(basic_memory_stats::BasicMemoryStatsDecoder));
         registry.register(259, Box::new(build_finished::BuildFinishedDecoder));
         registry.register(265, Box::new(daemon_state::DaemonStateDecoder));
         registry.register(

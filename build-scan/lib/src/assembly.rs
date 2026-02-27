@@ -23,6 +23,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
+    let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
 
     for (frame, decoded) in &events {
         match decoded {
@@ -91,6 +92,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             }
             DecodedEvent::TaskRegistrationSummary(e) => {
                 task_registration_summary = Some(e.clone());
+            }
+            DecodedEvent::BasicMemoryStats(e) => {
+                basic_memory_stats = Some(e.clone());
             }
             // Decoded for protocol coverage; not yet consumed by assembly.
             DecodedEvent::JavaToolchainUsage(_) => {}
@@ -264,6 +268,24 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             models::TaskRegistrationSummaryData {
                 task_count: e.task_count,
             }
+        }),
+        basic_memory_stats: basic_memory_stats.map(|e| models::BasicMemoryStatsData {
+            free: e.free,
+            total: e.total,
+            max: e.max,
+            peak_snapshots: e
+                .peak_snapshots
+                .into_iter()
+                .map(|s| models::MemoryPoolSnapshotData {
+                    name: s.name,
+                    heap: s.heap,
+                    init: s.init,
+                    used: s.used,
+                    committed: s.committed,
+                    max: s.max,
+                })
+                .collect(),
+            gc_time: e.gc_time,
         }),
     }
 }
