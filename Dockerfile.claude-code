@@ -50,9 +50,26 @@ RUN chmod +x /usr/local/bin/init-firewall.sh
 # direnv hook
 RUN echo 'eval "$(direnv hook bash)"' >> /home/node/.bashrc
 
+# Claude settings mount points:
+#   ~/.claude/       → settings.json, CLAUDE.md, agents/, rules/, auto-memory
+#   ~/.claude.json   → auth token, MCP server configs
+# Pre-create so Docker bind-mounts don't create them as root-owned
+RUN mkdir -p /home/node/.claude \
+    && touch  /home/node/.claude.json \
+    && chown -R node:node /home/node/.claude /home/node/.claude.json
+VOLUME ["/home/node/.claude", "/home/node/.claude.json"]
+
 USER node
 WORKDIR /workspace
 
 # Default: launch Claude interactively with permissions skipped.
 # Override with: docker run -it <image> bash
+#
+# Mount host settings:
+#   docker run -it \
+#     -v ~/.claude:/home/node/.claude \
+#     -v ~/.claude.json:/home/node/.claude.json \
+#     -v "$(pwd):/workspace" \
+#     --cap-add NET_ADMIN \
+#     claude-code
 CMD ["claude", "--dangerously-skip-permissions"]
