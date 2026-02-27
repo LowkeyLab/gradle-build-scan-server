@@ -28,6 +28,7 @@ pub mod task_inputs_property_names;
 pub mod task_inputs_snapshotting_finished;
 pub mod task_inputs_snapshotting_started;
 pub mod task_inputs_value_properties;
+pub mod task_registration_summary;
 pub mod task_started;
 pub mod transform_execution_finished;
 pub mod transform_execution_request;
@@ -71,6 +72,7 @@ pub enum DecodedEvent {
     Locality(LocalityEvent),
     Os(OsEvent),
     ScopeIds(ScopeIdsEvent),
+    TaskRegistrationSummary(TaskRegistrationSummaryEvent),
     Raw(RawEvent),
 }
 
@@ -347,6 +349,11 @@ pub struct ScopeIdsEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct TaskRegistrationSummaryEvent {
+    pub task_count: i32,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -401,6 +408,10 @@ impl DecoderRegistry {
         );
         registry.register(117, Box::new(task_identity::TaskIdentityDecoder));
         registry.register(119, Box::new(planned_node::PlannedNodeDecoder));
+        registry.register(
+            122,
+            Box::new(task_registration_summary::TaskRegistrationSummaryDecoder),
+        );
         registry.register(
             136,
             Box::new(transform_identification::TransformIdentificationDecoder),

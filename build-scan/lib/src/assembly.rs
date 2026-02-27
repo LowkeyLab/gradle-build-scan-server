@@ -22,6 +22,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
+    let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
 
     for (frame, decoded) in &events {
         match decoded {
@@ -87,6 +88,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             }
             DecodedEvent::TransformExecutionRequest(e) => {
                 transform_requests.push(e.clone());
+            }
+            DecodedEvent::TaskRegistrationSummary(e) => {
+                task_registration_summary = Some(e.clone());
             }
             // Decoded for protocol coverage; not yet consumed by assembly.
             DecodedEvent::JavaToolchainUsage(_) => {}
@@ -256,6 +260,11 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         planned_nodes: planned_nodes_data,
         transform_execution_requests: transform_requests_data,
         raw_events,
+        task_registration_summary: task_registration_summary.map(|e| {
+            models::TaskRegistrationSummaryData {
+                task_count: e.task_count,
+            }
+        }),
     }
 }
 

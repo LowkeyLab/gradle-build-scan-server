@@ -8,6 +8,8 @@ pub struct BuildScanPayload {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub transform_execution_requests: Vec<TransformExecutionRequestData>,
     pub raw_events: Vec<RawEventSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub task_registration_summary: Option<TaskRegistrationSummaryData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -165,4 +167,9 @@ pub struct TransformExecutionRequestData {
     pub identification_id: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub execution_id: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskRegistrationSummaryData {
+    pub task_count: i32,
 }

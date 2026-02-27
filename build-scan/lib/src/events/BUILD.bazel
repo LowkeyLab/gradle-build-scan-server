@@ -30,6 +30,7 @@ rust_library(
         "task_inputs_snapshotting_finished.rs",
         "task_inputs_snapshotting_started.rs",
         "task_inputs_value_properties.rs",
+        "task_registration_summary.rs",
         "task_started.rs",
         "transform_execution_finished.rs",
         "transform_execution_request.rs",
