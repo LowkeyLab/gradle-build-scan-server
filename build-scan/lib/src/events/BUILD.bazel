@@ -21,6 +21,7 @@ rust_library(
         "os.rs",
         "output_styled_text_event.rs",
         "planned_node.rs",
+        "resource_usage.rs",
         "scope_ids.rs",
         "task_finished.rs",
         "task_identity.rs",

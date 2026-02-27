@@ -12,6 +12,8 @@ pub struct BuildScanPayload {
     pub task_registration_summary: Option<TaskRegistrationSummaryData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub basic_memory_stats: Option<BasicMemoryStatsData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resource_usage: Option<ResourceUsageData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,4 +205,58 @@ pub struct MemoryPoolSnapshotData {
     pub committed: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceUsageData {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub timestamps: Vec<Vec<u8>>,
+    pub build_process_cpu: NormalizedSamplesData,
+    pub build_child_processes_cpu: NormalizedSamplesData,
+    pub all_processes_cpu_sum: NormalizedSamplesData,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub all_processes_cpu: Option<Vec<u8>>,
+    pub build_process_memory: NormalizedSamplesData,
+    pub build_child_processes_memory: NormalizedSamplesData,
+    pub all_processes_memory: NormalizedSamplesData,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_system_memory: Option<i64>,
+    pub disk_read_speed: NormalizedSamplesData,
+    pub disk_write_speed: NormalizedSamplesData,
+    pub network_download_speed: NormalizedSamplesData,
+    pub network_upload_speed: NormalizedSamplesData,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub processes: Vec<ProcessData>,
+    pub top_processes_by_cpu: IndexedNormalizedSamplesData,
+    pub top_processes_by_memory: IndexedNormalizedSamplesData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NormalizedSamplesData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub samples: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IndexedNormalizedSamplesData {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub indices: Vec<i32>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub samples: Vec<Vec<i32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProcessData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub process_type: Option<String>,
 }
