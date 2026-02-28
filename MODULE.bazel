@@ -31,7 +31,7 @@ use_repo(multitool, "multitool")
 
 #########################
 # Support for Rust, see https://github.com/bazelbuild/rules_rust
-bazel_dep(name = "rules_rust", version = "0.68.1")
+bazel_dep(name = "rules_rust", version = "0.69.0")
 bazel_dep(name = "rules_rs", version = "0.0.29")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
