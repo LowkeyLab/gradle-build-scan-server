@@ -184,6 +184,90 @@ mod tests {
     }
 
     #[test]
+    fn test_decode_all_fields_present() {
+        // flags = 0b00000000 → all 5 bits clear → all fields present
+        let mut data = vec![0x00u8];
+        // free = 100 → zigzag(100) = 200 = 0xC8 0x01
+        data.push(0xC8);
+        data.push(0x01);
+        // total = 512 → zigzag(512) = 1024 = 0x80 0x08
+        data.push(0x80);
+        data.push(0x08);
+        // max = 1024 → zigzag(1024) = 2048 = 0x80 0x10
+        data.push(0x80);
+        data.push(0x10);
+        // peak_snapshots: count = 2
+        data.push(0x02);
+
+        // Snapshot 1: all fields present (flags = 0x00), heap = true (bit 1 clear)
+        data.push(0x00);
+        // name = "Eden Space" (10 chars) → zigzag(10) = 20 = 0x14
+        data.push(0x14);
+        for &ch in b"Eden Space" {
+            data.push(ch);
+        }
+        // heap = true (bit 1 clear, no payload)
+        // init = 50 → zigzag(50) = 100 = 0x64
+        data.push(0x64);
+        // used = 200 → zigzag(200) = 400 = 0x90 0x03
+        data.push(0x90);
+        data.push(0x03);
+        // committed = 256 → zigzag(256) = 512 = 0x80 0x04
+        data.push(0x80);
+        data.push(0x04);
+        // max = 512 → zigzag(512) = 1024 = 0x80 0x08
+        data.push(0x80);
+        data.push(0x08);
+
+        // Snapshot 2: name back-refs to "Eden Space", heap = false (bit 1 set)
+        // flags: bit 1 set (heap=false), rest clear → 0b00000010 = 0x02
+        data.push(0x02);
+        // name = back-ref to index 0 → zigzag(-1) = 1
+        data.push(0x01);
+        // init = 10 → zigzag(10) = 20 = 0x14
+        data.push(0x14);
+        // used = 30 → zigzag(30) = 60 = 0x3C
+        data.push(0x3C);
+        // committed = 64 → zigzag(64) = 128 = 0x80 0x01
+        data.push(0x80);
+        data.push(0x01);
+        // max = 128 → zigzag(128) = 256 = 0x80 0x02
+        data.push(0x80);
+        data.push(0x02);
+
+        // gc_time = 42 → zigzag(42) = 84 = 0x54
+        data.push(0x54);
+
+        let decoder = BasicMemoryStatsDecoder;
+        let result = decoder.decode(&data).unwrap();
+        if let DecodedEvent::BasicMemoryStats(e) = result {
+            assert_eq!(e.free, Some(100));
+            assert_eq!(e.total, Some(512));
+            assert_eq!(e.max, Some(1024));
+            assert_eq!(e.gc_time, Some(42));
+            assert_eq!(e.peak_snapshots.len(), 2);
+
+            let s1 = &e.peak_snapshots[0];
+            assert_eq!(s1.name, Some("Eden Space".to_string()));
+            assert!(s1.heap);
+            assert_eq!(s1.init, Some(50));
+            assert_eq!(s1.used, Some(200));
+            assert_eq!(s1.committed, Some(256));
+            assert_eq!(s1.max, Some(512));
+
+            let s2 = &e.peak_snapshots[1];
+            assert_eq!(s2.name, Some("Eden Space".to_string())); // back-ref
+            assert!(!s2.heap);
+            assert_eq!(s2.init, Some(10));
+            assert_eq!(s2.used, Some(30));
+            assert_eq!(s2.committed, Some(64));
+            assert_eq!(s2.max, Some(128));
+        } else {
+            panic!("expected BasicMemoryStats");
+        }
+    }
+
+    #[test]
     fn test_snapshot_heap_true() {
         // flags: bit 3 present (peak_snapshots), all others absent → 0x17
         let mut data = vec![0x17u8];

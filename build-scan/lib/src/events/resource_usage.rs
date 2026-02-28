@@ -224,6 +224,73 @@ mod tests {
     }
 
     #[test]
+    fn test_decode_all_conditional_fields_present() {
+        // Main flags: 0b0000 → all 4 conditional fields present
+        let mut data = vec![0x00u8];
+
+        // bit 0: timestamps = list of 1 byte array [0x01, 0x02]
+        data.push(0x01); // list len=1
+        data.push(0x02); // byte array len=2
+        data.push(0x01);
+        data.push(0x02);
+
+        // 3 unconditional NormalizedSamples (all absent)
+        for _ in 0..3 {
+            data.push(0x03); // flags 0b11 → both absent
+        }
+
+        // bit 1: all_processes_cpu = byte array [0xAA]
+        data.push(0x01); // byte array len=1
+        data.push(0xAA);
+
+        // 3 more unconditional NormalizedSamples (all absent)
+        for _ in 0..3 {
+            data.push(0x03);
+        }
+
+        // bit 2: total_system_memory = 8192 → zigzag(8192) = 16384 = 0x80 0x80 0x01
+        data.push(0x80);
+        data.push(0x80);
+        data.push(0x01);
+
+        // 4 more unconditional NormalizedSamples (all absent)
+        for _ in 0..4 {
+            data.push(0x03);
+        }
+
+        // bit 3: processes = list of 1 process
+        data.push(0x01); // count=1
+        // Process flags: only name present (bit 1 clear, bits 0,2,3 set) → 0b00001101 = 0x0D
+        data.push(0x0D);
+        // name = "java" (4 chars) → zigzag(4) = 8 = 0x08
+        data.push(0x08);
+        for &ch in b"java" {
+            data.push(ch);
+        }
+
+        // 2 unconditional IndexedNormalizedSamples (all absent)
+        for _ in 0..2 {
+            data.push(0x07); // flags 0b111 → all 3 absent
+        }
+
+        let decoder = ResourceUsageDecoder;
+        let result = decoder.decode(&data).unwrap();
+        if let DecodedEvent::ResourceUsage(e) = result {
+            assert_eq!(e.timestamps.len(), 1);
+            assert_eq!(e.timestamps[0], vec![0x01, 0x02]);
+            assert_eq!(e.all_processes_cpu, Some(vec![0xAA]));
+            assert_eq!(e.total_system_memory, Some(8192));
+            assert_eq!(e.processes.len(), 1);
+            assert_eq!(e.processes[0].name, Some("java".to_string()));
+            assert_eq!(e.processes[0].id, None);
+            assert_eq!(e.processes[0].display_name, None);
+            assert_eq!(e.processes[0].process_type, None);
+        } else {
+            panic!("expected ResourceUsage");
+        }
+    }
+
+    #[test]
     fn test_decode_normalized_samples_both_present() {
         // flags = 0b00 → both present
         let mut data = vec![0x00u8];

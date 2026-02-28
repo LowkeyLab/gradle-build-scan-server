@@ -23,8 +23,8 @@ Decode the remaining 3 undecoded event types in the Gradle build scan parser to 
 - **Nested:** `MemoryPoolSnapshot_1_0 { String name, boolean heap, long init, long used, long committed, long max }`
 - **Wire format:** Requires decompilation of Kryo serializer to determine exact encoding (flags byte, field ordering, list encoding, nested snapshot format)
 - **Rust decoder:** Flags byte + conditional reads for each field. List of snapshots with per-snapshot interned string + bool + 4 longs.
-- **Output model:** `BasicMemoryStatsData { free, total, max, peak_snapshots: Vec<MemoryPoolSnapshotData>, gc_time }` on `BuildScanPayload`
-- **MemoryPoolSnapshotData:** `{ name: String, heap: bool, init: i64, used: i64, committed: i64, max: i64 }`
+- **Output model:** `BasicMemoryStatsData { free: Option<i64>, total: Option<i64>, max: Option<i64>, peak_snapshots: Vec<MemoryPoolSnapshotData>, gc_time: Option<i64> }` on `BuildScanPayload`
+- **MemoryPoolSnapshotData:** `{ name: Option<String>, heap: bool, init: Option<i64>, used: Option<i64>, committed: Option<i64>, max: Option<i64> }`
 
 ### 3. ResourceUsage_2_0 (wire 407, 37 bytes body)
 
@@ -36,7 +36,7 @@ Decode the remaining 3 undecoded event types in the Gradle build scan parser to 
   - `IndexedNormalizedSamples { indices: Vec<Vec<i32>>, samples: Vec<Vec<u8>>, max: i64 }` — `indices` is nested varint-encoded int lists, `samples` is a list of length-prefixed raw byte arrays
   - `ProcessInfo { id: i64, name: String, display_name: String, process_type: ProcessType }`
   - `ProcessType` enum: Self, Descendant, Other
-- **Output model:** `ResourceUsageData` with all fields as `Option<...>` on `BuildScanPayload`
+- **Output model:** `ResourceUsageData` on `BuildScanPayload` — 4 conditional top-level fields as `Option<...>` (timestamps, all_processes_cpu, total_system_memory, processes), 10 unconditional `NormalizedSamplesData` structs (with internal Option fields), 2 unconditional `IndexedNormalizedSamplesData` structs
 
 ## Approach
 
