@@ -22,6 +22,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
+    let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
+    let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
+    let mut resource_usage: Option<events::ResourceUsageEvent> = None;
 
     for (frame, decoded) in &events {
         match decoded {
@@ -87,6 +90,21 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             }
             DecodedEvent::TransformExecutionRequest(e) => {
                 transform_requests.push(e.clone());
+            }
+            DecodedEvent::TaskRegistrationSummary(e) => {
+                if task_registration_summary.is_none() {
+                    task_registration_summary = Some(e.clone());
+                }
+            }
+            DecodedEvent::BasicMemoryStats(e) => {
+                if basic_memory_stats.is_none() {
+                    basic_memory_stats = Some(e.clone());
+                }
+            }
+            DecodedEvent::ResourceUsage(e) => {
+                if resource_usage.is_none() {
+                    resource_usage = Some(e.clone());
+                }
             }
             // Decoded for protocol coverage; not yet consumed by assembly.
             DecodedEvent::JavaToolchainUsage(_) => {}
@@ -256,6 +274,84 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         planned_nodes: planned_nodes_data,
         transform_execution_requests: transform_requests_data,
         raw_events,
+        task_registration_summary: task_registration_summary.map(|e| {
+            models::TaskRegistrationSummaryData {
+                task_count: e.task_count,
+            }
+        }),
+        basic_memory_stats: basic_memory_stats.map(|e| models::BasicMemoryStatsData {
+            free: e.free,
+            total: e.total,
+            max: e.max,
+            peak_snapshots: e
+                .peak_snapshots
+                .into_iter()
+                .map(|s| models::MemoryPoolSnapshotData {
+                    name: s.name,
+                    heap: s.heap,
+                    init: s.init,
+                    used: s.used,
+                    committed: s.committed,
+                    max: s.max,
+                })
+                .collect(),
+            gc_time: e.gc_time,
+        }),
+        resource_usage: resource_usage.map(|e| models::ResourceUsageData {
+            timestamps: e.timestamps,
+            build_process_cpu: assemble_normalized_samples(e.build_process_cpu),
+            build_child_processes_cpu: assemble_normalized_samples(e.build_child_processes_cpu),
+            all_processes_cpu_sum: assemble_normalized_samples(e.all_processes_cpu_sum),
+            all_processes_cpu: e.all_processes_cpu,
+            build_process_memory: assemble_normalized_samples(e.build_process_memory),
+            build_child_processes_memory: assemble_normalized_samples(
+                e.build_child_processes_memory,
+            ),
+            all_processes_memory: assemble_normalized_samples(e.all_processes_memory),
+            total_system_memory: e.total_system_memory,
+            disk_read_speed: assemble_normalized_samples(e.disk_read_speed),
+            disk_write_speed: assemble_normalized_samples(e.disk_write_speed),
+            network_download_speed: assemble_normalized_samples(e.network_download_speed),
+            network_upload_speed: assemble_normalized_samples(e.network_upload_speed),
+            processes: e
+                .processes
+                .into_iter()
+                .map(|p| models::ProcessData {
+                    id: p.id,
+                    name: p.name,
+                    display_name: p.display_name,
+                    process_type: p.process_type.map(process_type_name),
+                })
+                .collect(),
+            top_processes_by_cpu: assemble_indexed_normalized_samples(e.top_processes_by_cpu),
+            top_processes_by_memory: assemble_indexed_normalized_samples(e.top_processes_by_memory),
+        }),
+    }
+}
+
+fn process_type_name(ordinal: u64) -> String {
+    match ordinal {
+        0 => "Self".to_string(),
+        1 => "Descendant".to_string(),
+        2 => "Other".to_string(),
+        _ => format!("Unknown({})", ordinal),
+    }
+}
+
+fn assemble_normalized_samples(e: events::NormalizedSamplesEvent) -> models::NormalizedSamplesData {
+    models::NormalizedSamplesData {
+        samples: e.samples,
+        max: e.max,
+    }
+}
+
+fn assemble_indexed_normalized_samples(
+    e: events::IndexedNormalizedSamplesEvent,
+) -> models::IndexedNormalizedSamplesData {
+    models::IndexedNormalizedSamplesData {
+        indices: e.indices,
+        samples: e.samples,
+        max: e.max,
     }
 }
 

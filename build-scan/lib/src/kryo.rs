@@ -4,6 +4,12 @@ pub struct StringInternTable {
     strings: Vec<String>,
 }
 
+impl Default for StringInternTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StringInternTable {
     pub fn new() -> Self {
         Self {
@@ -151,6 +157,17 @@ pub fn read_list_of_positive_varint_i32(
     let mut result = Vec::with_capacity(len);
     for _ in 0..len {
         result.push(read_positive_varint_i32(data, pos)?);
+    }
+    Ok(result)
+}
+
+/// Read a nested list of varint i32 (e.g. IndexedNormalizedSamples.indices = List<List<Integer>>):
+/// outer varint count, then for each inner list: varint count + N varints
+pub fn read_list_of_list_of_i32(data: &[u8], pos: &mut usize) -> Result<Vec<Vec<i32>>, ParseError> {
+    let outer_len = varint::read_unsigned_varint(data, pos)? as usize;
+    let mut result = Vec::with_capacity(outer_len);
+    for _ in 0..outer_len {
+        result.push(read_list_of_positive_varint_i32(data, pos)?);
     }
     Ok(result)
 }

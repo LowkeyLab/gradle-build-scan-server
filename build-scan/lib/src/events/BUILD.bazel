@@ -3,6 +3,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "events",
     srcs = [
+        "basic_memory_stats.rs",
         "build_agent.rs",
         "build_finished.rs",
         "build_modes.rs",
@@ -20,6 +21,7 @@ rust_library(
         "os.rs",
         "output_styled_text_event.rs",
         "planned_node.rs",
+        "resource_usage.rs",
         "scope_ids.rs",
         "task_finished.rs",
         "task_identity.rs",
@@ -30,6 +32,7 @@ rust_library(
         "task_inputs_snapshotting_finished.rs",
         "task_inputs_snapshotting_started.rs",
         "task_inputs_value_properties.rs",
+        "task_registration_summary.rs",
         "task_started.rs",
         "transform_execution_finished.rs",
         "transform_execution_request.rs",

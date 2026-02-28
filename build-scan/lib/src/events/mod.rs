@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use error::ParseError;
 
+pub mod basic_memory_stats;
 pub mod build_agent;
 pub mod build_finished;
 pub mod build_modes;
@@ -18,6 +19,7 @@ pub mod locality;
 pub mod os;
 pub mod output_styled_text_event;
 pub mod planned_node;
+pub mod resource_usage;
 pub mod scope_ids;
 pub mod task_finished;
 pub mod task_identity;
@@ -28,6 +30,7 @@ pub mod task_inputs_property_names;
 pub mod task_inputs_snapshotting_finished;
 pub mod task_inputs_snapshotting_started;
 pub mod task_inputs_value_properties;
+pub mod task_registration_summary;
 pub mod task_started;
 pub mod transform_execution_finished;
 pub mod transform_execution_request;
@@ -71,6 +74,9 @@ pub enum DecodedEvent {
     Locality(LocalityEvent),
     Os(OsEvent),
     ScopeIds(ScopeIdsEvent),
+    TaskRegistrationSummary(TaskRegistrationSummaryEvent),
+    BasicMemoryStats(BasicMemoryStatsEvent),
+    ResourceUsage(ResourceUsageEvent),
     Raw(RawEvent),
 }
 
@@ -347,6 +353,71 @@ pub struct ScopeIdsEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct TaskRegistrationSummaryEvent {
+    pub task_count: i32,
+}
+
+#[derive(Debug, Clone)]
+pub struct BasicMemoryStatsEvent {
+    pub free: Option<i64>,
+    pub total: Option<i64>,
+    pub max: Option<i64>,
+    pub peak_snapshots: Vec<MemoryPoolSnapshotEvent>,
+    pub gc_time: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemoryPoolSnapshotEvent {
+    pub name: Option<String>,
+    pub heap: bool,
+    pub init: Option<i64>,
+    pub used: Option<i64>,
+    pub committed: Option<i64>,
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResourceUsageEvent {
+    pub timestamps: Vec<Vec<u8>>,
+    pub build_process_cpu: NormalizedSamplesEvent,
+    pub build_child_processes_cpu: NormalizedSamplesEvent,
+    pub all_processes_cpu_sum: NormalizedSamplesEvent,
+    pub all_processes_cpu: Option<Vec<u8>>,
+    pub build_process_memory: NormalizedSamplesEvent,
+    pub build_child_processes_memory: NormalizedSamplesEvent,
+    pub all_processes_memory: NormalizedSamplesEvent,
+    pub total_system_memory: Option<i64>,
+    pub disk_read_speed: NormalizedSamplesEvent,
+    pub disk_write_speed: NormalizedSamplesEvent,
+    pub network_download_speed: NormalizedSamplesEvent,
+    pub network_upload_speed: NormalizedSamplesEvent,
+    pub processes: Vec<ProcessEvent>,
+    pub top_processes_by_cpu: IndexedNormalizedSamplesEvent,
+    pub top_processes_by_memory: IndexedNormalizedSamplesEvent,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct NormalizedSamplesEvent {
+    pub samples: Option<Vec<u8>>,
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct IndexedNormalizedSamplesEvent {
+    pub indices: Vec<Vec<i32>>,
+    pub samples: Vec<Vec<u8>>,
+    pub max: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ProcessEvent {
+    pub id: Option<i64>,
+    pub name: Option<String>,
+    pub display_name: Option<String>,
+    pub process_type: Option<u64>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -354,6 +425,12 @@ pub struct RawEvent {
 
 pub struct DecoderRegistry {
     decoders: HashMap<u16, Box<dyn BodyDecoder>>,
+}
+
+impl Default for DecoderRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DecoderRegistry {
@@ -402,6 +479,10 @@ impl DecoderRegistry {
         registry.register(117, Box::new(task_identity::TaskIdentityDecoder));
         registry.register(119, Box::new(planned_node::PlannedNodeDecoder));
         registry.register(
+            122,
+            Box::new(task_registration_summary::TaskRegistrationSummaryDecoder),
+        );
+        registry.register(
             136,
             Box::new(transform_identification::TransformIdentificationDecoder),
         );
@@ -421,6 +502,8 @@ impl DecoderRegistry {
             349,
             Box::new(task_inputs_snapshotting_finished::TaskInputsSnapshottingFinishedDecoder),
         );
+        registry.register(257, Box::new(basic_memory_stats::BasicMemoryStatsDecoder));
+        registry.register(407, Box::new(resource_usage::ResourceUsageDecoder));
         registry.register(259, Box::new(build_finished::BuildFinishedDecoder));
         registry.register(265, Box::new(daemon_state::DaemonStateDecoder));
         registry.register(
