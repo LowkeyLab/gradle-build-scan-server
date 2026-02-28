@@ -92,13 +92,19 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 transform_requests.push(e.clone());
             }
             DecodedEvent::TaskRegistrationSummary(e) => {
-                task_registration_summary = Some(e.clone());
+                if task_registration_summary.is_none() {
+                    task_registration_summary = Some(e.clone());
+                }
             }
             DecodedEvent::BasicMemoryStats(e) => {
-                basic_memory_stats = Some(e.clone());
+                if basic_memory_stats.is_none() {
+                    basic_memory_stats = Some(e.clone());
+                }
             }
             DecodedEvent::ResourceUsage(e) => {
-                resource_usage = Some(e.clone());
+                if resource_usage.is_none() {
+                    resource_usage = Some(e.clone());
+                }
             }
             // Decoded for protocol coverage; not yet consumed by assembly.
             DecodedEvent::JavaToolchainUsage(_) => {}

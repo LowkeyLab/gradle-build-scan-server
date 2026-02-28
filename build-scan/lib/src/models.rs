@@ -242,9 +242,9 @@ pub struct NormalizedSamplesData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IndexedNormalizedSamplesData {
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub indices: Vec<i32>,
+    pub indices: Vec<Vec<i32>>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub samples: Vec<Vec<i32>>,
+    pub samples: Vec<Vec<u8>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max: Option<i64>,
 }

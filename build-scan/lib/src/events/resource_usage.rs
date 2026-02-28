@@ -108,13 +108,13 @@ fn decode_indexed_normalized_samples(
     let flags = kryo::read_flags_byte(body, pos)?;
 
     let indices = if kryo::is_field_present(flags as u16, 0) {
-        kryo::read_list_of_positive_varint_i32(body, pos)?
+        kryo::read_list_of_list_of_i32(body, pos)?
     } else {
         vec![]
     };
 
     let samples = if kryo::is_field_present(flags as u16, 1) {
-        kryo::read_list_of_list_of_i32(body, pos)?
+        kryo::read_list_of_byte_arrays(body, pos)?
     } else {
         vec![]
     };
@@ -213,7 +213,10 @@ mod tests {
             assert!(e.all_processes_cpu.is_none());
             assert!(e.total_system_memory.is_none());
             assert!(e.processes.is_empty());
-            assert!(e.top_processes_by_cpu.indices.is_empty());
+            assert!(
+                e.top_processes_by_cpu.indices.is_empty(),
+                "indices should be empty when absent"
+            );
             assert!(e.top_processes_by_memory.max.is_none());
         } else {
             panic!("expected ResourceUsage");
@@ -242,23 +245,24 @@ mod tests {
     fn test_decode_indexed_normalized_samples_all_present() {
         // flags = 0b000 → all present
         let mut data = vec![0x00u8];
-        // indices: count=2, values 10, 20
-        data.push(0x02);
-        data.push(0x0A); // 10
-        data.push(0x14); // 20
-        // samples: outer count=1, inner count=2, values 1, 2
+        // indices: outer count=1, inner list: count=2, values 10, 20
         data.push(0x01); // outer len=1
         data.push(0x02); // inner len=2
-        data.push(0x01); // 1
-        data.push(0x02); // 2
+        data.push(0x0A); // 10
+        data.push(0x14); // 20
+        // samples: outer count=1, inner byte array: len=2, bytes 0xAA, 0xBB
+        data.push(0x01); // outer len=1
+        data.push(0x02); // byte array len=2
+        data.push(0xAA);
+        data.push(0xBB);
         // max = 99 → zigzag(99) = 198 = 0xC6 0x01
         data.push(0xC6);
         data.push(0x01);
 
         let mut pos = 0;
         let result = decode_indexed_normalized_samples(&data, &mut pos).unwrap();
-        assert_eq!(result.indices, vec![10, 20]);
-        assert_eq!(result.samples, vec![vec![1, 2]]);
+        assert_eq!(result.indices, vec![vec![10, 20]]);
+        assert_eq!(result.samples, vec![vec![0xAA, 0xBB]]);
         assert_eq!(result.max, Some(99));
     }
 

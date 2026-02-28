@@ -161,7 +161,8 @@ pub fn read_list_of_positive_varint_i32(
     Ok(result)
 }
 
-/// Read a list of lists of varint i32: outer varint count, then for each inner list: varint count + N varints
+/// Read a nested list of varint i32 (e.g. IndexedNormalizedSamples.indices = List<List<Integer>>):
+/// outer varint count, then for each inner list: varint count + N varints
 pub fn read_list_of_list_of_i32(data: &[u8], pos: &mut usize) -> Result<Vec<Vec<i32>>, ParseError> {
     let outer_len = varint::read_unsigned_varint(data, pos)? as usize;
     let mut result = Vec::with_capacity(outer_len);

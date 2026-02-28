@@ -404,8 +404,8 @@ pub struct NormalizedSamplesEvent {
 
 #[derive(Debug, Clone, Default)]
 pub struct IndexedNormalizedSamplesEvent {
-    pub indices: Vec<i32>,
-    pub samples: Vec<Vec<i32>>,
+    pub indices: Vec<Vec<i32>>,
+    pub samples: Vec<Vec<u8>>,
     pub max: Option<i64>,
 }
 

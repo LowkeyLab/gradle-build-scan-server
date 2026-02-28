@@ -29,11 +29,11 @@ Decode the remaining 3 undecoded event types in the Gradle build scan parser to 
 ### 3. ResourceUsage_2_0 (wire 407, 37 bytes body)
 
 - **Java model:** 16 fields — timestamps, 7 NormalizedSamples, 1 raw byte array, Long totalSystemMemory, List processes, 2 IndexedNormalizedSamples
-- **Wire format:** u16 flags (16 fields), most absent in reference payload (37 bytes = mostly nulls). Requires decompilation.
-- **Rust decoder:** Read u16 flags, conditional reads for each of 16 fields
+- **Wire format:** Single u8 flags byte (4 bits used for conditional fields: timestamps, allProcessesCpu, totalSystemMemory, processes); remaining 12 sub-structures are unconditional (each has its own internal flags).
+- **Rust decoder:** Read u8 flags, then interleaved conditional/unconditional reads for each field
 - **Nested types:**
-  - `NormalizedSamples { samples: Vec<u8>, max: i64 }`
-  - `IndexedNormalizedSamples { indices: Vec<Vec<i32>>, samples: Vec<Vec<u8>>, max: i64 }`
+  - `NormalizedSamples { samples: Vec<u8>, max: i64 }` — `samples` is a length-prefixed raw byte array
+  - `IndexedNormalizedSamples { indices: Vec<Vec<i32>>, samples: Vec<Vec<u8>>, max: i64 }` — `indices` is nested varint-encoded int lists, `samples` is a list of length-prefixed raw byte arrays
   - `ProcessInfo { id: i64, name: String, display_name: String, process_type: ProcessType }`
   - `ProcessType` enum: Self, Descendant, Other
 - **Output model:** `ResourceUsageData` with all fields as `Option<...>` on `BuildScanPayload`
