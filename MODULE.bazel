@@ -7,7 +7,7 @@ bazel_dep(name = "aspect_rules_lint", version = "2.0.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.2.1.1")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_multitool", version = "1.11.1")
-bazel_dep(name = "bazel_env.bzl", version = "0.5.0")
+bazel_dep(name = "bazel_env.bzl", version = "0.7.1")
 bazel_dep(name = "bazelrc-preset.bzl", version = "1.8.0")
 
 # We have to take a dependency on rules_python in order to set bootstrap=script
