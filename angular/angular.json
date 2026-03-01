@@ -15,7 +15,8 @@
             "browser": "projects/build-scan-web/src/main.ts",
             "tsConfig": "projects/build-scan-web/tsconfig.app.json",
             "assets": [{ "glob": "**/*", "input": "projects/build-scan-web/public" }],
-            "styles": ["projects/build-scan-web/src/processed_styles.css"]
+            "styles": ["projects/build-scan-web/src/processed_styles.css"],
+            "baseHref": "/web/"
           },
           "configurations": {
             "production": { "outputHashing": "all", "budgets": [{ "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }] },

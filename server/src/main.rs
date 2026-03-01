@@ -1,15 +1,16 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::extract::DefaultBodyLimit;
 use axum::Extension;
 use axum::Router;
+use axum::extract::DefaultBodyLimit;
 use axum::routing::MethodFilter;
 use axum::routing::{get, on, post};
 use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use sqlx::SqlitePool;
 use tokio::signal;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
@@ -75,7 +76,7 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/scans/publish", post(ingest::handle_token_request))
         .route(
             "/scans/publish/{id}/upload",
@@ -91,6 +92,13 @@ async fn main() {
         .layer(Extension(context))
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .layer(cors);
+
+    if let Some(ref spa_dir) = config.spa_dir {
+        app = app.nest_service(
+            "/web",
+            ServeDir::new(spa_dir.as_path()).fallback(ServeFile::new(spa_dir.join("index.html"))),
+        );
+    }
 
     let listener = match tokio::net::TcpListener::bind(addr).await {
         Ok(l) => l,

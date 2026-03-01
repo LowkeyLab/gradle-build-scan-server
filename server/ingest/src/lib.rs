@@ -149,7 +149,7 @@ pub async fn handle_token_request(
     let response = TokenResponse {
         scan_upload_token: upload_token,
         scan_upload_url: format!("{}/scans/publish/{}/upload", state.base_url, scan_id),
-        scan_url: format!("{}/s/{}", state.base_url, scan_id),
+        scan_url: format!("{}/web/scans/{}", state.base_url, scan_id),
         id: scan_id,
     };
 
