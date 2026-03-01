@@ -1,0 +1,12 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "db",
+    srcs = ["lib.rs"],
+    compile_data = ["migrations/001_initial.sql"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@crates//:sqlx",
+        "@crates//:uuid",
+    ],
+)
