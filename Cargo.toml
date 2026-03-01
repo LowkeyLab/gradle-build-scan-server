@@ -24,6 +24,10 @@ uuid = { version = "1.18.1", features = ["v4"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 thiserror = "2.0"
 flate2 = "1.0"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate", "uuid"] }
+juniper = "0.16"
+juniper_axum = "0.2"
+tower-http = { version = "0.6", features = ["cors"] }
 
 [dev-dependencies]
 proptest = "1.0"
