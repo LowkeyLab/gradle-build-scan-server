@@ -9,6 +9,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
+use service::{BuildScanService, UploadRequest};
 use uuid::Uuid;
 
 pub mod mime {
@@ -84,22 +85,11 @@ impl IngestState {
     }
 }
 
-#[derive(Debug)]
-pub struct UploadedScan {
-    pub scan_id: String,
-    pub build_tool_type: Option<String>,
-    pub build_tool_version: Option<String>,
-    pub plugin_version: Option<String>,
-    pub raw_payload: Vec<u8>,
-}
-
-pub type OnUpload = Arc<dyn Fn(UploadedScan) + Send + Sync>;
-
 #[derive(Clone)]
 pub struct IngestAppState {
     pub base_url: String,
     pub ingest: IngestState,
-    pub on_upload: OnUpload,
+    pub service: Arc<BuildScanService>,
 }
 
 pub async fn handle_token_request(
@@ -224,7 +214,7 @@ pub async fn handle_scan_upload(
             .expect("response builder should not fail");
     }
 
-    let uploaded = UploadedScan {
+    let req = UploadRequest {
         scan_id: pending.scan_id,
         build_tool_type: pending.build_tool_type,
         build_tool_version: pending.build_tool_version,
@@ -232,7 +222,10 @@ pub async fn handle_scan_upload(
         raw_payload: body.to_vec(),
     };
 
-    (state.on_upload)(uploaded);
+    let svc = state.service.clone();
+    tokio::spawn(async move {
+        svc.process_upload(req).await;
+    });
 
     let ack = UploadAck {};
     let ack_body = serde_json::to_vec(&ack).unwrap_or_else(|_| b"{}".to_vec());

@@ -1,16 +1,16 @@
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "graphql",
+    name = "service",
     srcs = ["lib.rs"],
     visibility = ["//visibility:public"],
     deps = [
+        "//build-scan/lib/src:lib",
+        "//build-scan/lib/src:models",
         "//server/db/src:db",
-        "//server/graphql/relay/src:relay",
-        "@crates//:axum",
-        "@crates//:juniper",
-        "@crates//:juniper_axum",
+        "@crates//:hex",
         "@crates//:serde_json",
         "@crates//:sqlx",
+        "@crates//:tracing",
     ],
 )

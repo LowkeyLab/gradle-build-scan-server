@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
+use axum::Extension;
 use juniper::{
     EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLInterface, ID, RootNode,
     graphql_object,
 };
+use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use relay::{Cursor, RelayId, validate_pagination};
 use sqlx::SqlitePool;
 
@@ -430,4 +432,12 @@ pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<Context>, EmptySubs
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot, EmptyMutation::new(), EmptySubscription::new())
+}
+
+pub async fn graphql_handler(
+    Extension(schema): Extension<Arc<Schema>>,
+    Extension(context): Extension<Arc<Context>>,
+    JuniperRequest(request): JuniperRequest,
+) -> JuniperResponse {
+    JuniperResponse(request.execute(&*schema, &*context).await)
 }

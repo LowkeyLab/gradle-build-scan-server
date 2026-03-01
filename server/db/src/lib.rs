@@ -46,8 +46,8 @@ pub struct TaskRow {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub async fn insert_build_scan(
-    pool: &SqlitePool,
+pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
     id: &str,
     build_tool_type: &str,
     build_tool_version: &str,
@@ -81,15 +81,15 @@ pub async fn insert_build_scan(
     .bind(jvm_vendor)
     .bind(jvm_version)
     .bind(raw_payload)
-    .execute(pool)
+    .execute(executor)
     .await?;
 
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-pub async fn insert_task(
-    pool: &SqlitePool,
+pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
     scan_id: &str,
     task_path: &str,
     class_name: Option<&str>,
@@ -117,7 +117,7 @@ pub async fn insert_task(
     .bind(finish_timestamp)
     .bind(cache_key)
     .bind(origin_execution_time)
-    .execute(pool)
+    .execute(executor)
     .await?;
 
     Ok(())
