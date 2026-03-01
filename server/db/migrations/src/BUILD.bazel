@@ -1,12 +1,11 @@
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "db",
+    name = "migrations",
     srcs = ["lib.rs"],
+    compile_data = ["sql/001_initial.sql"],
     visibility = ["//visibility:public"],
     deps = [
-        "//server/db/migrations/src:migrations",
         "@crates//:sqlx",
-        "@crates//:uuid",
     ],
 )
