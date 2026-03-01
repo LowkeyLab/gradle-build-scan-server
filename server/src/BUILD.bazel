@@ -1,0 +1,15 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "main",
+    srcs = ["main.rs"],
+    deps = [
+        "//build-scan/lib/src:lib",
+        "//server/config/src:config",
+        "//server/ingest/src:ingest",
+        "@crates//:axum",
+        "@crates//:tokio",
+        "@crates//:tracing",
+        "@crates//:tracing-subscriber",
+    ],
+)

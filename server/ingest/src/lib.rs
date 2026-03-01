@@ -12,13 +12,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub mod mime {
-    pub const SCAN_TOKEN_REQUEST: &str =
-        "application/vnd.gradle.scan-token-request+json";
+    pub const SCAN_TOKEN_REQUEST: &str = "application/vnd.gradle.scan-token-request+json";
     pub const SCAN_ACK: &str = "application/vnd.gradle.scan-ack+json";
     pub const SCAN: &str = "application/vnd.gradle.scan";
     pub const SCAN_UPLOAD_ACK: &str = "application/vnd.gradle.scan-upload-ack+json";
-    pub const SCAN_UPLOAD_FAILURE: &str =
-        "application/vnd.gradle.scan-upload-failure+json";
+    pub const SCAN_UPLOAD_FAILURE: &str = "application/vnd.gradle.scan-upload-failure+json";
 }
 
 #[derive(Debug, Deserialize)]
@@ -179,10 +177,7 @@ pub async fn handle_scan_upload(
     headers: HeaderMap,
     body: axum::body::Bytes,
 ) -> Response {
-    let upload_token = match headers
-        .get("x-upload-token")
-        .and_then(|v| v.to_str().ok())
-    {
+    let upload_token = match headers.get("x-upload-token").and_then(|v| v.to_str().ok()) {
         Some(t) => t.to_string(),
         None => {
             let failure = UploadFailure {
