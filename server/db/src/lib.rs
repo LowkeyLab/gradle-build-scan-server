@@ -249,3 +249,16 @@ pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64, sqlx::Error> {
 
     Ok(count)
 }
+
+pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<TaskRow>, sqlx::Error> {
+    let row = sqlx::query(
+        "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
+         FROM tasks WHERE id = ?",
+    )
+    .bind(id)
+    .map(map_task_row)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(row)
+}
