@@ -20,3 +20,6 @@ echo-server/payloads/
 
 # Rust
 rust-project.json
+
+# JavaScript / Node.js
+node_modules/

@@ -1,0 +1,44 @@
+{
+  "name": "build-scan-angular",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "test": "ng test"
+  },
+  "dependencies": {
+    "@angular/common": "catalog:",
+    "@angular/core": "catalog:",
+    "@angular/forms": "catalog:",
+    "@angular/platform-browser": "catalog:",
+    "@angular/router": "catalog:",
+    "@apollo/client": "catalog:",
+    "@wry/caches": "catalog:",
+    "@wry/context": "catalog:",
+    "@wry/equality": "catalog:",
+    "@wry/trie": "catalog:",
+    "apollo-angular": "catalog:",
+    "graphql": "catalog:",
+    "graphql-tag": "catalog:",
+    "optimism": "catalog:",
+    "rxjs": "catalog:",
+    "tslib": "catalog:",
+    "zone.js": "catalog:"
+  },
+  "devDependencies": {
+    "@angular/build": "catalog:",
+    "@angular/cli": "catalog:",
+    "@angular/compiler": "catalog:",
+    "@angular/compiler-cli": "catalog:",
+    "@tailwindcss/postcss": "catalog:",
+    "daisyui": "catalog:",
+    "jsdom": "catalog:",
+    "postcss": "catalog:",
+    "postcss-cli": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
