@@ -10,14 +10,14 @@ rust_library(
 rust_library(
     name = "models",
     srcs = ["models.rs"],
-    visibility = ["//build-scan:__subpackages__"],
+    visibility = ["//build-scan:__subpackages__", "//server:__subpackages__"],
     deps = ["@crates//:serde"],
 )
 
 rust_library(
     name = "lib",
     srcs = ["lib.rs"],
-    visibility = ["//build-scan:__subpackages__"],
+    visibility = ["//build-scan:__subpackages__", "//server:__subpackages__"],
     deps = [
         ":assembly",
         ":decompress",
