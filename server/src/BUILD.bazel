@@ -5,9 +5,13 @@ rust_binary(
     srcs = ["main.rs"],
     deps = [
         "//build-scan/lib/src:lib",
+        "//build-scan/lib/src:models",
         "//server/config/src:config",
+        "//server/db/src:db",
         "//server/ingest/src:ingest",
         "@crates//:axum",
+        "@crates//:hex",
+        "@crates//:sqlx",
         "@crates//:tokio",
         "@crates//:tracing",
         "@crates//:tracing-subscriber",
