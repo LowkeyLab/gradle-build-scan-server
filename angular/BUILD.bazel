@@ -1,0 +1,34 @@
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+npm_link_all_packages(name = "node_modules")
+
+jq(
+    name = "angular",
+    srcs = ["angular.json"],
+    filter = ".projects[].architect.build.options.outputPath = \"dist\" | .projects[].architect.build.options.preserveSymlinks = true",
+    visibility = [":__subpackages__"],
+)
+
+jq(
+    name = "tsconfig",
+    srcs = ["tsconfig.json"],
+    filter = "del(.references) | .compilerOptions.outDir = \"dist/out-tsc\"",
+    visibility = [":__subpackages__"],
+)
+
+filegroup(
+    name = "ng-config",
+    srcs = [
+        ":angular",
+        ":tsconfig",
+    ],
+    visibility = [":__subpackages__"],
+)
+
+js_library(
+    name = "postcssrc",
+    srcs = [".postcssrc.json"],
+    visibility = [":__subpackages__"],
+)

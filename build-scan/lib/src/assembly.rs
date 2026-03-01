@@ -25,6 +25,10 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
     let mut resource_usage: Option<events::ResourceUsageEvent> = None;
+    let mut build_agent: Option<events::BuildAgentEvent> = None;
+    let mut os_event: Option<events::OsEvent> = None;
+    let mut jvm_event: Option<events::JvmEvent> = None;
+    let mut requested_tasks: Vec<String> = Vec::new();
 
     for (frame, decoded) in &events {
         match decoded {
@@ -113,18 +117,34 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::TransformExecutionFinished(_) => {}
             DecodedEvent::OutputStyledText(_) => {}
             DecodedEvent::BuildStarted => {}
-            DecodedEvent::BuildAgent(_) => {}
-            DecodedEvent::BuildRequestedTasks(_) => {}
+            DecodedEvent::BuildAgent(e) => {
+                if build_agent.is_none() {
+                    build_agent = Some(e.clone());
+                }
+            }
+            DecodedEvent::BuildRequestedTasks(e) => {
+                if requested_tasks.is_empty() {
+                    requested_tasks = e.requested.clone();
+                }
+            }
             DecodedEvent::BuildFinished(_) => {}
             DecodedEvent::BuildModes(_) => {}
             DecodedEvent::DaemonState(_) => {}
             DecodedEvent::Encoding(_) => {}
             DecodedEvent::FileRefRoots(_) => {}
             DecodedEvent::Hardware(_) => {}
-            DecodedEvent::Jvm(_) => {}
+            DecodedEvent::Jvm(e) => {
+                if jvm_event.is_none() {
+                    jvm_event = Some(e.clone());
+                }
+            }
             DecodedEvent::JvmArgs(_) => {}
             DecodedEvent::Locality(_) => {}
-            DecodedEvent::Os(_) => {}
+            DecodedEvent::Os(e) => {
+                if os_event.is_none() {
+                    os_event = Some(e.clone());
+                }
+            }
             DecodedEvent::ScopeIds(_) => {}
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
@@ -297,6 +317,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 .collect(),
             gc_time: e.gc_time,
         }),
+        hostname: build_agent.and_then(|a| a.local_hostname),
+        os_name: os_event.as_ref().and_then(|o| o.name.clone()),
+        os_version: os_event.and_then(|o| o.version),
+        jvm_vendor: jvm_event.as_ref().and_then(|j| j.vendor.clone()),
+        jvm_version: jvm_event.and_then(|j| j.version),
+        requested_tasks,
         resource_usage: resource_usage.map(|e| models::ResourceUsageData {
             timestamps: e.timestamps,
             build_process_cpu: assemble_normalized_samples(e.build_process_cpu),

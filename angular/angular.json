@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "build-scan-web": {
+      "projectType": "application",
+      "root": "projects/build-scan-web",
+      "sourceRoot": "projects/build-scan-web/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/build-scan-web/src/main.ts",
+            "tsConfig": "projects/build-scan-web/tsconfig.app.json",
+            "assets": [{ "glob": "**/*", "input": "projects/build-scan-web/public" }],
+            "styles": ["projects/build-scan-web/src/processed_styles.css"],
+            "baseHref": "/web/"
+          },
+          "configurations": {
+            "production": { "outputHashing": "all", "budgets": [{ "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }] },
+            "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": { "buildTarget": "build-scan-web:build:production" },
+            "development": { "buildTarget": "build-scan-web:build:development" }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": { "tsConfig": "projects/build-scan-web/tsconfig.spec.json" }
+        }
+      }
+    }
+  }
+}

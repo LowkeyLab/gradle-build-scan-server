@@ -1,0 +1,19 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "main",
+    srcs = ["main.rs"],
+    deps = [
+        "//server/config/src:config",
+        "//server/db/src:db",
+        "//server/graphql/src:graphql",
+        "//server/ingest/src:ingest",
+        "//server/service/src:service",
+        "@crates//:axum",
+        "@crates//:juniper_axum",
+        "@crates//:tokio",
+        "@crates//:tower-http",
+        "@crates//:tracing",
+        "@crates//:tracing-subscriber",
+    ],
+)

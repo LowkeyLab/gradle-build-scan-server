@@ -1,0 +1,85 @@
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "copy_to_bin")
+load("//angular/bzl:ng.bzl", "ng_application", "ng_test", "process_styles")
+
+exports_files([
+    "tsconfig.app.json",
+    "tsconfig.spec.json",
+])
+
+copy_to_bin(
+    name = "srcs",
+    srcs = glob(
+        ["src/**/*"],
+        exclude = [
+            "src/**/*.spec.ts",
+            "src/styles.css",
+            "dist/**",
+        ],
+    ),
+)
+
+copy_to_bin(
+    name = "srcs_test",
+    srcs = glob(
+        ["src/**/*"],
+        exclude = [
+            "src/styles.css",
+            "dist/**",
+        ],
+    ),
+)
+
+process_styles(
+    name = "processed_styles",
+    src = "src/styles.css",
+    srcs = glob(["src/**/*.ts"]),
+    out = "src/processed_styles.css",
+    deps = [
+        "//angular:node_modules/daisyui",
+    ],
+)
+
+ng_application(
+    name = "build-scan-web",
+    srcs = [
+        ":processed_styles",
+        ":srcs",
+    ],
+    tailwindcss = True,
+    deps = [
+        "//angular:node_modules/@angular/forms",
+        "//angular:node_modules/@angular/router",
+        "//angular:node_modules/@apollo/client",
+        "//angular:node_modules/@wry/caches",
+        "//angular:node_modules/@wry/context",
+        "//angular:node_modules/@wry/equality",
+        "//angular:node_modules/@wry/trie",
+        "//angular:node_modules/apollo-angular",
+        "//angular:node_modules/graphql",
+        "//angular:node_modules/graphql-tag",
+        "//angular:node_modules/optimism",
+    ],
+)
+
+ng_test(
+    name = "test",
+    srcs = [
+        ":processed_styles",
+        ":srcs_test",
+    ],
+    tailwindcss = True,
+    vitest = True,
+    deps = [
+        "//angular:node_modules/@angular/forms",
+        "//angular:node_modules/@angular/router",
+        "//angular:node_modules/@apollo/client",
+        "//angular:node_modules/@wry/caches",
+        "//angular:node_modules/@wry/context",
+        "//angular:node_modules/@wry/equality",
+        "//angular:node_modules/@wry/trie",
+        "//angular:node_modules/apollo-angular",
+        "//angular:node_modules/graphql",
+        "//angular:node_modules/graphql-tag",
+        "//angular:node_modules/optimism",
+    ],
+)

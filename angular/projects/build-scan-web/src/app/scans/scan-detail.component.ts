@@ -1,0 +1,162 @@
+import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core';
+import { Apollo, gql } from 'apollo-angular';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { map, switchMap } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+
+const GET_BUILD_SCAN = gql`
+  query GetBuildScan($id: ID!, $first: Int!, $after: String) {
+    buildScan(id: $id) {
+      id
+      scanId
+      buildToolType
+      buildToolVersion
+      pluginVersion
+      outcome
+      createdAt
+      hostname
+      osName
+      osVersion
+      jvmVendor
+      jvmVersion
+      requestedTasks
+      tasks(first: $first, after: $after) {
+        edges {
+          node {
+            id
+            taskPath
+            className
+            outcome
+            cacheable
+            durationMs
+            cacheKey
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        totalCount
+      }
+    }
+  }
+`;
+
+@Component({
+  selector: 'app-scan-detail',
+  imports: [AsyncPipe, DatePipe, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="container mx-auto p-6">
+      @if (scan$ | async; as scan) {
+        <div class="mb-4">
+          <a routerLink="/scans" class="link link-primary">&larr; All Scans</a>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title">
+              Build Scan
+              <span class="badge"
+                [class.badge-success]="scan.outcome === 'success'"
+                [class.badge-error]="scan.outcome === 'failed'">
+                {{ scan.outcome }}
+              </span>
+            </h2>
+
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <span class="text-sm opacity-60">Created</span>
+                <p>{{ scan.createdAt | date:'long' }}</p>
+              </div>
+              <div>
+                <span class="text-sm opacity-60">Build Tool</span>
+                <p>{{ scan.buildToolType }} {{ scan.buildToolVersion }}</p>
+              </div>
+              <div>
+                <span class="text-sm opacity-60">Plugin Version</span>
+                <p>{{ scan.pluginVersion }}</p>
+              </div>
+              <div>
+                <span class="text-sm opacity-60">Hostname</span>
+                <p>{{ scan.hostname || '—' }}</p>
+              </div>
+              @if (scan.osName) {
+                <div>
+                  <span class="text-sm opacity-60">OS</span>
+                  <p>{{ scan.osName }} {{ scan.osVersion }}</p>
+                </div>
+              }
+              @if (scan.jvmVersion) {
+                <div>
+                  <span class="text-sm opacity-60">JVM</span>
+                  <p>{{ scan.jvmVendor }} {{ scan.jvmVersion }}</p>
+                </div>
+              }
+            </div>
+
+            @if (scan.requestedTasks.length > 0) {
+              <div class="mt-4">
+                <span class="text-sm opacity-60">Requested Tasks</span>
+                <p>{{ scan.requestedTasks.join(' ') }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <h3 class="text-xl font-bold mb-4">
+          Tasks ({{ scan.tasks.totalCount }})
+        </h3>
+
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Task Path</th>
+                <th>Outcome</th>
+                <th>Duration</th>
+                <th>Cacheable</th>
+                <th>Class</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (edge of scan.tasks.edges; track edge.node.id) {
+                <tr>
+                  <td class="font-mono text-sm">{{ edge.node.taskPath }}</td>
+                  <td>
+                    <span class="badge badge-sm"
+                      [class.badge-success]="edge.node.outcome === 'Success' || edge.node.outcome === 'UpToDate'"
+                      [class.badge-error]="edge.node.outcome === 'Failed'"
+                      [class.badge-info]="edge.node.outcome === 'FromCache'"
+                      [class.badge-warning]="edge.node.outcome === 'Skipped'">
+                      {{ edge.node.outcome }}
+                    </span>
+                  </td>
+                  <td>{{ edge.node.durationMs != null ? edge.node.durationMs + 'ms' : '—' }}</td>
+                  <td>{{ edge.node.cacheable ? 'Yes' : 'No' }}</td>
+                  <td class="text-xs opacity-60">{{ edge.node.className }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  `,
+})
+export class ScanDetailComponent {
+  id = input.required<string>();
+  private apollo = inject(Apollo);
+
+  scan$ = toObservable(this.id).pipe(
+    switchMap(id =>
+      this.apollo.watchQuery<any>({
+        query: GET_BUILD_SCAN,
+        variables: { id, first: 100 },
+      }).valueChanges
+    ),
+    map(result => result.data.buildScan)
+  );
+}

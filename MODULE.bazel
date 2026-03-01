@@ -1,6 +1,6 @@
 # Currently bazel-lib is only load()ed when platforms is used.
 bazel_dep(name = "bazel_lib", version = "3.1.1")
-bazel_dep(name = "aspect_bazel_lib", version = "2.22.5", repo_name = None)  # force a recent version that works with v3
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")  # force a recent version that works with v3
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "apple_support", version = "2.2.0")
 bazel_dep(name = "aspect_rules_lint", version = "2.0.0")
@@ -23,6 +23,15 @@ git_override(
     module_name = "gazelle_rust",
     commit = "47fbd90383fb504460e75ff208f0bce4ca5861c1",
     remote = "https://github.com/Calsign/gazelle_rust.git",
+)
+
+# JavaScript / Angular
+bazel_dep(name = "aspect_rules_js", version = "2.9.2")
+bazel_dep(name = "rules_angular")
+git_override(
+    module_name = "rules_angular",
+    commit = "d746c4f75e42cffe389d1ab077f4639be2bc78d1",
+    remote = "https://github.com/devversion/rules_angular.git",
 )
 
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
@@ -53,5 +62,20 @@ crate.from_cargo(
     ],
 )
 use_repo(crate, "crates")
+
+#########################
+# JavaScript and pnpm package manager
+
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm")
+pnpm.pnpm(pnpm_version = "latest")
+use_repo(pnpm, "pnpm")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    npmrc = "//:.npmrc",
+    pnpm_lock = "//:pnpm-lock.yaml",
+)
+use_repo(npm, "npm")
 
 register_toolchains("//tools/toolchains:all")

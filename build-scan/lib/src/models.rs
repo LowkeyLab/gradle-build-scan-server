@@ -14,6 +14,18 @@ pub struct BuildScanPayload {
     pub basic_memory_stats: Option<BasicMemoryStatsData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource_usage: Option<ResourceUsageData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hostname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub os_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jvm_vendor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jvm_version: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub requested_tasks: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
