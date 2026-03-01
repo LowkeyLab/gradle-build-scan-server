@@ -1,0 +1,18 @@
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+rust_library(
+    name = "relay",
+    srcs = ["lib.rs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@crates//:base64",
+        "@crates//:juniper",
+        "@crates//:serde",
+        "@crates//:serde_json",
+    ],
+)
+
+rust_test(
+    name = "relay_test",
+    crate = ":relay",
+)
