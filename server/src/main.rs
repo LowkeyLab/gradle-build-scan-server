@@ -1,16 +1,28 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use axum::Extension;
 use axum::Router;
-use axum::routing::post;
+use axum::routing::MethodFilter;
+use axum::routing::{get, on, post};
+use juniper_axum::{extract::JuniperRequest, graphiql, response::JuniperResponse};
 use sqlx::SqlitePool;
 use tokio::signal;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 use config::Config;
 use ingest::{IngestAppState, IngestState, UploadedScan};
 use models::TaskOutcome;
+
+async fn graphql_handler(
+    Extension(schema): Extension<Arc<graphql::Schema>>,
+    Extension(context): Extension<Arc<graphql::Context>>,
+    JuniperRequest(request): JuniperRequest,
+) -> JuniperResponse {
+    JuniperResponse(request.execute(&*schema, &*context).await)
+}
 
 #[tokio::main]
 async fn main() {
@@ -46,11 +58,21 @@ async fn main() {
         })
     };
 
+    let schema = Arc::new(graphql::create_schema());
+    let context = Arc::new(graphql::Context {
+        pool: Arc::new(pool.clone()),
+    });
+
     let ingest_state = IngestAppState {
         base_url,
         ingest: IngestState::new(),
         on_upload,
     };
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
     let app = Router::new()
         .route("/scans/publish", post(ingest::handle_token_request))
@@ -58,7 +80,15 @@ async fn main() {
             "/scans/publish/{id}/upload",
             post(ingest::handle_scan_upload),
         )
-        .with_state(ingest_state);
+        .with_state(ingest_state)
+        .route(
+            "/graphql",
+            on(MethodFilter::GET.or(MethodFilter::POST), graphql_handler),
+        )
+        .route("/graphiql", get(graphiql("/graphql", None::<&str>)))
+        .layer(Extension(schema))
+        .layer(Extension(context))
+        .layer(cors);
 
     let listener = match tokio::net::TcpListener::bind(addr).await {
         Ok(l) => l,
@@ -68,6 +98,7 @@ async fn main() {
         }
     };
     info!("Build scan server listening on http://{}", addr);
+    info!("GraphiQL IDE available at http://{}/graphiql", addr);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
