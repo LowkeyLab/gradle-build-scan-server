@@ -11,6 +11,18 @@ copy_to_bin(
     srcs = glob(
         ["src/**/*"],
         exclude = [
+            "src/**/*.spec.ts",
+            "src/styles.css",
+            "dist/**",
+        ],
+    ),
+)
+
+copy_to_bin(
+    name = "srcs_test",
+    srcs = glob(
+        ["src/**/*"],
+        exclude = [
             "src/styles.css",
             "dist/**",
         ],
@@ -53,7 +65,7 @@ ng_test(
     name = "test",
     srcs = [
         ":processed_styles",
-        ":srcs",
+        ":srcs_test",
     ],
     tailwindcss = True,
     vitest = True,
