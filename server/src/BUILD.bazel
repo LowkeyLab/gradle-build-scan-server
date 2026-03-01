@@ -12,6 +12,7 @@ rust_binary(
         "//server/ingest/src:ingest",
         "@crates//:axum",
         "@crates//:hex",
+        "@crates//:serde_json",
         "@crates//:juniper_axum",
         "@crates//:sqlx",
         "@crates//:tokio",

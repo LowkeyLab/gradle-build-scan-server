@@ -97,6 +97,13 @@ impl BuildScan {
             .unwrap_or_default()
     }
 
+    async fn task_count(&self, context: &Context) -> FieldResult<i32> {
+        let count = db::count_tasks(&context.pool, &self.row.id)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+        Ok(count)
+    }
+
     async fn tasks(
         &self,
         context: &Context,

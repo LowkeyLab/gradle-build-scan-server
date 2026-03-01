@@ -8,7 +8,7 @@ pub async fn connect(url: &str) -> Result<SqlitePool, sqlx::Error> {
         .await?;
 
     let migration_sql = include_str!("migrations/001_initial.sql");
-    sqlx::query(migration_sql).execute(&pool).await?;
+    sqlx::raw_sql(migration_sql).execute(&pool).await?;
 
     Ok(pool)
 }

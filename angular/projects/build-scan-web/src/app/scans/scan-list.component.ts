@@ -16,9 +16,7 @@ const GET_BUILD_SCANS = gql`
           outcome
           createdAt
           hostname
-          tasks(first: 0) {
-            totalCount
-          }
+          taskCount
         }
         cursor
       }
@@ -69,7 +67,7 @@ const GET_BUILD_SCANS = gql`
                   </td>
                   <td>{{ edge.node.buildToolType }} {{ edge.node.buildToolVersion }}</td>
                   <td>{{ edge.node.hostname || '—' }}</td>
-                  <td>{{ edge.node.tasks.totalCount }}</td>
+                  <td>{{ edge.node.taskCount }}</td>
                 </tr>
               }
             </tbody>

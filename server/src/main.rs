@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use axum::extract::DefaultBodyLimit;
 use axum::Extension;
 use axum::Router;
 use axum::routing::MethodFilter;
@@ -46,7 +47,7 @@ async fn main() {
         }
     };
 
-    let base_url = format!("http://{}", addr);
+    let base_url = config.base_url.clone();
 
     let on_upload = {
         let pool = pool.clone();
@@ -88,6 +89,7 @@ async fn main() {
         .route("/graphiql", get(graphiql("/graphql", None::<&str>)))
         .layer(Extension(schema))
         .layer(Extension(context))
+        .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .layer(cors);
 
     let listener = match tokio::net::TcpListener::bind(addr).await {
@@ -147,6 +149,12 @@ async fn process_upload(pool: SqlitePool, uploaded: UploadedScan) {
                 "success"
             };
 
+            let requested_tasks_json = if payload.requested_tasks.is_empty() {
+                None
+            } else {
+                serde_json::to_string(&payload.requested_tasks).ok()
+            };
+
             if let Err(db_err) = db::insert_build_scan(
                 &pool,
                 &scan_id,
@@ -156,12 +164,12 @@ async fn process_upload(pool: SqlitePool, uploaded: UploadedScan) {
                 None,
                 None,
                 Some(outcome),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                requested_tasks_json.as_deref(),
+                payload.hostname.as_deref(),
+                payload.os_name.as_deref(),
+                payload.os_version.as_deref(),
+                payload.jvm_vendor.as_deref(),
+                payload.jvm_version.as_deref(),
                 Some(&uploaded.raw_payload),
             )
             .await
