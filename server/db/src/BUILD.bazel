@@ -6,6 +6,9 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "//server/db/migrations/src:migrations",
+        "//server/domain/src:domain",
+        "@crates//:chrono",
+        "@crates//:serde_json",
         "@crates//:sqlx",
         "@crates//:uuid",
     ],
