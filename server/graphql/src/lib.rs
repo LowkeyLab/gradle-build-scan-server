@@ -330,6 +330,11 @@ impl TaskConnection {
 // QueryRoot
 // ---------------------------------------------------------------------------
 
+fn encode_build_scan_cursor(row: &db::BuildScanRow) -> String {
+    let value = serde_json::json!({"created_at": &row.created_at, "id": &row.id}).to_string();
+    Cursor::new(value).encode()
+}
+
 pub struct QueryRoot;
 
 #[graphql_object(context = Context)]
@@ -394,19 +399,12 @@ impl QueryRoot {
             rows.pop();
         }
 
-        let end_cursor = rows.last().map(|r| {
-            let value = serde_json::json!({"created_at": &r.created_at, "id": &r.id}).to_string();
-            Cursor::new(value).encode()
-        });
+        let end_cursor = rows.last().map(|r| encode_build_scan_cursor(r));
 
         let edges: Vec<BuildScanEdge> = rows
             .into_iter()
             .map(|r| {
-                let cursor = {
-                    let value =
-                        serde_json::json!({"created_at": &r.created_at, "id": &r.id}).to_string();
-                    Cursor::new(value).encode()
-                };
+                let cursor = encode_build_scan_cursor(&r);
                 BuildScanEdge {
                     cursor,
                     node: BuildScan { row: r },
