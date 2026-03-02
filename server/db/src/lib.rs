@@ -131,26 +131,31 @@ pub async fn list_build_scans(
     pool: &SqlitePool,
     limit: i64,
     after_created_at: Option<&str>,
+    after_id: Option<&str>,
 ) -> Result<Vec<BuildScanRow>, sqlx::Error> {
-    let rows = if let Some(cursor) = after_created_at {
-        sqlx::query(
-            "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
-             FROM build_scans WHERE created_at < ? ORDER BY created_at DESC LIMIT ?",
-        )
-        .bind(cursor)
-        .bind(limit)
-        .map(map_build_scan_row)
-        .fetch_all(pool)
-        .await?
-    } else {
-        sqlx::query(
-            "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
-             FROM build_scans ORDER BY created_at DESC LIMIT ?",
-        )
-        .bind(limit)
-        .map(map_build_scan_row)
-        .fetch_all(pool)
-        .await?
+    let rows = match (after_created_at, after_id) {
+        (Some(cursor_created_at), Some(cursor_id)) => {
+            sqlx::query(
+                "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
+                 FROM build_scans WHERE (created_at, id) < (?1, ?2) ORDER BY created_at DESC, id DESC LIMIT ?3",
+            )
+            .bind(cursor_created_at)
+            .bind(cursor_id)
+            .bind(limit)
+            .map(map_build_scan_row)
+            .fetch_all(pool)
+            .await?
+        }
+        _ => {
+            sqlx::query(
+                "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
+                 FROM build_scans ORDER BY created_at DESC, id DESC LIMIT ?",
+            )
+            .bind(limit)
+            .map(map_build_scan_row)
+            .fetch_all(pool)
+            .await?
+        }
     };
 
     Ok(rows)

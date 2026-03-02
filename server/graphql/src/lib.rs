@@ -359,17 +359,32 @@ impl QueryRoot {
         after: Option<String>,
     ) -> FieldResult<BuildScanConnection> {
         let limit = validate_pagination(first).map_err(FieldError::from)?;
-        let after_created_at = after
+        let cursor = after
             .as_deref()
             .map(Cursor::decode)
             .transpose()
-            .map_err(FieldError::from)?
-            .map(|c| c.value);
+            .map_err(FieldError::from)?;
+        let (after_created_at, after_id) = if let Some(c) = cursor {
+            let v: serde_json::Value = serde_json::from_str(&c.value)
+                .map_err(|_| FieldError::from("Invalid cursor format".to_string()))?;
+            let created_at = v["created_at"]
+                .as_str()
+                .ok_or_else(|| FieldError::from("Missing created_at in cursor".to_string()))?
+                .to_string();
+            let id = v["id"]
+                .as_str()
+                .ok_or_else(|| FieldError::from("Missing id in cursor".to_string()))?
+                .to_string();
+            (Some(created_at), Some(id))
+        } else {
+            (None, None)
+        };
 
         let mut rows = db::list_build_scans(
             &context.pool,
             (limit + 1) as i64,
             after_created_at.as_deref(),
+            after_id.as_deref(),
         )
         .await
         .map_err(|e| FieldError::from(e.to_string()))?;
@@ -379,14 +394,19 @@ impl QueryRoot {
             rows.pop();
         }
 
-        let end_cursor = rows
-            .last()
-            .map(|r| Cursor::new(r.created_at.clone()).encode());
+        let end_cursor = rows.last().map(|r| {
+            let value = serde_json::json!({"created_at": &r.created_at, "id": &r.id}).to_string();
+            Cursor::new(value).encode()
+        });
 
         let edges: Vec<BuildScanEdge> = rows
             .into_iter()
             .map(|r| {
-                let cursor = Cursor::new(r.created_at.clone()).encode();
+                let cursor = {
+                    let value =
+                        serde_json::json!({"created_at": &r.created_at, "id": &r.id}).to_string();
+                    Cursor::new(value).encode()
+                };
                 BuildScanEdge {
                     cursor,
                     node: BuildScan { row: r },
