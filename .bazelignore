@@ -1,3 +1,5 @@
 gradle/
 target/
 .opencode/
+.claude/worktrees/
+.worktrees/
