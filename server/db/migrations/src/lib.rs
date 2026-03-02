@@ -6,14 +6,24 @@ use sqlx::migrate::{Migration, MigrationType, Migrator};
 /// which doesn't resolve correctly in Bazel's sandbox. We construct the Migrator
 /// manually using `include_str!` (which Bazel handles via `compile_data`).
 pub static MIGRATOR: Migrator = Migrator {
-    migrations: Cow::Borrowed(&[Migration {
-        version: 1,
-        description: Cow::Borrowed("initial"),
-        migration_type: MigrationType::Simple,
-        sql: Cow::Borrowed(include_str!("sql/001_initial.sql")),
-        checksum: Cow::Borrowed(&[]),
-        no_tx: false,
-    }]),
+    migrations: Cow::Borrowed(&[
+        Migration {
+            version: 1,
+            description: Cow::Borrowed("initial"),
+            migration_type: MigrationType::Simple,
+            sql: Cow::Borrowed(include_str!("sql/001_initial.sql")),
+            checksum: Cow::Borrowed(&[]),
+            no_tx: false,
+        },
+        Migration {
+            version: 2,
+            description: Cow::Borrowed("composite pagination index"),
+            migration_type: MigrationType::Simple,
+            sql: Cow::Borrowed(include_str!("sql/002_composite_pagination_index.sql")),
+            checksum: Cow::Borrowed(&[]),
+            no_tx: false,
+        },
+    ]),
     ignore_missing: false,
     locking: true,
     no_tx: false,
