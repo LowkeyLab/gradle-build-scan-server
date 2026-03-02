@@ -1,10 +1,14 @@
-use sqlx::{Row, SqlitePool, sqlite::SqlitePoolOptions, sqlite::SqliteRow};
+use sqlx::{
+    Row, SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions, sqlite::SqliteRow,
+};
+use std::str::FromStr;
 use uuid::Uuid;
 
 pub async fn connect(url: &str) -> Result<SqlitePool, sqlx::Error> {
+    let options = SqliteConnectOptions::from_str(url)?.pragma("foreign_keys", "ON");
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
-        .connect(url)
+        .connect_with(options)
         .await?;
 
     migrations::MIGRATOR
