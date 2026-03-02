@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Apollo, gql } from 'apollo-angular';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
 const GET_BUILD_SCANS = gql`
@@ -31,13 +32,13 @@ const GET_BUILD_SCANS = gql`
 
 @Component({
   selector: 'app-scan-list',
-  imports: [RouterLink, AsyncPipe, DatePipe],
+  imports: [RouterLink, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="container mx-auto p-6">
       <h1 class="text-3xl font-bold mb-6">Build Scans</h1>
 
-      @if (scans$ | async; as data) {
+      @if (scans(); as data) {
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full">
             <thead>
@@ -74,7 +75,7 @@ const GET_BUILD_SCANS = gql`
           </table>
         </div>
 
-        @if (hasNextPage) {
+        @if (hasNextPage()) {
           <div class="mt-4">
             <button class="btn btn-outline" (click)="loadMore()">Load More</button>
           </div>
@@ -90,24 +91,18 @@ export class ScanListComponent {
     variables: { first: 20 },
   });
 
-  scans$ = this.queryRef.valueChanges.pipe(
-    map(result => result.data.buildScans)
-  );
+  scans = toSignal(this.queryRef.valueChanges.pipe(
+    map(r => r.data.buildScans)
+  ));
 
-  hasNextPage = false;
-  endCursor: string | null = null;
-
-  constructor() {
-    this.queryRef.valueChanges.subscribe(result => {
-      this.hasNextPage = result.data.buildScans.pageInfo.hasNextPage;
-      this.endCursor = result.data.buildScans.pageInfo.endCursor;
-    });
-  }
+  hasNextPage = computed(() => this.scans()?.pageInfo.hasNextPage ?? false);
+  endCursor = computed(() => this.scans()?.pageInfo.endCursor ?? null);
 
   loadMore() {
-    if (!this.endCursor) return;
+    const cursor = this.endCursor();
+    if (!cursor) return;
     this.queryRef.fetchMore({
-      variables: { first: 20, after: this.endCursor },
+      variables: { first: 20, after: cursor },
     });
   }
 }
