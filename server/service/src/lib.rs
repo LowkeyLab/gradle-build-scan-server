@@ -2,6 +2,8 @@ use models::TaskOutcome;
 use sqlx::SqlitePool;
 use tracing::{error, info};
 
+use domain;
+
 pub struct UploadRequest {
     pub scan_id: String,
     pub build_tool_type: Option<String>,
@@ -130,5 +132,62 @@ impl BuildScanService {
                 info!(scan_id = %scan_id, task_count = task_count, "Stored build scan successfully");
             }
         }
+    }
+
+    pub async fn get_build_scan(
+        &self,
+        id: &str,
+    ) -> Result<Option<domain::BuildScan>, Box<dyn std::error::Error>> {
+        let row = db::get_build_scan(&self.pool, id).await?;
+        row.map(domain::BuildScan::try_from)
+            .transpose()
+            .map_err(|e| e.into())
+    }
+
+    pub async fn list_build_scans(
+        &self,
+        limit: i64,
+        after_created_at: Option<&str>,
+        after_id: Option<&str>,
+    ) -> Result<Vec<domain::BuildScan>, Box<dyn std::error::Error>> {
+        let rows = db::list_build_scans(&self.pool, limit, after_created_at, after_id).await?;
+        rows.into_iter()
+            .map(domain::BuildScan::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.into())
+    }
+
+    pub async fn get_task(
+        &self,
+        id: &str,
+    ) -> Result<Option<domain::Task>, Box<dyn std::error::Error>> {
+        let row = db::get_task(&self.pool, id).await?;
+        row.map(domain::Task::try_from)
+            .transpose()
+            .map_err(|e| e.into())
+    }
+
+    pub async fn list_tasks(
+        &self,
+        scan_id: &str,
+        limit: i64,
+        after_id: Option<&str>,
+    ) -> Result<Vec<domain::Task>, Box<dyn std::error::Error>> {
+        let rows = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
+        rows.into_iter()
+            .map(domain::Task::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.into())
+    }
+
+    pub async fn count_tasks(
+        &self,
+        scan_id: &str,
+    ) -> Result<i64, Box<dyn std::error::Error>> {
+        Ok(db::count_tasks(&self.pool, scan_id).await?)
+    }
+
+    pub async fn count_build_scans(&self) -> Result<i64, Box<dyn std::error::Error>> {
+        Ok(db::count_build_scans(&self.pool).await?)
     }
 }
