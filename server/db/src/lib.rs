@@ -81,10 +81,7 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 
         let outcome = row
             .outcome
-            .map(|s| {
-                s.parse::<domain::BuildOutcome>()
-                    .map_err(ConversionError)
-            })
+            .map(|s| s.parse::<domain::BuildOutcome>().map_err(ConversionError))
             .transpose()?;
 
         let requested_tasks = row
@@ -131,10 +128,7 @@ impl TryFrom<TaskRow> for domain::Task {
         );
         let outcome = row
             .outcome
-            .map(|s| {
-                s.parse::<domain::TaskOutcome>()
-                    .map_err(ConversionError)
-            })
+            .map(|s| s.parse::<domain::TaskOutcome>().map_err(ConversionError))
             .transpose()?;
 
         Ok(domain::Task {

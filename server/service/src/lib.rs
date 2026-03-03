@@ -180,10 +180,7 @@ impl BuildScanService {
             .map_err(|e| e.into())
     }
 
-    pub async fn count_tasks(
-        &self,
-        scan_id: &str,
-    ) -> Result<i64, Box<dyn std::error::Error>> {
+    pub async fn count_tasks(&self, scan_id: &str) -> Result<i64, Box<dyn std::error::Error>> {
         Ok(db::count_tasks(&self.pool, scan_id).await?)
     }
 

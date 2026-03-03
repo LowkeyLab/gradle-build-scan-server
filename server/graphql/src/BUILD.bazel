@@ -9,7 +9,6 @@ rust_library(
         "//server/graphql/relay/src:relay",
         "//server/service/src:service",
         "@crates//:axum",
-        "@crates//:chrono",
         "@crates//:juniper",
         "@crates//:juniper_axum",
         "@crates//:serde_json",
