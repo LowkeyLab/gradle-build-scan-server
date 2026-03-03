@@ -8,6 +8,7 @@ rust_library(
         "//build-scan/lib/src:lib",
         "//build-scan/lib/src:models",
         "//server/db/src:db",
+        "//server/domain/src:domain",
         "@crates//:hex",
         "@crates//:serde_json",
         "@crates//:sqlx",

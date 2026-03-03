@@ -7,10 +7,10 @@ use juniper::{
 };
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 use relay::{Cursor, RelayId, validate_pagination};
-use sqlx::SqlitePool;
+use service::BuildScanService;
 
 pub struct Context {
-    pub pool: Arc<SqlitePool>,
+    pub service: Arc<BuildScanService>,
 }
 
 impl juniper::Context for Context {}
@@ -30,77 +30,79 @@ pub struct Node {
 // ---------------------------------------------------------------------------
 
 pub struct BuildScan {
-    pub row: db::BuildScanRow,
+    pub scan: domain::BuildScan,
 }
 
 #[graphql_object(context = Context, impl = NodeValue)]
 impl BuildScan {
     fn id(&self) -> ID {
-        RelayId::encode("BuildScan", &self.row.id)
+        RelayId::encode("BuildScan", &self.scan.id.0.to_string())
     }
 
-    fn scan_id(&self) -> &str {
-        &self.row.id
+    fn scan_id(&self) -> String {
+        self.scan.id.0.to_string()
     }
 
     fn build_tool_type(&self) -> &str {
-        &self.row.build_tool_type
+        &self.scan.build_tool_type.0
     }
 
     fn build_tool_version(&self) -> &str {
-        &self.row.build_tool_version
+        &self.scan.build_tool_version.0
     }
 
     fn plugin_version(&self) -> &str {
-        &self.row.plugin_version
+        &self.scan.plugin_version.0
     }
 
-    fn started_at(&self) -> Option<&str> {
-        self.row.started_at.as_deref()
+    fn started_at(&self) -> Option<String> {
+        self.scan.started_at.map(|dt| dt.to_rfc3339())
     }
 
-    fn finished_at(&self) -> Option<&str> {
-        self.row.finished_at.as_deref()
+    fn finished_at(&self) -> Option<String> {
+        self.scan.finished_at.map(|dt| dt.to_rfc3339())
     }
 
-    fn outcome(&self) -> Option<&str> {
-        self.row.outcome.as_deref()
+    fn outcome(&self) -> Option<String> {
+        self.scan.outcome.map(|o| o.to_string())
     }
 
     fn hostname(&self) -> Option<&str> {
-        self.row.hostname.as_deref()
+        self.scan.hostname.as_ref().map(|h| h.0.as_str())
     }
 
     fn os_name(&self) -> Option<&str> {
-        self.row.os_name.as_deref()
+        self.scan.os_name.as_ref().map(|n| n.0.as_str())
     }
 
     fn os_version(&self) -> Option<&str> {
-        self.row.os_version.as_deref()
+        self.scan.os_version.as_ref().map(|v| v.0.as_str())
     }
 
     fn jvm_vendor(&self) -> Option<&str> {
-        self.row.jvm_vendor.as_deref()
+        self.scan.jvm_vendor.as_ref().map(|v| v.0.as_str())
     }
 
     fn jvm_version(&self) -> Option<&str> {
-        self.row.jvm_version.as_deref()
+        self.scan.jvm_version.as_ref().map(|v| v.0.as_str())
     }
 
-    fn created_at(&self) -> &str {
-        &self.row.created_at
+    fn created_at(&self) -> String {
+        self.scan.created_at.to_rfc3339()
     }
 
     fn requested_tasks(&self) -> Vec<String> {
-        self.row
+        self.scan
             .requested_tasks
-            .as_deref()
-            .and_then(|s| serde_json::from_str::<Vec<String>>(s).ok())
+            .as_ref()
+            .map(|tasks| tasks.iter().map(|t| t.0.clone()).collect())
             .unwrap_or_default()
     }
 
     async fn task_count(&self, context: &Context) -> FieldResult<i32> {
-        let count = db::count_tasks(&context.pool, &self.row.id)
+        let count = context
+            .service
+            .count_tasks(&self.scan.id.0.to_string())
             .await
             .map_err(|e| FieldError::from(e.to_string()))? as i32;
         Ok(count)
@@ -120,34 +122,36 @@ impl BuildScan {
             .map_err(FieldError::from)?
             .map(|c| c.value);
 
-        let mut rows = db::list_tasks(
-            &context.pool,
-            &self.row.id,
-            (limit + 1) as i64,
-            after_id.as_deref(),
-        )
-        .await
-        .map_err(|e| FieldError::from(e.to_string()))?;
+        let scan_id_str = self.scan.id.0.to_string();
+        let mut tasks = context
+            .service
+            .list_tasks(&scan_id_str, (limit + 1) as i64, after_id.as_deref())
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
 
-        let has_next_page = rows.len() > limit as usize;
+        let has_next_page = tasks.len() > limit as usize;
         if has_next_page {
-            rows.pop();
+            tasks.pop();
         }
 
-        let end_cursor = rows.last().map(|r| Cursor::new(r.id.clone()).encode());
+        let end_cursor = tasks
+            .last()
+            .map(|t| Cursor::new(t.id.0.to_string()).encode());
 
-        let edges: Vec<TaskEdge> = rows
+        let edges: Vec<TaskEdge> = tasks
             .into_iter()
-            .map(|r| {
-                let cursor = Cursor::new(r.id.clone()).encode();
+            .map(|t| {
+                let cursor = Cursor::new(t.id.0.to_string()).encode();
                 TaskEdge {
                     cursor,
-                    node: Task { row: r },
+                    node: Task { task: t },
                 }
             })
             .collect();
 
-        let total_count = db::count_tasks(&context.pool, &self.row.id)
+        let total_count = context
+            .service
+            .count_tasks(&scan_id_str)
             .await
             .map_err(|e| FieldError::from(e.to_string()))? as i32;
 
@@ -167,60 +171,60 @@ impl BuildScan {
 // ---------------------------------------------------------------------------
 
 pub struct Task {
-    pub row: db::TaskRow,
+    pub task: domain::Task,
 }
 
 #[graphql_object(context = Context, impl = NodeValue)]
 impl Task {
     fn id(&self) -> ID {
-        RelayId::encode("Task", &self.row.id)
+        RelayId::encode("Task", &self.task.id.0.to_string())
     }
 
-    fn task_id(&self) -> &str {
-        &self.row.id
+    fn task_id(&self) -> String {
+        self.task.id.0.to_string()
     }
 
-    fn scan_id(&self) -> &str {
-        &self.row.scan_id
+    fn scan_id(&self) -> String {
+        self.task.scan_id.0.to_string()
     }
 
     fn task_path(&self) -> &str {
-        &self.row.task_path
+        &self.task.task_path.0
     }
 
     fn class_name(&self) -> Option<&str> {
-        self.row.class_name.as_deref()
+        self.task.class_name.as_ref().map(|c| c.0.as_str())
     }
 
-    fn outcome(&self) -> Option<&str> {
-        self.row.outcome.as_deref()
+    fn outcome(&self) -> Option<String> {
+        self.task.outcome.map(|o| o.to_string())
     }
 
     fn cacheable(&self) -> Option<bool> {
-        self.row.cacheable
+        self.task.cacheable
     }
 
     fn start_timestamp(&self) -> Option<f64> {
-        self.row.start_timestamp.map(|v| v as f64)
+        self.task.start_timestamp.map(|t| t.0 as f64)
     }
 
     fn finish_timestamp(&self) -> Option<f64> {
-        self.row.finish_timestamp.map(|v| v as f64)
+        self.task.finish_timestamp.map(|t| t.0 as f64)
     }
 
     fn duration_ms(&self) -> Option<f64> {
-        match (self.row.start_timestamp, self.row.finish_timestamp) {
-            (Some(start), Some(finish)) => Some((finish - start) as f64),
+        match (self.task.start_timestamp, self.task.finish_timestamp) {
+            (Some(start), Some(finish)) => Some((finish.0 - start.0) as f64),
             _ => None,
         }
     }
 
     fn cache_key(&self) -> Option<&str> {
-        self.row.cache_key.as_deref()
+        self.task.cache_key.as_ref().map(|k| k.0.as_str())
     }
 
     fn origin_execution_time(&self) -> Option<f64> {
-        self.row.origin_execution_time.map(|v| v as f64)
+        self.task.origin_execution_time.map(|d| d.0 as f64)
     }
 }
 
@@ -330,8 +334,12 @@ impl TaskConnection {
 // QueryRoot
 // ---------------------------------------------------------------------------
 
-fn encode_build_scan_cursor(row: &db::BuildScanRow) -> String {
-    let value = serde_json::json!({"created_at": &row.created_at, "id": &row.id}).to_string();
+fn encode_build_scan_cursor(scan: &domain::BuildScan) -> String {
+    let value = serde_json::json!({
+        "created_at": scan.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+        "id": scan.id.0.to_string()
+    })
+    .to_string();
     Cursor::new(value).encode()
 }
 
@@ -343,16 +351,20 @@ impl QueryRoot {
         let relay_id = RelayId::decode(&id).map_err(FieldError::from)?;
         match relay_id.type_name.as_str() {
             "BuildScan" => {
-                let row = db::get_build_scan(&context.pool, &relay_id.raw_id)
+                let scan = context
+                    .service
+                    .get_build_scan(&relay_id.raw_id)
                     .await
                     .map_err(|e| FieldError::from(e.to_string()))?;
-                Ok(row.map(|r| NodeValue::BuildScan(BuildScan { row: r })))
+                Ok(scan.map(|s| NodeValue::BuildScan(BuildScan { scan: s })))
             }
             "Task" => {
-                let row = db::get_task(&context.pool, &relay_id.raw_id)
+                let task = context
+                    .service
+                    .get_task(&relay_id.raw_id)
                     .await
                     .map_err(|e| FieldError::from(e.to_string()))?;
-                Ok(row.map(|r| NodeValue::Task(Task { row: r })))
+                Ok(task.map(|t| NodeValue::Task(Task { task: t })))
             }
             _ => Ok(None),
         }
@@ -385,34 +397,37 @@ impl QueryRoot {
             (None, None)
         };
 
-        let mut rows = db::list_build_scans(
-            &context.pool,
-            (limit + 1) as i64,
-            after_created_at.as_deref(),
-            after_id.as_deref(),
-        )
-        .await
-        .map_err(|e| FieldError::from(e.to_string()))?;
+        let mut scans = context
+            .service
+            .list_build_scans(
+                (limit + 1) as i64,
+                after_created_at.as_deref(),
+                after_id.as_deref(),
+            )
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
 
-        let has_next_page = rows.len() > limit as usize;
+        let has_next_page = scans.len() > limit as usize;
         if has_next_page {
-            rows.pop();
+            scans.pop();
         }
 
-        let end_cursor = rows.last().map(|r| encode_build_scan_cursor(r));
+        let end_cursor = scans.last().map(encode_build_scan_cursor);
 
-        let edges: Vec<BuildScanEdge> = rows
+        let edges: Vec<BuildScanEdge> = scans
             .into_iter()
-            .map(|r| {
-                let cursor = encode_build_scan_cursor(&r);
+            .map(|s| {
+                let cursor = encode_build_scan_cursor(&s);
                 BuildScanEdge {
                     cursor,
-                    node: BuildScan { row: r },
+                    node: BuildScan { scan: s },
                 }
             })
             .collect();
 
-        let total_count = db::count_build_scans(&context.pool)
+        let total_count = context
+            .service
+            .count_build_scans()
             .await
             .map_err(|e| FieldError::from(e.to_string()))? as i32;
 
@@ -434,11 +449,13 @@ impl QueryRoot {
             id.to_string()
         };
 
-        let row = db::get_build_scan(&context.pool, &raw_id)
+        let scan = context
+            .service
+            .get_build_scan(&raw_id)
             .await
             .map_err(|e| FieldError::from(e.to_string()))?;
 
-        Ok(row.map(|r| BuildScan { row: r }))
+        Ok(scan.map(|s| BuildScan { scan: s }))
     }
 }
 

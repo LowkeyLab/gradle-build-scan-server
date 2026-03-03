@@ -8,7 +8,5 @@ rust_library(
         "sql/002_composite_pagination_index.sql",
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "@crates//:sqlx",
-    ],
+    deps = ["@crates//:sqlx"],
 )
