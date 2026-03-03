@@ -43,7 +43,7 @@ async fn main() {
 
     let schema = Arc::new(graphql::create_schema());
     let context = Arc::new(graphql::Context {
-        pool: Arc::new(pool.clone()),
+        service: service.clone(),
     });
 
     let ingest_state = IngestAppState {
