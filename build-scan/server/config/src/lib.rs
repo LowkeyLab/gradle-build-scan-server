@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use runfiles::{Runfiles, rlocation};
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub port: u16,
@@ -23,30 +25,10 @@ fn resolve_spa_dir() -> Option<PathBuf> {
         return Some(PathBuf::from(dir));
     }
 
-    if let Some(runfiles) = find_runfiles_dir() {
-        let path = runfiles.join(RUNFILES_SPA_PATH);
-        if path.is_dir() {
-            return Some(path);
-        }
-    }
-
-    None
-}
-
-/// Locate the Bazel runfiles directory.
-///
-/// Checks `RUNFILES_DIR` env var first, then falls back to
-/// `<executable>.runfiles/` adjacent to the current binary.
-fn find_runfiles_dir() -> Option<PathBuf> {
-    if let Ok(dir) = std::env::var("RUNFILES_DIR") {
-        return Some(PathBuf::from(dir));
-    }
-
-    let exe = std::env::current_exe().ok()?;
-    let exe_name = exe.file_name()?.to_str()?;
-    let runfiles = exe.with_file_name(format!("{}.runfiles", exe_name));
-    if runfiles.is_dir() {
-        return Some(runfiles);
+    let r = Runfiles::create().ok()?;
+    let path = rlocation!(r, RUNFILES_SPA_PATH)?;
+    if path.is_dir() {
+        return Some(path);
     }
 
     None
