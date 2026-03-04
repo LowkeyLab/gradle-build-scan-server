@@ -62,8 +62,7 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 
     fn try_from(row: BuildScanRow) -> Result<Self, Self::Error> {
         let id = domain::BuildScanId(
-            uuid::Uuid::parse_str(&row.id)
-                .map_err(|e| anyhow!("invalid build scan id: {e}"))?,
+            uuid::Uuid::parse_str(&row.id).map_err(|e| anyhow!("invalid build scan id: {e}"))?,
         );
 
         let started_at = row.started_at.map(|s| parse_datetime(&s)).transpose()?;
@@ -71,7 +70,10 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 
         let outcome = row
             .outcome
-            .map(|s| s.parse::<domain::BuildOutcome>().map_err(|s| anyhow!("{s}")))
+            .map(|s| {
+                s.parse::<domain::BuildOutcome>()
+                    .map_err(|s| anyhow!("{s}"))
+            })
             .transpose()?;
 
         let requested_tasks = row
@@ -109,12 +111,10 @@ impl TryFrom<TaskRow> for domain::Task {
 
     fn try_from(row: TaskRow) -> Result<Self, Self::Error> {
         let id = domain::TaskId(
-            uuid::Uuid::parse_str(&row.id)
-                .map_err(|e| anyhow!("invalid task id: {e}"))?,
+            uuid::Uuid::parse_str(&row.id).map_err(|e| anyhow!("invalid task id: {e}"))?,
         );
         let scan_id = domain::BuildScanId(
-            uuid::Uuid::parse_str(&row.scan_id)
-                .map_err(|e| anyhow!("invalid scan_id: {e}"))?,
+            uuid::Uuid::parse_str(&row.scan_id).map_err(|e| anyhow!("invalid scan_id: {e}"))?,
         );
         let outcome = row
             .outcome
@@ -246,10 +246,7 @@ pub async fn list_build_scans(
     Ok(rows)
 }
 
-pub async fn get_build_scan(
-    pool: &SqlitePool,
-    id: &str,
-) -> Result<Option<BuildScanRow>> {
+pub async fn get_build_scan(pool: &SqlitePool, id: &str) -> Result<Option<BuildScanRow>> {
     let row = sqlx::query_as::<_, BuildScanRow>(
         "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
          FROM build_scans WHERE id = ?",

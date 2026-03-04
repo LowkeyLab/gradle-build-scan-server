@@ -135,10 +135,7 @@ impl BuildScanService {
         }
     }
 
-    pub async fn get_build_scan(
-        &self,
-        id: &str,
-    ) -> Result<Option<domain::BuildScan>> {
+    pub async fn get_build_scan(&self, id: &str) -> Result<Option<domain::BuildScan>> {
         let row = db::get_build_scan(&self.pool, id).await?;
         Ok(row.map(domain::BuildScan::try_from).transpose()?)
     }
@@ -150,15 +147,13 @@ impl BuildScanService {
         after_id: Option<&str>,
     ) -> Result<Vec<domain::BuildScan>> {
         let rows = db::list_build_scans(&self.pool, limit, after_created_at, after_id).await?;
-        Ok(rows.into_iter()
+        Ok(rows
+            .into_iter()
             .map(domain::BuildScan::try_from)
             .collect::<Result<Vec<_>, _>>()?)
     }
 
-    pub async fn get_task(
-        &self,
-        id: &str,
-    ) -> Result<Option<domain::Task>> {
+    pub async fn get_task(&self, id: &str) -> Result<Option<domain::Task>> {
         let row = db::get_task(&self.pool, id).await?;
         Ok(row.map(domain::Task::try_from).transpose()?)
     }
@@ -170,7 +165,8 @@ impl BuildScanService {
         after_id: Option<&str>,
     ) -> Result<Vec<domain::Task>> {
         let rows = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
-        Ok(rows.into_iter()
+        Ok(rows
+            .into_iter()
             .map(domain::Task::try_from)
             .collect::<Result<Vec<_>, _>>()?)
     }

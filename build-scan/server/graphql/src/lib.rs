@@ -114,12 +114,12 @@ impl BuildScan {
         first: Option<i32>,
         after: Option<String>,
     ) -> FieldResult<TaskConnection> {
-        let limit = validate_pagination(first).map_err(FieldError::from)?;
+        let limit = validate_pagination(first).map_err(|e| FieldError::from(e.to_string()))?;
         let after_id = after
             .as_deref()
             .map(Cursor::decode)
             .transpose()
-            .map_err(FieldError::from)?
+            .map_err(|e| FieldError::from(e.to_string()))?
             .map(|c| c.value);
 
         let scan_id_str = self.scan.id.0.to_string();
@@ -348,7 +348,7 @@ pub struct QueryRoot;
 #[graphql_object(context = Context)]
 impl QueryRoot {
     async fn node(context: &Context, id: ID) -> FieldResult<Option<NodeValue>> {
-        let relay_id = RelayId::decode(&id).map_err(FieldError::from)?;
+        let relay_id = RelayId::decode(&id).map_err(|e| FieldError::from(e.to_string()))?;
         match relay_id.type_name.as_str() {
             "BuildScan" => {
                 let scan = context
@@ -375,12 +375,12 @@ impl QueryRoot {
         first: Option<i32>,
         after: Option<String>,
     ) -> FieldResult<BuildScanConnection> {
-        let limit = validate_pagination(first).map_err(FieldError::from)?;
+        let limit = validate_pagination(first).map_err(|e| FieldError::from(e.to_string()))?;
         let cursor = after
             .as_deref()
             .map(Cursor::decode)
             .transpose()
-            .map_err(FieldError::from)?;
+            .map_err(|e| FieldError::from(e.to_string()))?;
         let (after_created_at, after_id) = if let Some(c) = cursor {
             let v: serde_json::Value = serde_json::from_str(&c.value)
                 .map_err(|_| FieldError::from("Invalid cursor format".to_string()))?;
