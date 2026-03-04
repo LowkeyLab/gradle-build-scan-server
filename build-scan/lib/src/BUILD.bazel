@@ -12,7 +12,6 @@ rust_library(
     srcs = ["models.rs"],
     visibility = [
         "//build-scan:__subpackages__",
-        "//server:__subpackages__",
     ],
     deps = ["@crates//:serde"],
 )
@@ -22,7 +21,6 @@ rust_library(
     srcs = ["lib.rs"],
     visibility = [
         "//build-scan:__subpackages__",
-        "//server:__subpackages__",
     ],
     deps = [
         ":assembly",

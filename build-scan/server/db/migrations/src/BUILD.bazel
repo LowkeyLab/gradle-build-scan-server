@@ -1,0 +1,12 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "migrations",
+    srcs = ["lib.rs"],
+    compile_data = [
+        "sql/001_initial.sql",
+        "sql/002_composite_pagination_index.sql",
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["@crates//:sqlx"],
+)
