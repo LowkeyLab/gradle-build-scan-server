@@ -15,6 +15,20 @@ pub struct UploadRequest {
     pub raw_payload: Vec<u8>,
 }
 
+fn map_task_outcome(outcome: &models::TaskOutcome) -> domain::TaskOutcome {
+    match outcome {
+        models::TaskOutcome::UpToDate => domain::TaskOutcome::UpToDate,
+        models::TaskOutcome::Skipped => domain::TaskOutcome::Skipped,
+        models::TaskOutcome::Failed => domain::TaskOutcome::Failed,
+        models::TaskOutcome::Success => domain::TaskOutcome::Success,
+        models::TaskOutcome::FromCache => domain::TaskOutcome::FromCache,
+        models::TaskOutcome::NoSource => domain::TaskOutcome::NoSource,
+        models::TaskOutcome::AvoidedForUnknownReason => {
+            domain::TaskOutcome::AvoidedForUnknownReason
+        }
+    }
+}
+
 pub struct BuildScanService {
     pool: SqlitePool,
 }
@@ -111,10 +125,7 @@ impl BuildScanService {
 
                 let task_count = payload.tasks.len();
                 for task in &payload.tasks {
-                    let task_outcome = task
-                        .outcome
-                        .as_ref()
-                        .and_then(|o| format!("{:?}", o).parse::<domain::TaskOutcome>().ok());
+                    let task_outcome = task.outcome.as_ref().map(map_task_outcome);
 
                     let cache_key_str =
                         task.origin_build_cache_key.as_ref().map(|k| hex::encode(k));
@@ -139,6 +150,9 @@ impl BuildScanService {
                     }
                     if let Some(ts) = task.finished_at {
                         task_builder.finish_timestamp(ts);
+                    }
+                    if let Some(d) = task.duration_ms {
+                        task_builder.origin_execution_time(d);
                     }
                     if let Some(ck) = cache_key_str {
                         task_builder.cache_key(ck);
