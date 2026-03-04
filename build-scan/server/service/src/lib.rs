@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use chrono::Utc;
 use models::TaskOutcome;
 use sqlx::SqlitePool;
@@ -38,9 +38,9 @@ impl BuildScanService {
         Self { pool }
     }
 
-    pub async fn process_upload(&self, req: UploadRequest) {
+    pub async fn process_upload(&self, req: UploadRequest) -> Result<()> {
         let scan_id = req.scan_id.clone();
-        let scan_uuid = Uuid::parse_str(&scan_id).unwrap();
+        let scan_uuid = Uuid::parse_str(&scan_id).context("invalid scan_id UUID")?;
         let payload_size = req.raw_payload.len();
         info!(scan_id = %scan_id, payload_size = payload_size, "Received build scan upload");
 
@@ -55,12 +55,11 @@ impl BuildScanService {
                     .outcome(domain::BuildOutcome::ParseError)
                     .created_at(Utc::now())
                     .build()
-                    .unwrap();
-                if let Err(db_err) =
-                    db::insert_build_scan(&self.pool, &scan, Some(&req.raw_payload)).await
-                {
-                    error!(scan_id = %scan_id, error = %db_err, "Failed to store parse_error scan");
-                }
+                    .map_err(|e| anyhow::anyhow!(e))
+                    .context("failed to build parse-error BuildScan")?;
+                db::insert_build_scan(&self.pool, &scan, Some(&req.raw_payload))
+                    .await
+                    .context("failed to store parse_error scan")?;
             }
             Ok(payload) => {
                 let outcome = if payload
@@ -107,22 +106,20 @@ impl BuildScanService {
                     scan_builder.jvm_version(v);
                 }
 
-                let scan = scan_builder.build().unwrap();
+                let scan = scan_builder
+                    .build()
+                    .map_err(|e| anyhow::anyhow!(e))
+                    .context("failed to build BuildScan")?;
 
-                let mut tx = match self.pool.begin().await {
-                    Ok(tx) => tx,
-                    Err(e) => {
-                        error!(scan_id = %scan_id, error = %e, "Failed to begin transaction");
-                        return;
-                    }
-                };
+                let mut tx = self
+                    .pool
+                    .begin()
+                    .await
+                    .context("failed to begin transaction")?;
 
-                if let Err(db_err) =
-                    db::insert_build_scan(&mut *tx, &scan, Some(&req.raw_payload)).await
-                {
-                    error!(scan_id = %scan_id, error = %db_err, "Failed to store build scan");
-                    return;
-                }
+                db::insert_build_scan(&mut *tx, &scan, Some(&req.raw_payload))
+                    .await
+                    .context("failed to store build scan")?;
 
                 let task_count = payload.tasks.len();
                 for task in &payload.tasks {
@@ -159,22 +156,23 @@ impl BuildScanService {
                         task_builder.cache_key(ck);
                     }
 
-                    let domain_task = task_builder.build().unwrap();
+                    let domain_task = task_builder
+                        .build()
+                        .map_err(|e| anyhow::anyhow!(e))
+                        .context("failed to build Task")?;
 
-                    if let Err(db_err) = db::insert_task(&mut *tx, &domain_task).await {
-                        error!(scan_id = %scan_id, task_path = %task.task_path, error = %db_err, "Failed to store task");
-                        return;
-                    }
+                    db::insert_task(&mut *tx, &domain_task)
+                        .await
+                        .with_context(|| format!("failed to store task {}", task.task_path))?;
                 }
 
-                if let Err(e) = tx.commit().await {
-                    error!(scan_id = %scan_id, error = %e, "Failed to commit transaction");
-                    return;
-                }
+                tx.commit().await.context("failed to commit transaction")?;
 
                 info!(scan_id = %scan_id, task_count = task_count, "Stored build scan successfully");
             }
         }
+
+        Ok(())
     }
 
     pub async fn get_build_scan(&self, id: &str) -> Result<Option<domain::BuildScan>> {
