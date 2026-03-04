@@ -144,8 +144,12 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     raw_payload: Option<&[u8]>,
 ) -> Result<()> {
     let id = scan.id.0.to_string();
-    let started_at = scan.started_at.map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
-    let finished_at = scan.finished_at.map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
+    let started_at = scan
+        .started_at
+        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
+    let finished_at = scan
+        .finished_at
+        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
     let outcome = scan.outcome.map(|o| o.to_string());
     let requested_tasks = scan.requested_tasks.as_ref().map(|tasks| {
         serde_json::to_string(&tasks.iter().map(|t| &t.0).collect::<Vec<_>>()).unwrap()

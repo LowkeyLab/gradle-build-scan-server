@@ -48,16 +48,15 @@ impl BuildScanService {
                 }
             }
             Ok(payload) => {
-                let outcome =
-                    if payload
-                        .tasks
-                        .iter()
-                        .any(|t| matches!(t.outcome, Some(TaskOutcome::Failed)))
-                    {
-                        domain::BuildOutcome::Failed
-                    } else {
-                        domain::BuildOutcome::Success
-                    };
+                let outcome = if payload
+                    .tasks
+                    .iter()
+                    .any(|t| matches!(t.outcome, Some(TaskOutcome::Failed)))
+                {
+                    domain::BuildOutcome::Failed
+                } else {
+                    domain::BuildOutcome::Success
+                };
 
                 let requested_tasks: Vec<domain::RequestedTask> = payload
                     .requested_tasks
