@@ -463,7 +463,7 @@ impl QueryRoot {
 // Schema
 // ---------------------------------------------------------------------------
 
-pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<Context>, EmptySubscription<Context>>;
+pub type Schema = RootNode<QueryRoot, EmptyMutation<Context>, EmptySubscription<Context>>;
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot, EmptyMutation::new(), EmptySubscription::new())

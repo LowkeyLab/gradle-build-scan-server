@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use derive_builder::Builder;
 use uuid::Uuid;
 
 // === ID types ===
@@ -56,6 +57,89 @@ pub struct Timestamp(pub i64);
 /// Duration in milliseconds
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Duration(pub i64);
+
+// === From impls for newtype wrappers (enables derive_builder setter(into)) ===
+
+impl From<Uuid> for BuildScanId {
+    fn from(v: Uuid) -> Self {
+        Self(v)
+    }
+}
+impl From<Uuid> for TaskId {
+    fn from(v: Uuid) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for BuildToolType {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for BuildToolVersion {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for PluginVersion {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for Hostname {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for OsName {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for OsVersion {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for JvmVendor {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for JvmVersion {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for TaskPath {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for ClassName {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for CacheKey {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for RequestedTask {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<i64> for Timestamp {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+impl From<i64> for Duration {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
 
 // === Enums (strict, no Unknown fallback) ===
 
@@ -133,34 +217,52 @@ impl std::str::FromStr for TaskOutcome {
 
 // === Aggregates ===
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Builder)]
+#[builder(setter(into))]
 pub struct BuildScan {
     pub id: BuildScanId,
     pub build_tool_type: BuildToolType,
     pub build_tool_version: BuildToolVersion,
     pub plugin_version: PluginVersion,
+    #[builder(setter(strip_option), default)]
     pub started_at: Option<DateTime<Utc>>,
+    #[builder(setter(strip_option), default)]
     pub finished_at: Option<DateTime<Utc>>,
+    #[builder(setter(strip_option), default)]
     pub outcome: Option<BuildOutcome>,
+    #[builder(setter(strip_option), default)]
     pub requested_tasks: Option<Vec<RequestedTask>>,
+    #[builder(setter(strip_option), default)]
     pub hostname: Option<Hostname>,
+    #[builder(setter(strip_option), default)]
     pub os_name: Option<OsName>,
+    #[builder(setter(strip_option), default)]
     pub os_version: Option<OsVersion>,
+    #[builder(setter(strip_option), default)]
     pub jvm_vendor: Option<JvmVendor>,
+    #[builder(setter(strip_option), default)]
     pub jvm_version: Option<JvmVersion>,
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Builder)]
+#[builder(setter(into))]
 pub struct Task {
     pub id: TaskId,
     pub scan_id: BuildScanId,
     pub task_path: TaskPath,
+    #[builder(setter(strip_option), default)]
     pub class_name: Option<ClassName>,
+    #[builder(setter(strip_option), default)]
     pub outcome: Option<TaskOutcome>,
+    #[builder(setter(strip_option), default)]
     pub cacheable: Option<bool>,
+    #[builder(setter(strip_option), default)]
     pub start_timestamp: Option<Timestamp>,
+    #[builder(setter(strip_option), default)]
     pub finish_timestamp: Option<Timestamp>,
+    #[builder(setter(strip_option), default)]
     pub cache_key: Option<CacheKey>,
+    #[builder(setter(strip_option), default)]
     pub origin_execution_time: Option<Duration>,
 }

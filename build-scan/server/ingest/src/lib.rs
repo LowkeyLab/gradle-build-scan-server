@@ -224,7 +224,9 @@ pub async fn handle_scan_upload(
 
     let svc = state.service.clone();
     tokio::spawn(async move {
-        svc.process_upload(req).await;
+        if let Err(e) = svc.process_upload(req).await {
+            tracing::error!(error = %e, "Failed to process build scan upload");
+        }
     });
 
     let ack = UploadAck {};

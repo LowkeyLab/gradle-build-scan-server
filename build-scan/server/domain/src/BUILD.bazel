@@ -6,6 +6,7 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "@crates//:chrono",
+        "@crates//:derive_builder",
         "@crates//:uuid",
     ],
 )
