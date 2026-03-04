@@ -1,3 +1,4 @@
+use anyhow::Result;
 use models::TaskOutcome;
 use sqlx::SqlitePool;
 use tracing::{error, info};
@@ -137,11 +138,9 @@ impl BuildScanService {
     pub async fn get_build_scan(
         &self,
         id: &str,
-    ) -> Result<Option<domain::BuildScan>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<domain::BuildScan>> {
         let row = db::get_build_scan(&self.pool, id).await?;
-        row.map(domain::BuildScan::try_from)
-            .transpose()
-            .map_err(|e| e.into())
+        Ok(row.map(domain::BuildScan::try_from).transpose()?)
     }
 
     pub async fn list_build_scans(
@@ -149,22 +148,19 @@ impl BuildScanService {
         limit: i64,
         after_created_at: Option<&str>,
         after_id: Option<&str>,
-    ) -> Result<Vec<domain::BuildScan>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<domain::BuildScan>> {
         let rows = db::list_build_scans(&self.pool, limit, after_created_at, after_id).await?;
-        rows.into_iter()
+        Ok(rows.into_iter()
             .map(domain::BuildScan::try_from)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.into())
+            .collect::<Result<Vec<_>, _>>()?)
     }
 
     pub async fn get_task(
         &self,
         id: &str,
-    ) -> Result<Option<domain::Task>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<domain::Task>> {
         let row = db::get_task(&self.pool, id).await?;
-        row.map(domain::Task::try_from)
-            .transpose()
-            .map_err(|e| e.into())
+        Ok(row.map(domain::Task::try_from).transpose()?)
     }
 
     pub async fn list_tasks(
@@ -172,19 +168,18 @@ impl BuildScanService {
         scan_id: &str,
         limit: i64,
         after_id: Option<&str>,
-    ) -> Result<Vec<domain::Task>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<domain::Task>> {
         let rows = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
-        rows.into_iter()
+        Ok(rows.into_iter()
             .map(domain::Task::try_from)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.into())
+            .collect::<Result<Vec<_>, _>>()?)
     }
 
-    pub async fn count_tasks(&self, scan_id: &str) -> Result<i64, Box<dyn std::error::Error>> {
+    pub async fn count_tasks(&self, scan_id: &str) -> Result<i64> {
         Ok(db::count_tasks(&self.pool, scan_id).await?)
     }
 
-    pub async fn count_build_scans(&self) -> Result<i64, Box<dyn std::error::Error>> {
+    pub async fn count_build_scans(&self) -> Result<i64> {
         Ok(db::count_build_scans(&self.pool).await?)
     }
 }
