@@ -1,1 +1,14 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 exports_files(["ng.bzl"])
+
+bzl_library(
+    name = "ng",
+    srcs = ["ng.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@npm//angular:postcss-cli/package_json",
+        "@rules_angular//src/architect:ng_application",
+        "@rules_angular//src/architect:ng_test",
+    ],
+)

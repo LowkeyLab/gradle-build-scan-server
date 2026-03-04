@@ -3,6 +3,7 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 rust_binary(
     name = "main",
     srcs = ["main.rs"],
+    data = ["//angular/projects/build-scan-web"],
     deps = [
         "//build-scan/server/config/src:config",
         "//build-scan/server/db/src:db",
