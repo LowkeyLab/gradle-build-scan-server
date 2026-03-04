@@ -33,6 +33,8 @@ pub struct BuildScanRow {
     pub os_version: Option<String>,
     pub jvm_vendor: Option<String>,
     pub jvm_version: Option<String>,
+    #[sqlx(default)]
+    pub raw_payload: Option<Vec<u8>>,
     pub created_at: String,
 }
 
@@ -163,6 +165,7 @@ impl From<&domain::BuildScan> for BuildScanRow {
             os_version: scan.os_version.as_ref().map(|v| v.0.clone()),
             jvm_vendor: scan.jvm_vendor.as_ref().map(|v| v.0.clone()),
             jvm_version: scan.jvm_version.as_ref().map(|v| v.0.clone()),
+            raw_payload: None,
             created_at: scan.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         }
     }
@@ -188,7 +191,6 @@ impl From<&domain::Task> for TaskRow {
 pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     executor: E,
     row: &BuildScanRow,
-    raw_payload: Option<&[u8]>,
 ) -> Result<()> {
     sqlx::query(
         "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload, created_at) \
@@ -207,7 +209,7 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     .bind(row.os_version.as_deref())
     .bind(row.jvm_vendor.as_deref())
     .bind(row.jvm_version.as_deref())
-    .bind(raw_payload)
+    .bind(row.raw_payload.as_deref())
     .bind(&row.created_at)
     .execute(executor)
     .await?;
