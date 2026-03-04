@@ -57,7 +57,8 @@ impl BuildScanService {
                     .build()
                     .map_err(|e| anyhow::anyhow!(e))
                     .context("failed to build parse-error BuildScan")?;
-                db::insert_build_scan(&self.pool, &scan, Some(&req.raw_payload))
+                let row = db::BuildScanRow::from(&scan);
+                db::insert_build_scan(&self.pool, &row, Some(&req.raw_payload))
                     .await
                     .context("failed to store parse_error scan")?;
             }
@@ -117,7 +118,8 @@ impl BuildScanService {
                     .await
                     .context("failed to begin transaction")?;
 
-                db::insert_build_scan(&mut *tx, &scan, Some(&req.raw_payload))
+                let row = db::BuildScanRow::from(&scan);
+                db::insert_build_scan(&mut *tx, &row, Some(&req.raw_payload))
                     .await
                     .context("failed to store build scan")?;
 
@@ -161,7 +163,8 @@ impl BuildScanService {
                         .map_err(|e| anyhow::anyhow!(e))
                         .context("failed to build Task")?;
 
-                    db::insert_task(&mut *tx, &domain_task)
+                    let task_row = db::TaskRow::from(&domain_task);
+                    db::insert_task(&mut *tx, &task_row)
                         .await
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
                 }
