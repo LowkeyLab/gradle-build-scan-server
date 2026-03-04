@@ -1,7 +1,9 @@
 use anyhow::Result;
+use chrono::Utc;
 use models::TaskOutcome;
 use sqlx::SqlitePool;
 use tracing::{error, info};
+use uuid::Uuid;
 
 use domain;
 
@@ -30,44 +32,68 @@ impl BuildScanService {
         match lib::parse(&req.raw_payload) {
             Err(e) => {
                 error!(scan_id = %scan_id, error = %e, "Failed to parse build scan payload");
-                if let Err(db_err) = db::insert_build_scan(
-                    &self.pool,
-                    &scan_id,
-                    req.build_tool_type.as_deref().unwrap_or(""),
-                    req.build_tool_version.as_deref().unwrap_or(""),
-                    req.plugin_version.as_deref().unwrap_or(""),
-                    None,
-                    None,
-                    Some("parse_error"),
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    Some(&req.raw_payload),
-                )
-                .await
+                let scan = domain::BuildScanBuilder::default()
+                    .id(Uuid::parse_str(&scan_id).unwrap())
+                    .build_tool_type(req.build_tool_type.unwrap_or_default())
+                    .build_tool_version(req.build_tool_version.unwrap_or_default())
+                    .plugin_version(req.plugin_version.unwrap_or_default())
+                    .outcome(domain::BuildOutcome::ParseError)
+                    .created_at(Utc::now())
+                    .build()
+                    .unwrap();
+                if let Err(db_err) =
+                    db::insert_build_scan(&self.pool, &scan, Some(&req.raw_payload)).await
                 {
                     error!(scan_id = %scan_id, error = %db_err, "Failed to store parse_error scan");
                 }
             }
             Ok(payload) => {
-                let outcome = if payload
-                    .tasks
-                    .iter()
-                    .any(|t| matches!(t.outcome, Some(TaskOutcome::Failed)))
-                {
-                    "failed"
-                } else {
-                    "success"
-                };
+                let outcome =
+                    if payload
+                        .tasks
+                        .iter()
+                        .any(|t| matches!(t.outcome, Some(TaskOutcome::Failed)))
+                    {
+                        domain::BuildOutcome::Failed
+                    } else {
+                        domain::BuildOutcome::Success
+                    };
 
-                let requested_tasks_json = if payload.requested_tasks.is_empty() {
-                    None
-                } else {
-                    serde_json::to_string(&payload.requested_tasks).ok()
-                };
+                let requested_tasks: Vec<domain::RequestedTask> = payload
+                    .requested_tasks
+                    .into_iter()
+                    .map(domain::RequestedTask::from)
+                    .collect();
+
+                let mut scan_builder = domain::BuildScanBuilder::default();
+                scan_builder
+                    .id(Uuid::parse_str(&scan_id).unwrap())
+                    .build_tool_type(req.build_tool_type.unwrap_or_default())
+                    .build_tool_version(req.build_tool_version.unwrap_or_default())
+                    .plugin_version(req.plugin_version.unwrap_or_default())
+                    .outcome(outcome)
+                    .created_at(Utc::now());
+
+                if !requested_tasks.is_empty() {
+                    scan_builder.requested_tasks(requested_tasks);
+                }
+                if let Some(h) = payload.hostname {
+                    scan_builder.hostname(h);
+                }
+                if let Some(n) = payload.os_name {
+                    scan_builder.os_name(n);
+                }
+                if let Some(v) = payload.os_version {
+                    scan_builder.os_version(v);
+                }
+                if let Some(v) = payload.jvm_vendor {
+                    scan_builder.jvm_vendor(v);
+                }
+                if let Some(v) = payload.jvm_version {
+                    scan_builder.jvm_version(v);
+                }
+
+                let scan = scan_builder.build().unwrap();
 
                 let mut tx = match self.pool.begin().await {
                     Ok(tx) => tx,
@@ -77,24 +103,8 @@ impl BuildScanService {
                     }
                 };
 
-                if let Err(db_err) = db::insert_build_scan(
-                    &mut *tx,
-                    &scan_id,
-                    req.build_tool_type.as_deref().unwrap_or(""),
-                    req.build_tool_version.as_deref().unwrap_or(""),
-                    req.plugin_version.as_deref().unwrap_or(""),
-                    None,
-                    None,
-                    Some(outcome),
-                    requested_tasks_json.as_deref(),
-                    payload.hostname.as_deref(),
-                    payload.os_name.as_deref(),
-                    payload.os_version.as_deref(),
-                    payload.jvm_vendor.as_deref(),
-                    payload.jvm_version.as_deref(),
-                    Some(&req.raw_payload),
-                )
-                .await
+                if let Err(db_err) =
+                    db::insert_build_scan(&mut *tx, &scan, Some(&req.raw_payload)).await
                 {
                     error!(scan_id = %scan_id, error = %db_err, "Failed to store build scan");
                     return;
@@ -102,24 +112,42 @@ impl BuildScanService {
 
                 let task_count = payload.tasks.len();
                 for task in &payload.tasks {
-                    let outcome_str = task.outcome.as_ref().map(|o| format!("{:?}", o));
+                    let task_outcome = task
+                        .outcome
+                        .as_ref()
+                        .and_then(|o| format!("{:?}", o).parse::<domain::TaskOutcome>().ok());
+
                     let cache_key_str =
                         task.origin_build_cache_key.as_ref().map(|k| hex::encode(k));
 
-                    if let Err(db_err) = db::insert_task(
-                        &mut *tx,
-                        &scan_id,
-                        &task.task_path,
-                        task.class_name.as_deref(),
-                        outcome_str.as_deref(),
-                        task.cacheable,
-                        task.started_at,
-                        task.finished_at,
-                        cache_key_str.as_deref(),
-                        None,
-                    )
-                    .await
-                    {
+                    let mut task_builder = domain::TaskBuilder::default();
+                    task_builder
+                        .id(Uuid::new_v4())
+                        .scan_id(Uuid::parse_str(&scan_id).unwrap())
+                        .task_path(task.task_path.clone());
+
+                    if let Some(cn) = &task.class_name {
+                        task_builder.class_name(cn.clone());
+                    }
+                    if let Some(o) = task_outcome {
+                        task_builder.outcome(o);
+                    }
+                    if let Some(c) = task.cacheable {
+                        task_builder.cacheable(c);
+                    }
+                    if let Some(ts) = task.started_at {
+                        task_builder.start_timestamp(ts);
+                    }
+                    if let Some(ts) = task.finished_at {
+                        task_builder.finish_timestamp(ts);
+                    }
+                    if let Some(ck) = cache_key_str {
+                        task_builder.cache_key(ck);
+                    }
+
+                    let domain_task = task_builder.build().unwrap();
+
+                    if let Err(db_err) = db::insert_task(&mut *tx, &domain_task).await {
                         error!(scan_id = %scan_id, task_path = %task.task_path, error = %db_err, "Failed to store task");
                         return;
                     }

@@ -10,9 +10,10 @@ rust_library(
         "//build-scan/server/db/src:db",
         "//build-scan/server/domain/src:domain",
         "@crates//:anyhow",
+        "@crates//:chrono",
         "@crates//:hex",
-        "@crates//:serde_json",
         "@crates//:sqlx",
         "@crates//:tracing",
+        "@crates//:uuid",
     ],
 )

@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
 use std::str::FromStr;
-use uuid::Uuid;
 
 pub async fn connect(url: &str) -> Result<SqlitePool> {
     let options = SqliteConnectOptions::from_str(url)?.pragma("foreign_keys", "ON");
@@ -139,41 +138,36 @@ impl TryFrom<TaskRow> for domain::Task {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     executor: E,
-    id: &str,
-    build_tool_type: &str,
-    build_tool_version: &str,
-    plugin_version: &str,
-    started_at: Option<&str>,
-    finished_at: Option<&str>,
-    outcome: Option<&str>,
-    requested_tasks: Option<&str>,
-    hostname: Option<&str>,
-    os_name: Option<&str>,
-    os_version: Option<&str>,
-    jvm_vendor: Option<&str>,
-    jvm_version: Option<&str>,
+    scan: &domain::BuildScan,
     raw_payload: Option<&[u8]>,
 ) -> Result<()> {
+    let id = scan.id.0.to_string();
+    let started_at = scan.started_at.map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
+    let finished_at = scan.finished_at.map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
+    let outcome = scan.outcome.map(|o| o.to_string());
+    let requested_tasks = scan.requested_tasks.as_ref().map(|tasks| {
+        serde_json::to_string(&tasks.iter().map(|t| &t.0).collect::<Vec<_>>()).unwrap()
+    });
+
     sqlx::query(
         "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
-    .bind(id)
-    .bind(build_tool_type)
-    .bind(build_tool_version)
-    .bind(plugin_version)
-    .bind(started_at)
-    .bind(finished_at)
-    .bind(outcome)
-    .bind(requested_tasks)
-    .bind(hostname)
-    .bind(os_name)
-    .bind(os_version)
-    .bind(jvm_vendor)
-    .bind(jvm_version)
+    .bind(&id)
+    .bind(&scan.build_tool_type.0)
+    .bind(&scan.build_tool_version.0)
+    .bind(&scan.plugin_version.0)
+    .bind(started_at.as_deref())
+    .bind(finished_at.as_deref())
+    .bind(outcome.as_deref())
+    .bind(requested_tasks.as_deref())
+    .bind(scan.hostname.as_ref().map(|h| &h.0))
+    .bind(scan.os_name.as_ref().map(|n| &n.0))
+    .bind(scan.os_version.as_ref().map(|v| &v.0))
+    .bind(scan.jvm_vendor.as_ref().map(|v| &v.0))
+    .bind(scan.jvm_version.as_ref().map(|v| &v.0))
     .bind(raw_payload)
     .execute(executor)
     .await?;
@@ -181,36 +175,29 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     executor: E,
-    scan_id: &str,
-    task_path: &str,
-    class_name: Option<&str>,
-    outcome: Option<&str>,
-    cacheable: Option<bool>,
-    start_timestamp: Option<i64>,
-    finish_timestamp: Option<i64>,
-    cache_key: Option<&str>,
-    origin_execution_time: Option<i64>,
+    task: &domain::Task,
 ) -> Result<()> {
-    let id = Uuid::new_v4().to_string();
-    let cacheable_int: Option<i64> = cacheable.map(|b| if b { 1 } else { 0 });
+    let id = task.id.0.to_string();
+    let scan_id = task.scan_id.0.to_string();
+    let outcome = task.outcome.map(|o| o.to_string());
+    let cacheable_int: Option<i64> = task.cacheable.map(|b| if b { 1 } else { 0 });
 
     sqlx::query(
         "INSERT INTO tasks (id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&id)
-    .bind(scan_id)
-    .bind(task_path)
-    .bind(class_name)
-    .bind(outcome)
+    .bind(&scan_id)
+    .bind(&task.task_path.0)
+    .bind(task.class_name.as_ref().map(|c| &c.0))
+    .bind(outcome.as_deref())
     .bind(cacheable_int)
-    .bind(start_timestamp)
-    .bind(finish_timestamp)
-    .bind(cache_key)
-    .bind(origin_execution_time)
+    .bind(task.start_timestamp.map(|t| t.0))
+    .bind(task.finish_timestamp.map(|t| t.0))
+    .bind(task.cache_key.as_ref().map(|k| &k.0))
+    .bind(task.origin_execution_time.map(|d| d.0))
     .execute(executor)
     .await?;
 
