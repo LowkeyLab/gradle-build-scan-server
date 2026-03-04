@@ -57,9 +57,6 @@ catalogs:
     daisyui:
       specifier: ^5.5.5
       version: 5.5.19
-    graphql:
-      specifier: ^16.10.0
-      version: 16.13.0
     graphql-tag:
       specifier: ^2.12.6
       version: 2.12.6
@@ -69,6 +66,9 @@ catalogs:
     optimism:
       specifier: ^0.18.1
       version: 0.18.1
+    postcss:
+      specifier: ^8.5.3
+      version: 8.5.8
     postcss-cli:
       specifier: ^11.0.1
       version: 11.0.1
@@ -115,7 +115,7 @@ importers:
         version: 21.2.0(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(@angular/platform-browser@21.2.0(@angular/common@21.2.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1)))(rxjs@7.8.2)
       '@apollo/client':
         specifier: 'catalog:'
-        version: 4.1.6(graphql@16.13.0)(rxjs@7.8.2)
+        version: 4.1.6(graphql@16.13.1)(rxjs@7.8.2)
       '@wry/caches':
         specifier: 'catalog:'
         version: 1.0.1
@@ -130,13 +130,13 @@ importers:
         version: 0.5.0
       apollo-angular:
         specifier: 'catalog:'
-        version: 13.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(@apollo/client@4.1.6(graphql@16.13.0)(rxjs@7.8.2))(graphql@16.13.0)(rxjs@7.8.2)
+        version: 13.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(@apollo/client@4.1.6(graphql@16.13.1)(rxjs@7.8.2))(graphql@16.13.1)(rxjs@7.8.2)
       graphql:
         specifier: 'catalog:'
-        version: 16.13.0
+        version: 16.13.1
       graphql-tag:
         specifier: 'catalog:'
-        version: 2.12.6(graphql@16.13.0)
+        version: 2.12.6(graphql@16.13.1)
       optimism:
         specifier: 'catalog:'
         version: 0.18.1
@@ -2102,8 +2102,8 @@ packages:
     peerDependencies:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
 
-  graphql@16.13.0:
-    resolution: {integrity: sha512-uSisMYERbaB9bkA9M4/4dnqyktaEkf1kMHNKq/7DHyxVeWqHQ2mBmVqm5u6/FVHwF3iCNalKcg82Zfl+tffWoA==}
+  graphql@16.13.1:
+    resolution: {integrity: sha512-gGgrVCoDKlIZ8fIqXBBb0pPKqDgki0Z/FSKNiQzSGj2uEYHr1tq5wmBegGwJx6QB5S5cM0khSBpi/JFHMCvsmQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   has-symbols@1.1.0:
@@ -3463,14 +3463,14 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@apollo/client@4.1.6(graphql@16.13.0)(rxjs@7.8.2)':
+  '@apollo/client@4.1.6(graphql@16.13.1)(rxjs@7.8.2)':
     dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.0)
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.1)
       '@wry/caches': 1.0.1
       '@wry/equality': 0.5.7
       '@wry/trie': 0.5.0
-      graphql: 16.13.0
-      graphql-tag: 2.12.6(graphql@16.13.0)
+      graphql: 16.13.1
+      graphql-tag: 2.12.6(graphql@16.13.1)
       optimism: 0.18.1
       rxjs: 7.8.2
       tslib: 2.8.1
@@ -3727,9 +3727,9 @@ snapshots:
     dependencies:
       retry: 0.13.1
 
-  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.0)':
+  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.1)':
     dependencies:
-      graphql: 16.13.0
+      graphql: 16.13.1
 
   '@harperfast/extended-iterable@1.0.3':
     optional: true
@@ -4496,11 +4496,11 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  apollo-angular@13.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(@apollo/client@4.1.6(graphql@16.13.0)(rxjs@7.8.2))(graphql@16.13.0)(rxjs@7.8.2):
+  apollo-angular@13.0.0(@angular/core@21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1))(@apollo/client@4.1.6(graphql@16.13.1)(rxjs@7.8.2))(graphql@16.13.1)(rxjs@7.8.2):
     dependencies:
       '@angular/core': 21.2.0(@angular/compiler@21.2.0)(rxjs@7.8.2)(zone.js@0.16.1)
-      '@apollo/client': 4.1.6(graphql@16.13.0)(rxjs@7.8.2)
-      graphql: 16.13.0
+      '@apollo/client': 4.1.6(graphql@16.13.1)(rxjs@7.8.2)
+      graphql: 16.13.1
       rxjs: 7.8.2
       tslib: 2.8.1
 
@@ -4949,12 +4949,12 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql-tag@2.12.6(graphql@16.13.0):
+  graphql-tag@2.12.6(graphql@16.13.1):
     dependencies:
-      graphql: 16.13.0
+      graphql: 16.13.1
       tslib: 2.8.1
 
-  graphql@16.13.0: {}
+  graphql@16.13.1: {}
 
   has-symbols@1.1.0: {}
 
