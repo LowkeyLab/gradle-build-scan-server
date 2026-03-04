@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
 use std::str::FromStr;
@@ -62,7 +62,8 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 
     fn try_from(row: BuildScanRow) -> Result<Self, Self::Error> {
         let id = domain::BuildScanId(
-            uuid::Uuid::parse_str(&row.id).map_err(|e| anyhow!("invalid build scan id: {e}"))?,
+            uuid::Uuid::parse_str(&row.id)
+                .with_context(|| format!("invalid build scan id '{}'", row.id))?,
         );
 
         let started_at = row.started_at.map(|s| parse_datetime(&s)).transpose()?;
@@ -72,15 +73,15 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
             .outcome
             .map(|s| {
                 s.parse::<domain::BuildOutcome>()
-                    .map_err(|s| anyhow!("{s}"))
+                    .map_err(anyhow::Error::msg)
             })
             .transpose()?;
 
         let requested_tasks = row
             .requested_tasks
             .map(|s| -> Result<Vec<domain::RequestedTask>> {
-                let strings: Vec<String> = serde_json::from_str(&s)
-                    .map_err(|e| anyhow!("invalid requested_tasks JSON: {e}"))?;
+                let strings: Vec<String> =
+                    serde_json::from_str(&s).context("invalid requested_tasks JSON")?;
                 Ok(strings.into_iter().map(domain::RequestedTask).collect())
             })
             .transpose()?;
@@ -111,14 +112,16 @@ impl TryFrom<TaskRow> for domain::Task {
 
     fn try_from(row: TaskRow) -> Result<Self, Self::Error> {
         let id = domain::TaskId(
-            uuid::Uuid::parse_str(&row.id).map_err(|e| anyhow!("invalid task id: {e}"))?,
+            uuid::Uuid::parse_str(&row.id)
+                .with_context(|| format!("invalid task id '{}'", row.id))?,
         );
         let scan_id = domain::BuildScanId(
-            uuid::Uuid::parse_str(&row.scan_id).map_err(|e| anyhow!("invalid scan_id: {e}"))?,
+            uuid::Uuid::parse_str(&row.scan_id)
+                .with_context(|| format!("invalid scan_id '{}'", row.scan_id))?,
         );
         let outcome = row
             .outcome
-            .map(|s| s.parse::<domain::TaskOutcome>().map_err(|s| anyhow!("{s}")))
+            .map(|s| s.parse::<domain::TaskOutcome>().map_err(anyhow::Error::msg))
             .transpose()?;
 
         Ok(domain::Task {
