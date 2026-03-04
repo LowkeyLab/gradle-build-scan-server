@@ -1,9 +1,10 @@
+use anyhow::{Context, Result, anyhow};
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
 use std::str::FromStr;
 use uuid::Uuid;
 
-pub async fn connect(url: &str) -> Result<SqlitePool, sqlx::Error> {
+pub async fn connect(url: &str) -> Result<SqlitePool> {
     let options = SqliteConnectOptions::from_str(url)?.pragma("foreign_keys", "ON");
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
@@ -13,7 +14,7 @@ pub async fn connect(url: &str) -> Result<SqlitePool, sqlx::Error> {
     migrations::MIGRATOR
         .run(&pool)
         .await
-        .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        .context("failed to run migrations")?;
 
     Ok(pool)
 }
@@ -50,30 +51,19 @@ pub struct TaskRow {
     pub origin_execution_time: Option<i64>,
 }
 
-#[derive(Debug)]
-pub struct ConversionError(pub String);
-
-impl std::fmt::Display for ConversionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for ConversionError {}
-
-fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>, ConversionError> {
+fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>> {
     NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
         .map(|dt| Utc.from_utc_datetime(&dt))
-        .map_err(|e| ConversionError(format!("invalid datetime '{s}': {e}")))
+        .with_context(|| format!("invalid datetime '{s}'"))
 }
 
 impl TryFrom<BuildScanRow> for domain::BuildScan {
-    type Error = ConversionError;
+    type Error = anyhow::Error;
 
     fn try_from(row: BuildScanRow) -> Result<Self, Self::Error> {
         let id = domain::BuildScanId(
             uuid::Uuid::parse_str(&row.id)
-                .map_err(|e| ConversionError(format!("invalid build scan id: {e}")))?,
+                .map_err(|e| anyhow!("invalid build scan id: {e}"))?,
         );
 
         let started_at = row.started_at.map(|s| parse_datetime(&s)).transpose()?;
@@ -81,14 +71,14 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 
         let outcome = row
             .outcome
-            .map(|s| s.parse::<domain::BuildOutcome>().map_err(ConversionError))
+            .map(|s| s.parse::<domain::BuildOutcome>().map_err(|s| anyhow!("{s}")))
             .transpose()?;
 
         let requested_tasks = row
             .requested_tasks
-            .map(|s| -> Result<Vec<domain::RequestedTask>, ConversionError> {
+            .map(|s| -> Result<Vec<domain::RequestedTask>> {
                 let strings: Vec<String> = serde_json::from_str(&s)
-                    .map_err(|e| ConversionError(format!("invalid requested_tasks JSON: {e}")))?;
+                    .map_err(|e| anyhow!("invalid requested_tasks JSON: {e}"))?;
                 Ok(strings.into_iter().map(domain::RequestedTask).collect())
             })
             .transpose()?;
@@ -115,20 +105,20 @@ impl TryFrom<BuildScanRow> for domain::BuildScan {
 }
 
 impl TryFrom<TaskRow> for domain::Task {
-    type Error = ConversionError;
+    type Error = anyhow::Error;
 
     fn try_from(row: TaskRow) -> Result<Self, Self::Error> {
         let id = domain::TaskId(
             uuid::Uuid::parse_str(&row.id)
-                .map_err(|e| ConversionError(format!("invalid task id: {e}")))?,
+                .map_err(|e| anyhow!("invalid task id: {e}"))?,
         );
         let scan_id = domain::BuildScanId(
             uuid::Uuid::parse_str(&row.scan_id)
-                .map_err(|e| ConversionError(format!("invalid scan_id: {e}")))?,
+                .map_err(|e| anyhow!("invalid scan_id: {e}"))?,
         );
         let outcome = row
             .outcome
-            .map(|s| s.parse::<domain::TaskOutcome>().map_err(ConversionError))
+            .map(|s| s.parse::<domain::TaskOutcome>().map_err(|s| anyhow!("{s}")))
             .transpose()?;
 
         Ok(domain::Task {
@@ -163,7 +153,7 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     jvm_vendor: Option<&str>,
     jvm_version: Option<&str>,
     raw_payload: Option<&[u8]>,
-) -> Result<(), sqlx::Error> {
+) -> Result<()> {
     sqlx::query(
         "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -200,7 +190,7 @@ pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     finish_timestamp: Option<i64>,
     cache_key: Option<&str>,
     origin_execution_time: Option<i64>,
-) -> Result<(), sqlx::Error> {
+) -> Result<()> {
     let id = Uuid::new_v4().to_string();
     let cacheable_int: Option<i64> = cacheable.map(|b| if b { 1 } else { 0 });
 
@@ -229,7 +219,7 @@ pub async fn list_build_scans(
     limit: i64,
     after_created_at: Option<&str>,
     after_id: Option<&str>,
-) -> Result<Vec<BuildScanRow>, sqlx::Error> {
+) -> Result<Vec<BuildScanRow>> {
     let rows = match (after_created_at, after_id) {
         (Some(cursor_created_at), Some(cursor_id)) => {
             sqlx::query_as::<_, BuildScanRow>(
@@ -259,7 +249,7 @@ pub async fn list_build_scans(
 pub async fn get_build_scan(
     pool: &SqlitePool,
     id: &str,
-) -> Result<Option<BuildScanRow>, sqlx::Error> {
+) -> Result<Option<BuildScanRow>> {
     let row = sqlx::query_as::<_, BuildScanRow>(
         "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
          FROM build_scans WHERE id = ?",
@@ -276,7 +266,7 @@ pub async fn list_tasks(
     scan_id: &str,
     limit: i64,
     after_id: Option<&str>,
-) -> Result<Vec<TaskRow>, sqlx::Error> {
+) -> Result<Vec<TaskRow>> {
     let rows = if let Some(cursor) = after_id {
         sqlx::query_as::<_, TaskRow>(
             "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
@@ -301,7 +291,7 @@ pub async fn list_tasks(
     Ok(rows)
 }
 
-pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64, sqlx::Error> {
+pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tasks WHERE scan_id = ?")
         .bind(scan_id)
         .fetch_one(pool)
@@ -310,7 +300,7 @@ pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64, sqlx::
     Ok(count)
 }
 
-pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64, sqlx::Error> {
+pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM build_scans")
         .fetch_one(pool)
         .await?;
@@ -318,7 +308,7 @@ pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64, sqlx::Error> {
     Ok(count)
 }
 
-pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<TaskRow>, sqlx::Error> {
+pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<TaskRow>> {
     let row = sqlx::query_as::<_, TaskRow>(
         "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
          FROM tasks WHERE id = ?",
