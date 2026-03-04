@@ -7,7 +7,7 @@ npm_link_all_packages(name = "node_modules")
 jq(
     name = "angular",
     srcs = ["angular.json"],
-    filter = ".projects[].architect.build.options.outputPath = \"projects/build-scan-web/dist\" | .projects[].architect.build.options.preserveSymlinks = true",
+    filter = ".projects[].architect.build.options.outputPath.base = \"projects/build-scan-web/dist\" | .projects[].architect.build.options.preserveSymlinks = true",
     visibility = [":__subpackages__"],
 )
 

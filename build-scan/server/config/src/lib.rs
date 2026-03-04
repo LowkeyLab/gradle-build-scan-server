@@ -22,7 +22,14 @@ const RUNFILES_SPA_PATH: &str = "_main/angular/projects/build-scan-web/dist/brow
 /// Returns `None` if neither source is available.
 fn resolve_spa_dir() -> Option<PathBuf> {
     if let Ok(dir) = std::env::var("SPA_DIR") {
-        return Some(PathBuf::from(dir));
+        let path = PathBuf::from(dir);
+        if path.is_dir() {
+            return Some(path);
+        }
+        eprintln!(
+            "Warning: SPA_DIR '{}' is not a directory; falling back to runfiles",
+            path.display()
+        );
     }
 
     let r = Runfiles::create().ok()?;
