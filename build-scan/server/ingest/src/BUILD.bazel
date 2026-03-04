@@ -1,16 +1,15 @@
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "graphql",
+    name = "ingest",
     srcs = ["lib.rs"],
     visibility = ["//visibility:public"],
     deps = [
-        "//server/domain/src:domain",
-        "//server/graphql/relay/src:relay",
-        "//server/service/src:service",
+        "//build-scan/server/service/src:service",
         "@crates//:axum",
-        "@crates//:juniper",
-        "@crates//:juniper_axum",
+        "@crates//:serde",
         "@crates//:serde_json",
+        "@crates//:tokio",
+        "@crates//:uuid",
     ],
 )

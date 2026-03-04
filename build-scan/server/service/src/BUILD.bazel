@@ -7,8 +7,8 @@ rust_library(
     deps = [
         "//build-scan/lib/src:lib",
         "//build-scan/lib/src:models",
-        "//server/db/src:db",
-        "//server/domain/src:domain",
+        "//build-scan/server/db/src:db",
+        "//build-scan/server/domain/src:domain",
         "@crates//:hex",
         "@crates//:serde_json",
         "@crates//:sqlx",
