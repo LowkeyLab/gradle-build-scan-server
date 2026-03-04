@@ -151,13 +151,17 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
         .finished_at
         .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
     let outcome = scan.outcome.map(|o| o.to_string());
-    let requested_tasks = scan.requested_tasks.as_ref().map(|tasks| {
-        serde_json::to_string(&tasks.iter().map(|t| &t.0).collect::<Vec<_>>()).unwrap()
-    });
+    let requested_tasks = scan
+        .requested_tasks
+        .as_ref()
+        .map(|tasks| serde_json::to_string(&tasks.iter().map(|t| &t.0).collect::<Vec<_>>()))
+        .transpose()
+        .context("failed to serialize requested_tasks to JSON")?;
+    let created_at = scan.created_at.format("%Y-%m-%d %H:%M:%S").to_string();
 
     sqlx::query(
-        "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload, created_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&id)
     .bind(&scan.build_tool_type.0)
@@ -173,6 +177,7 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     .bind(scan.jvm_vendor.as_ref().map(|v| &v.0))
     .bind(scan.jvm_version.as_ref().map(|v| &v.0))
     .bind(raw_payload)
+    .bind(&created_at)
     .execute(executor)
     .await?;
 

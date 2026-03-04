@@ -40,6 +40,7 @@ impl BuildScanService {
 
     pub async fn process_upload(&self, req: UploadRequest) {
         let scan_id = req.scan_id.clone();
+        let scan_uuid = Uuid::parse_str(&scan_id).unwrap();
         let payload_size = req.raw_payload.len();
         info!(scan_id = %scan_id, payload_size = payload_size, "Received build scan upload");
 
@@ -47,7 +48,7 @@ impl BuildScanService {
             Err(e) => {
                 error!(scan_id = %scan_id, error = %e, "Failed to parse build scan payload");
                 let scan = domain::BuildScanBuilder::default()
-                    .id(Uuid::parse_str(&scan_id).unwrap())
+                    .id(scan_uuid)
                     .build_tool_type(req.build_tool_type.unwrap_or_default())
                     .build_tool_version(req.build_tool_version.unwrap_or_default())
                     .plugin_version(req.plugin_version.unwrap_or_default())
@@ -80,7 +81,7 @@ impl BuildScanService {
 
                 let mut scan_builder = domain::BuildScanBuilder::default();
                 scan_builder
-                    .id(Uuid::parse_str(&scan_id).unwrap())
+                    .id(scan_uuid)
                     .build_tool_type(req.build_tool_type.unwrap_or_default())
                     .build_tool_version(req.build_tool_version.unwrap_or_default())
                     .plugin_version(req.plugin_version.unwrap_or_default())
@@ -133,7 +134,7 @@ impl BuildScanService {
                     let mut task_builder = domain::TaskBuilder::default();
                     task_builder
                         .id(Uuid::new_v4())
-                        .scan_id(Uuid::parse_str(&scan_id).unwrap())
+                        .scan_id(scan_uuid)
                         .task_path(task.task_path.clone());
 
                     if let Some(cn) = &task.class_name {
