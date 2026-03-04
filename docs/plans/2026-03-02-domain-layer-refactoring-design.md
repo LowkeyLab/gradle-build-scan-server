@@ -144,8 +144,8 @@ pub struct TaskRow {
 
 - `TryFrom<BuildScanRow> for domain::BuildScan` — fallible (UUID parse, datetime parse, strict enum parse, JSON deserialize)
 - `TryFrom<TaskRow> for domain::Task` — fallible (UUID parse, strict enum parse)
-- `From<&domain::BuildScan> for BuildScanRow` — infallible (serialize to strings)
-- `From<&domain::Task> for TaskRow` — infallible
+
+Note: `From<&domain::BuildScan> for BuildScanRow` and `From<&domain::Task> for TaskRow` (domain-to-DAO) conversions are not needed yet since `process_upload` writes directly from parsed payload fields. These can be added in a future PR if the service layer is refactored to construct domain objects before persisting.
 
 DB functions continue to use `sqlx::query_as::<_, BuildScanRow>(...)` internally.
 
