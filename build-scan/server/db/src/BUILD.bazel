@@ -7,6 +7,7 @@ rust_library(
     deps = [
         "//build-scan/server/db/migrations/src:migrations",
         "//build-scan/server/domain/src:domain",
+        "@crates//:anyhow",
         "@crates//:chrono",
         "@crates//:serde_json",
         "@crates//:sqlx",

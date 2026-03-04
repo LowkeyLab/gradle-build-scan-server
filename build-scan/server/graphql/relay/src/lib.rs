@@ -1,3 +1,4 @@
+use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use juniper::ID;
 use serde::{Deserialize, Serialize};
@@ -27,14 +28,13 @@ impl RelayId {
     }
 
     /// Decode a Relay global ID and extract components
-    pub fn decode(encoded: &ID) -> Result<RelayId, String> {
+    pub fn decode(encoded: &ID) -> Result<RelayId> {
         let encoded_str: &str = encoded;
         let bytes = BASE64
             .decode(encoded_str)
-            .map_err(|_| "Invalid base64 encoding".to_string())?;
+            .context("Invalid base64 encoding")?;
 
-        let plain =
-            String::from_utf8(bytes).map_err(|_| "Invalid UTF-8 in decoded ID".to_string())?;
+        let plain = String::from_utf8(bytes).context("Invalid UTF-8 in decoded ID")?;
 
         let parts: Vec<&str> = plain.splitn(2, ':').collect();
 
@@ -43,7 +43,7 @@ impl RelayId {
                 type_name: type_name.to_string(),
                 raw_id: id.to_string(),
             }),
-            _ => Err(format!("Invalid relay ID format: {}", plain)),
+            _ => bail!("Invalid relay ID format: {}", plain),
         }
     }
 }
@@ -70,16 +70,14 @@ impl Cursor {
     }
 
     /// Decode cursor from base64 JSON string
-    pub fn decode(encoded: &str) -> Result<Self, String> {
+    pub fn decode(encoded: &str) -> Result<Self> {
         let bytes = BASE64
             .decode(encoded)
-            .map_err(|_| "Invalid base64 encoding in cursor".to_string())?;
+            .context("Invalid base64 encoding in cursor")?;
 
-        let json_str =
-            String::from_utf8(bytes).map_err(|_| "Invalid UTF-8 in cursor".to_string())?;
+        let json_str = String::from_utf8(bytes).context("Invalid UTF-8 in cursor")?;
 
-        let cursor: Cursor =
-            serde_json::from_str(&json_str).map_err(|_| "Invalid JSON in cursor".to_string())?;
+        let cursor: Cursor = serde_json::from_str(&json_str).context("Invalid JSON in cursor")?;
 
         Ok(cursor)
     }
@@ -89,11 +87,11 @@ impl Cursor {
 ///
 /// Ensures the page size is within acceptable bounds.
 /// Defaults to DEFAULT_PAGE_SIZE if None.
-pub fn validate_pagination(first: Option<i32>) -> Result<i32, String> {
+pub fn validate_pagination(first: Option<i32>) -> Result<i32> {
     let page_size = first.unwrap_or(DEFAULT_PAGE_SIZE);
 
     if page_size < MIN_PAGE_SIZE {
-        return Err(format!("Page size must be at least {}", MIN_PAGE_SIZE));
+        bail!("Page size must be at least {}", MIN_PAGE_SIZE);
     }
 
     if page_size > MAX_PAGE_SIZE {
