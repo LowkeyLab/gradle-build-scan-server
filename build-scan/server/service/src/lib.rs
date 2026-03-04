@@ -57,9 +57,7 @@ impl BuildScanService {
                     .build()
                     .map_err(|e| anyhow::anyhow!(e))
                     .context("failed to build parse-error BuildScan")?;
-                let mut row = db::BuildScanRow::from(&scan);
-                row.raw_payload = Some(req.raw_payload.clone());
-                db::insert_build_scan(&self.pool, &row)
+                db::insert_build_scan(&self.pool, &scan, Some(&req.raw_payload))
                     .await
                     .context("failed to store parse_error scan")?;
             }
@@ -119,9 +117,7 @@ impl BuildScanService {
                     .await
                     .context("failed to begin transaction")?;
 
-                let mut row = db::BuildScanRow::from(&scan);
-                row.raw_payload = Some(req.raw_payload.clone());
-                db::insert_build_scan(&mut *tx, &row)
+                db::insert_build_scan(&mut *tx, &scan, Some(&req.raw_payload))
                     .await
                     .context("failed to store build scan")?;
 
@@ -165,8 +161,7 @@ impl BuildScanService {
                         .map_err(|e| anyhow::anyhow!(e))
                         .context("failed to build Task")?;
 
-                    let task_row = db::TaskRow::from(&domain_task);
-                    db::insert_task(&mut *tx, &task_row)
+                    db::insert_task(&mut *tx, &domain_task)
                         .await
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
                 }
@@ -181,8 +176,7 @@ impl BuildScanService {
     }
 
     pub async fn get_build_scan(&self, id: &str) -> Result<Option<domain::BuildScan>> {
-        let row = db::get_build_scan(&self.pool, id).await?;
-        Ok(row.map(domain::BuildScan::try_from).transpose()?)
+        db::get_build_scan(&self.pool, id).await
     }
 
     pub async fn list_build_scans(
@@ -191,16 +185,11 @@ impl BuildScanService {
         after_created_at: Option<&str>,
         after_id: Option<&str>,
     ) -> Result<Vec<domain::BuildScan>> {
-        let rows = db::list_build_scans(&self.pool, limit, after_created_at, after_id).await?;
-        Ok(rows
-            .into_iter()
-            .map(domain::BuildScan::try_from)
-            .collect::<Result<Vec<_>, _>>()?)
+        db::list_build_scans(&self.pool, limit, after_created_at, after_id).await
     }
 
     pub async fn get_task(&self, id: &str) -> Result<Option<domain::Task>> {
-        let row = db::get_task(&self.pool, id).await?;
-        Ok(row.map(domain::Task::try_from).transpose()?)
+        db::get_task(&self.pool, id).await
     }
 
     pub async fn list_tasks(
@@ -209,18 +198,14 @@ impl BuildScanService {
         limit: i64,
         after_id: Option<&str>,
     ) -> Result<Vec<domain::Task>> {
-        let rows = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
-        Ok(rows
-            .into_iter()
-            .map(domain::Task::try_from)
-            .collect::<Result<Vec<_>, _>>()?)
+        db::list_tasks(&self.pool, scan_id, limit, after_id).await
     }
 
     pub async fn count_tasks(&self, scan_id: &str) -> Result<i64> {
-        Ok(db::count_tasks(&self.pool, scan_id).await?)
+        db::count_tasks(&self.pool, scan_id).await
     }
 
     pub async fn count_build_scans(&self) -> Result<i64> {
-        Ok(db::count_build_scans(&self.pool).await?)
+        db::count_build_scans(&self.pool).await
     }
 }
