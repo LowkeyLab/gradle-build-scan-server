@@ -46,6 +46,7 @@ ng_application(
         ":srcs",
     ],
     tailwindcss = True,
+    visibility = ["//build-scan/server/src:__pkg__"],
     deps = [
         "//angular:node_modules/@angular/forms",
         "//angular:node_modules/@angular/router",
