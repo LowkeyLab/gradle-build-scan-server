@@ -46,6 +46,7 @@ rust_library(
         "//build-scan/lib/src:error",
         "//build-scan/lib/src:kryo",
         "//build-scan/lib/src:varint",
+        "@crates//:tracing",
     ],
 )
 

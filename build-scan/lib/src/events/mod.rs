@@ -526,7 +526,21 @@ impl DecoderRegistry {
 
     pub fn decode(&self, wire_id: u16, body: &[u8]) -> Result<DecodedEvent, ParseError> {
         match self.decoders.get(&wire_id) {
-            Some(decoder) => decoder.decode(body),
+            Some(decoder) => match decoder.decode(body) {
+                Ok(event) => Ok(event),
+                Err(e) => {
+                    tracing::warn!(
+                        wire_id,
+                        error = %e,
+                        body_len = body.len(),
+                        "Failed to decode event, treating as raw"
+                    );
+                    Ok(DecodedEvent::Raw(RawEvent {
+                        wire_id,
+                        body: body.to_vec(),
+                    }))
+                }
+            },
             None => Ok(DecodedEvent::Raw(RawEvent {
                 wire_id,
                 body: body.to_vec(),

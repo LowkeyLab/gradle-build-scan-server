@@ -7,6 +7,7 @@ rust_library(
     deps = [
         "//build-scan/server/service/src:service",
         "@crates//:axum",
+        "@crates//:base64",
         "@crates//:serde",
         "@crates//:serde_json",
         "@crates//:tokio",

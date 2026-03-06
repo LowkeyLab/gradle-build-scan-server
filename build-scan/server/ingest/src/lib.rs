@@ -8,6 +8,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use service::{BuildScanService, UploadRequest};
 use uuid::Uuid;
@@ -18,6 +19,8 @@ pub mod mime {
     pub const SCAN: &str = "application/vnd.gradle.scan";
     pub const SCAN_UPLOAD_ACK: &str = "application/vnd.gradle.scan-upload-ack+json";
     pub const SCAN_UPLOAD_FAILURE: &str = "application/vnd.gradle.scan-upload-failure+json";
+    pub const USER_COUNT_CHECK_RESPONSE: &str =
+        "application/vnd.gradle.user-count-check-response+json";
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,14 +73,14 @@ impl IngestState {
         self.pending
             .lock()
             .expect("pending uploads mutex should not be poisoned")
-            .insert(upload.scan_id.clone(), upload);
+            .insert(upload.upload_token.clone(), upload);
     }
 
-    pub fn take_pending(&self, scan_id: &str) -> Option<PendingUpload> {
+    pub fn take_pending(&self, upload_token: &str) -> Option<PendingUpload> {
         self.pending
             .lock()
             .expect("pending uploads mutex should not be poisoned")
-            .remove(scan_id)
+            .remove(upload_token)
     }
 
     pub fn put_pending(&self, upload: PendingUpload) {
@@ -94,6 +97,7 @@ pub struct IngestAppState {
 
 pub async fn handle_token_request(
     State(state): State<IngestAppState>,
+    Path((tool_type, version)): Path<(String, String)>,
     headers: HeaderMap,
     body: axum::body::Bytes,
 ) -> Response {
@@ -130,15 +134,15 @@ pub async fn handle_token_request(
     let pending = PendingUpload {
         scan_id: scan_id.clone(),
         upload_token: upload_token.clone(),
-        build_tool_type: token_request.build_tool_type,
+        build_tool_type: token_request.build_tool_type.or(Some(tool_type.clone())),
         build_tool_version: token_request.build_tool_version,
-        plugin_version: token_request.build_agent_version,
+        plugin_version: token_request.build_agent_version.or(Some(version.clone())),
     };
     state.ingest.insert_pending(pending);
 
     let response = TokenResponse {
         scan_upload_token: upload_token,
-        scan_upload_url: format!("{}/scans/publish/{}/upload", state.base_url, scan_id),
+        scan_upload_url: format!("/scans/publish/{}/{}/upload", tool_type, version),
         scan_url: format!("{}/web/scans/{}", state.base_url, scan_id),
         id: scan_id,
     };
@@ -163,11 +167,11 @@ pub async fn handle_token_request(
 
 pub async fn handle_scan_upload(
     State(state): State<IngestAppState>,
-    Path(scan_id): Path<String>,
+    Path((_tool_type, _version)): Path<(String, String)>,
     headers: HeaderMap,
     body: axum::body::Bytes,
 ) -> Response {
-    let upload_token = match headers.get("x-upload-token").and_then(|v| v.to_str().ok()) {
+    let raw_token = match headers.get("x-upload-token").and_then(|v| v.to_str().ok()) {
         Some(t) => t.to_string(),
         None => {
             let failure = UploadFailure {
@@ -183,11 +187,19 @@ pub async fn handle_scan_upload(
         }
     };
 
-    let pending = match state.ingest.take_pending(&scan_id) {
+    // The Gradle client base64-encodes the upload token (no-pad) before sending.
+    // Try to decode it; fall back to the raw value if decoding fails.
+    let upload_token = base64::engine::general_purpose::STANDARD_NO_PAD
+        .decode(&raw_token)
+        .ok()
+        .and_then(|bytes| String::from_utf8(bytes).ok())
+        .unwrap_or(raw_token);
+
+    let pending = match state.ingest.take_pending(&upload_token) {
         Some(p) => p,
         None => {
             let failure = UploadFailure {
-                message: format!("No pending upload found for scan id: {scan_id}"),
+                message: format!("No pending upload found for token: {upload_token}"),
                 retry: false,
             };
             let body = serde_json::to_vec(&failure).unwrap_or_default();
@@ -198,21 +210,6 @@ pub async fn handle_scan_upload(
                 .expect("response builder should not fail");
         }
     };
-
-    if pending.upload_token != upload_token {
-        // Put it back so the client could retry with correct token
-        state.ingest.put_pending(pending);
-        let failure = UploadFailure {
-            message: "Invalid upload token".to_string(),
-            retry: true,
-        };
-        let body = serde_json::to_vec(&failure).unwrap_or_default();
-        return axum::http::Response::builder()
-            .status(StatusCode::UNAUTHORIZED)
-            .header("Content-Type", mime::SCAN_UPLOAD_FAILURE)
-            .body(axum::body::Body::from(body))
-            .expect("response builder should not fail");
-    }
 
     let req = UploadRequest {
         scan_id: pending.scan_id,
@@ -236,5 +233,16 @@ pub async fn handle_scan_upload(
         .status(StatusCode::OK)
         .header("Content-Type", mime::SCAN_UPLOAD_ACK)
         .body(axum::body::Body::from(ack_body))
+        .expect("response builder should not fail")
+}
+
+pub async fn handle_usage_check() -> Response {
+    let body = serde_json::json!({"numberOfDays": 0});
+    let body_bytes = serde_json::to_vec(&body).unwrap_or_default();
+
+    axum::http::Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", mime::USER_COUNT_CHECK_RESPONSE)
+        .body(axum::body::Body::from(body_bytes))
         .expect("response builder should not fail")
 }
