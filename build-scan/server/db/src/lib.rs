@@ -19,37 +19,35 @@ pub async fn connect(url: &str) -> Result<SqlitePool> {
 }
 
 #[derive(Debug, sqlx::FromRow)]
-pub struct BuildScanRow {
-    pub id: String,
-    pub build_tool_type: String,
-    pub build_tool_version: String,
-    pub plugin_version: String,
-    pub started_at: Option<String>,
-    pub finished_at: Option<String>,
-    pub outcome: Option<String>,
-    pub requested_tasks: Option<String>,
-    pub hostname: Option<String>,
-    pub os_name: Option<String>,
-    pub os_version: Option<String>,
-    pub jvm_vendor: Option<String>,
-    pub jvm_version: Option<String>,
-    #[sqlx(default)]
-    pub raw_payload: Option<Vec<u8>>,
-    pub created_at: String,
+struct BuildScanRow {
+    id: String,
+    build_tool_type: String,
+    build_tool_version: String,
+    plugin_version: String,
+    started_at: Option<String>,
+    finished_at: Option<String>,
+    outcome: Option<String>,
+    requested_tasks: Option<String>,
+    hostname: Option<String>,
+    os_name: Option<String>,
+    os_version: Option<String>,
+    jvm_vendor: Option<String>,
+    jvm_version: Option<String>,
+    created_at: String,
 }
 
 #[derive(Debug, sqlx::FromRow)]
-pub struct TaskRow {
-    pub id: String,
-    pub scan_id: String,
-    pub task_path: String,
-    pub class_name: Option<String>,
-    pub outcome: Option<String>,
-    pub cacheable: Option<bool>,
-    pub start_timestamp: Option<i64>,
-    pub finish_timestamp: Option<i64>,
-    pub cache_key: Option<String>,
-    pub origin_execution_time: Option<i64>,
+struct TaskRow {
+    id: String,
+    scan_id: String,
+    task_path: String,
+    class_name: Option<String>,
+    outcome: Option<String>,
+    cacheable: Option<bool>,
+    start_timestamp: Option<i64>,
+    finish_timestamp: Option<i64>,
+    cache_key: Option<String>,
+    origin_execution_time: Option<i64>,
 }
 
 fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>> {
@@ -165,7 +163,6 @@ impl From<&domain::BuildScan> for BuildScanRow {
             os_version: scan.os_version.as_ref().map(|v| v.0.clone()),
             jvm_vendor: scan.jvm_vendor.as_ref().map(|v| v.0.clone()),
             jvm_version: scan.jvm_version.as_ref().map(|v| v.0.clone()),
-            raw_payload: None,
             created_at: scan.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         }
     }
@@ -190,8 +187,11 @@ impl From<&domain::Task> for TaskRow {
 
 pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     executor: E,
-    row: &BuildScanRow,
+    scan: &domain::BuildScan,
+    raw_payload: Option<&[u8]>,
 ) -> Result<()> {
+    let row = BuildScanRow::from(scan);
+
     sqlx::query(
         "INSERT INTO build_scans (id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, raw_payload, created_at) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -209,7 +209,7 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
     .bind(row.os_version.as_deref())
     .bind(row.jvm_vendor.as_deref())
     .bind(row.jvm_version.as_deref())
-    .bind(row.raw_payload.as_deref())
+    .bind(raw_payload)
     .bind(&row.created_at)
     .execute(executor)
     .await?;
@@ -219,8 +219,9 @@ pub async fn insert_build_scan<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite
 
 pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     executor: E,
-    row: &TaskRow,
+    task: &domain::Task,
 ) -> Result<()> {
+    let row = TaskRow::from(task);
     let cacheable_int: Option<i64> = row.cacheable.map(|b| if b { 1 } else { 0 });
 
     sqlx::query(
@@ -248,7 +249,7 @@ pub async fn list_build_scans(
     limit: i64,
     after_created_at: Option<&str>,
     after_id: Option<&str>,
-) -> Result<Vec<BuildScanRow>> {
+) -> Result<Vec<domain::BuildScan>> {
     let rows = match (after_created_at, after_id) {
         (Some(cursor_created_at), Some(cursor_id)) => {
             sqlx::query_as::<_, BuildScanRow>(
@@ -272,10 +273,12 @@ pub async fn list_build_scans(
         }
     };
 
-    Ok(rows)
+    rows.into_iter()
+        .map(domain::BuildScan::try_from)
+        .collect::<Result<Vec<_>>>()
 }
 
-pub async fn get_build_scan(pool: &SqlitePool, id: &str) -> Result<Option<BuildScanRow>> {
+pub async fn get_build_scan(pool: &SqlitePool, id: &str) -> Result<Option<domain::BuildScan>> {
     let row = sqlx::query_as::<_, BuildScanRow>(
         "SELECT id, build_tool_type, build_tool_version, plugin_version, started_at, finished_at, outcome, requested_tasks, hostname, os_name, os_version, jvm_vendor, jvm_version, created_at \
          FROM build_scans WHERE id = ?",
@@ -284,7 +287,7 @@ pub async fn get_build_scan(pool: &SqlitePool, id: &str) -> Result<Option<BuildS
     .fetch_optional(pool)
     .await?;
 
-    Ok(row)
+    row.map(domain::BuildScan::try_from).transpose()
 }
 
 pub async fn list_tasks(
@@ -292,7 +295,7 @@ pub async fn list_tasks(
     scan_id: &str,
     limit: i64,
     after_id: Option<&str>,
-) -> Result<Vec<TaskRow>> {
+) -> Result<Vec<domain::Task>> {
     let rows = if let Some(cursor) = after_id {
         sqlx::query_as::<_, TaskRow>(
             "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
@@ -314,7 +317,9 @@ pub async fn list_tasks(
         .await?
     };
 
-    Ok(rows)
+    rows.into_iter()
+        .map(domain::Task::try_from)
+        .collect::<Result<Vec<_>>>()
 }
 
 pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64> {
@@ -334,7 +339,7 @@ pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64> {
     Ok(count)
 }
 
-pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<TaskRow>> {
+pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<domain::Task>> {
     let row = sqlx::query_as::<_, TaskRow>(
         "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
          FROM tasks WHERE id = ?",
@@ -343,5 +348,5 @@ pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<TaskRow>> {
     .fetch_optional(pool)
     .await?;
 
-    Ok(row)
+    row.map(domain::Task::try_from).transpose()
 }
