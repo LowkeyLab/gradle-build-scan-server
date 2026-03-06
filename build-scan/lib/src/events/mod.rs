@@ -548,3 +548,60 @@ impl DecoderRegistry {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decode_unknown_wire_id_returns_raw_with_original_bytes() {
+        let registry = DecoderRegistry::new();
+        let unknown_id: u16 = 9999;
+        let body = vec![0xDE, 0xAD, 0xBE, 0xEF];
+
+        let result = registry.decode(unknown_id, &body).unwrap();
+        match result {
+            DecodedEvent::Raw(raw) => {
+                assert_eq!(raw.wire_id, unknown_id);
+                assert_eq!(raw.body, body);
+            }
+            other => panic!("expected Raw, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn decode_registered_wire_id_with_invalid_body_falls_back_to_raw() {
+        let registry = DecoderRegistry::new();
+        // wire_id 259 = BuildFinished, which expects at least a flags byte.
+        // An empty body will cause the decoder to fail.
+        let build_finished_id: u16 = 259;
+        let invalid_body: Vec<u8> = vec![];
+
+        let result = registry.decode(build_finished_id, &invalid_body).unwrap();
+        match result {
+            DecodedEvent::Raw(raw) => {
+                assert_eq!(raw.wire_id, build_finished_id);
+                assert_eq!(raw.body, invalid_body);
+            }
+            other => panic!("expected Raw fallback for invalid body, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn decode_registered_wire_id_with_truncated_body_falls_back_to_raw() {
+        let registry = DecoderRegistry::new();
+        // wire_id 2074 = TaskFinished, expects a 2-byte BE flags prefix + more data.
+        // Give it only 1 byte to force an UnexpectedEof.
+        let task_finished_id: u16 = 2074;
+        let truncated_body = vec![0x00];
+
+        let result = registry.decode(task_finished_id, &truncated_body).unwrap();
+        match result {
+            DecodedEvent::Raw(raw) => {
+                assert_eq!(raw.wire_id, task_finished_id);
+                assert_eq!(raw.body, truncated_body);
+            }
+            other => panic!("expected Raw fallback for truncated body, got {:?}", other),
+        }
+    }
+}
