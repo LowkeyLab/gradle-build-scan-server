@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Apollo, gql } from 'apollo-angular';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { filter, map } from 'rxjs';
 
 const GET_BUILD_SCANS = gql`
   query GetBuildScans($first: Int!, $after: String) {
@@ -89,9 +89,11 @@ export class ScanListComponent {
   private queryRef = this.apollo.watchQuery<any>({
     query: GET_BUILD_SCANS,
     variables: { first: 20 },
+    errorPolicy: 'all',
   });
 
   scans = toSignal(this.queryRef.valueChanges.pipe(
+    filter(r => !!r.data),
     map(r => r.data.buildScans)
   ));
 
