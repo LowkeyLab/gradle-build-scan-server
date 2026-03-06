@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, input, inject } from '@angular/core
 import { Apollo, gql } from 'apollo-angular';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { map, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 const GET_BUILD_SCAN = gql`
@@ -155,8 +155,10 @@ export class ScanDetailComponent {
       this.apollo.watchQuery<any>({
         query: GET_BUILD_SCAN,
         variables: { id, first: 100 },
+        errorPolicy: 'all',
       }).valueChanges
     ),
+    filter(result => !!result.data),
     map(result => result.data.buildScan)
   );
 }

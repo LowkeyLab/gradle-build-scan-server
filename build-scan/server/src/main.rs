@@ -58,11 +58,15 @@ async fn main() {
         .allow_headers(Any);
 
     let mut app = Router::new()
-        .route("/scans/publish", post(ingest::handle_token_request))
         .route(
-            "/scans/publish/{id}/upload",
+            "/scans/publish/{tool_type}/{version}/token",
+            post(ingest::handle_token_request),
+        )
+        .route(
+            "/scans/publish/{tool_type}/{version}/upload",
             post(ingest::handle_scan_upload),
         )
+        .route("/usage/users/check", get(ingest::handle_usage_check))
         .with_state(ingest_state)
         .route(
             "/graphql",

@@ -1,5 +1,14 @@
 use error::ParseError;
 
+/// Cap a decoded length against the remaining buffer to prevent OOM from corrupt varints.
+fn check_len(len: usize, data: &[u8], pos: usize) -> Result<usize, ParseError> {
+    let remaining = data.len().saturating_sub(pos);
+    if len > remaining {
+        return Err(ParseError::UnexpectedEof { offset: pos });
+    }
+    Ok(len)
+}
+
 pub struct StringInternTable {
     strings: Vec<String>,
 }
@@ -31,7 +40,7 @@ impl StringInternTable {
                 .ok_or(ParseError::InvalidStringRef { index })
         } else {
             // New string: raw = character count
-            let char_count = raw as usize;
+            let char_count = check_len(raw as usize, data, *pos)?;
             let mut s = String::with_capacity(char_count);
             for _ in 0..char_count {
                 let ch = varint::read_unsigned_varint(data, pos)? as u32;
@@ -101,7 +110,11 @@ pub fn read_byte_array(data: &[u8], pos: &mut usize) -> Result<Vec<u8>, ParseErr
 
 /// Read a list of fixed 8-byte LE i64 values: varint length prefix, then N × 8 bytes
 pub fn read_list_of_i64(data: &[u8], pos: &mut usize) -> Result<Vec<i64>, ParseError> {
-    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let len = check_len(
+        varint::read_unsigned_varint(data, pos)? as usize,
+        data,
+        *pos,
+    )?;
     let mut result = Vec::with_capacity(len);
     for _ in 0..len {
         result.push(read_task_id(data, pos)?);
@@ -111,7 +124,11 @@ pub fn read_list_of_i64(data: &[u8], pos: &mut usize) -> Result<Vec<i64>, ParseE
 
 /// Read a list of byte arrays: varint length prefix, then N byte arrays
 pub fn read_list_of_byte_arrays(data: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ParseError> {
-    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let len = check_len(
+        varint::read_unsigned_varint(data, pos)? as usize,
+        data,
+        *pos,
+    )?;
     let mut result = Vec::with_capacity(len);
     for _ in 0..len {
         result.push(read_byte_array(data, pos)?);
@@ -125,7 +142,11 @@ pub fn read_list_of_interned_strings(
     pos: &mut usize,
     table: &mut StringInternTable,
 ) -> Result<Vec<String>, ParseError> {
-    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let len = check_len(
+        varint::read_unsigned_varint(data, pos)? as usize,
+        data,
+        *pos,
+    )?;
     let mut result = Vec::with_capacity(len);
     for _ in 0..len {
         result.push(table.read_string(data, pos)?);
@@ -153,7 +174,11 @@ pub fn read_list_of_positive_varint_i32(
     data: &[u8],
     pos: &mut usize,
 ) -> Result<Vec<i32>, ParseError> {
-    let len = varint::read_unsigned_varint(data, pos)? as usize;
+    let len = check_len(
+        varint::read_unsigned_varint(data, pos)? as usize,
+        data,
+        *pos,
+    )?;
     let mut result = Vec::with_capacity(len);
     for _ in 0..len {
         result.push(read_positive_varint_i32(data, pos)?);
@@ -164,7 +189,11 @@ pub fn read_list_of_positive_varint_i32(
 /// Read a nested list of varint i32 (e.g. IndexedNormalizedSamples.indices = List<List<Integer>>):
 /// outer varint count, then for each inner list: varint count + N varints
 pub fn read_list_of_list_of_i32(data: &[u8], pos: &mut usize) -> Result<Vec<Vec<i32>>, ParseError> {
-    let outer_len = varint::read_unsigned_varint(data, pos)? as usize;
+    let outer_len = check_len(
+        varint::read_unsigned_varint(data, pos)? as usize,
+        data,
+        *pos,
+    )?;
     let mut result = Vec::with_capacity(outer_len);
     for _ in 0..outer_len {
         result.push(read_list_of_positive_varint_i32(data, pos)?);
