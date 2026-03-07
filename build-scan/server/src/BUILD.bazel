@@ -5,6 +5,7 @@ rust_binary(
     srcs = ["main.rs"],
     data = ["//angular/projects/build-scan-web"],
     deps = [
+        "//build-scan/server/config/src:config",
         "//build-scan/server/db/src:db",
         "//build-scan/server/graphql/src:graphql",
         "//build-scan/server/ingest/src:ingest",
