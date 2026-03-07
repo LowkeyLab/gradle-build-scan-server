@@ -22,6 +22,8 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
+    let mut test_cases: Vec<models::TestCase> = Vec::new();
+    let mut executor_names: HashMap<i64, String> = HashMap::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
     let mut resource_usage: Option<events::ResourceUsageEvent> = None;
@@ -146,6 +148,27 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 }
             }
             DecodedEvent::ScopeIds(_) => {}
+            DecodedEvent::TestExecutorIdentity(e) => {
+                executor_names.insert(e.executor_id, e.name.clone());
+            }
+            DecodedEvent::TestCase(e) => {
+                // Only method-level events become test cases (class-level are metadata)
+                if e.method_name.is_some() {
+                    let executor_name = e
+                        .executor_name
+                        .clone()
+                        .or_else(|| executor_names.get(&e.executor_id).cloned());
+                    test_cases.push(models::TestCase {
+                        class_name: e.class_name.clone(),
+                        method_name: e.method_name.clone(),
+                        executor_name,
+                        outcome: None,
+                    });
+                }
+            }
+            DecodedEvent::TestExecutorStarted(_) => {}
+            DecodedEvent::TestExecutorFinished(_) => {}
+            DecodedEvent::TestResult(_) => {}
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
@@ -323,6 +346,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         jvm_vendor: jvm_event.as_ref().and_then(|j| j.vendor.clone()),
         jvm_version: jvm_event.and_then(|j| j.version),
         requested_tasks,
+        tests: test_cases,
         resource_usage: resource_usage.map(|e| models::ResourceUsageData {
             timestamps: e.timestamps,
             build_process_cpu: assemble_normalized_samples(e.build_process_cpu),
@@ -403,6 +427,52 @@ mod tests {
             ordinal: 0,
             body: vec![],
         }
+    }
+
+    #[test]
+    fn test_assemble_test_cases() {
+        let events = vec![
+            (
+                frame(127, 1000),
+                DecodedEvent::TestExecutorIdentity(TestExecutorIdentityEvent {
+                    executor_id: 42,
+                    name: "Gradle Test Executor 1".into(),
+                }),
+            ),
+            (
+                frame(798, 2000),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: 42,
+                    class_name: "org.example.list.LinkedListTest".into(),
+                    method_name: Some("testAdd()".into()),
+                    executor_name: Some("Gradle Test Executor 1".into()),
+                }),
+            ),
+            (
+                frame(798, 2001),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: 42,
+                    class_name: "org.example.list.LinkedListTest".into(),
+                    method_name: None,
+                    executor_name: None,
+                }),
+            ),
+        ];
+        let payload = assemble(events);
+        // Only method-level events become test cases
+        assert_eq!(payload.tests.len(), 1);
+        assert_eq!(
+            payload.tests[0].class_name,
+            "org.example.list.LinkedListTest"
+        );
+        assert_eq!(
+            payload.tests[0].method_name.as_deref(),
+            Some("testAdd()")
+        );
+        assert_eq!(
+            payload.tests[0].executor_name.as_deref(),
+            Some("Gradle Test Executor 1")
+        );
     }
 
     #[test]
