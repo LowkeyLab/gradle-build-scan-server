@@ -22,8 +22,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
-    let mut test_cases: Vec<models::TestCase> = Vec::new();
+    let mut test_cases: Vec<(i64, models::TestCase)> = Vec::new();
     let mut executor_names: HashMap<i64, String> = HashMap::new();
+    let mut test_results: HashMap<i64, u64> = HashMap::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
     let mut resource_usage: Option<events::ResourceUsageEvent> = None;
@@ -158,17 +159,24 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         .executor_name
                         .clone()
                         .or_else(|| executor_names.get(&e.executor_id).cloned());
-                    test_cases.push(models::TestCase {
-                        class_name: e.class_name.clone(),
-                        method_name: e.method_name.clone(),
-                        executor_name,
-                        outcome: None,
-                    });
+                    test_cases.push((
+                        e.executor_id,
+                        models::TestCase {
+                            class_name: e.class_name.clone(),
+                            method_name: e.method_name.clone(),
+                            executor_name,
+                            outcome: None,
+                        },
+                    ));
                 }
             }
             DecodedEvent::TestExecutorStarted(_) => {}
             DecodedEvent::TestExecutorFinished(_) => {}
-            DecodedEvent::TestResult(_) => {}
+            DecodedEvent::TestResult(e) => {
+                if let Some(ordinal) = e.result_ordinal {
+                    test_results.insert(e.executor_id, ordinal);
+                }
+            }
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
@@ -346,7 +354,15 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         jvm_vendor: jvm_event.as_ref().and_then(|j| j.vendor.clone()),
         jvm_version: jvm_event.and_then(|j| j.version),
         requested_tasks,
-        tests: test_cases,
+        tests: test_cases
+            .into_iter()
+            .map(|(executor_id, mut tc)| {
+                tc.outcome = test_results
+                    .get(&executor_id)
+                    .and_then(|&ord| models::TestOutcome::from_ordinal(ord));
+                tc
+            })
+            .collect(),
         resource_usage: resource_usage.map(|e| models::ResourceUsageData {
             timestamps: e.timestamps,
             build_process_cpu: assemble_normalized_samples(e.build_process_cpu),
@@ -469,6 +485,56 @@ mod tests {
         assert_eq!(
             payload.tests[0].executor_name.as_deref(),
             Some("Gradle Test Executor 1")
+        );
+    }
+
+    #[test]
+    fn test_assemble_test_cases_with_outcome() {
+        let events = vec![
+            (
+                frame(798, 1000),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: 42,
+                    class_name: "org.example.MyTest".into(),
+                    method_name: Some("testPass()".into()),
+                    executor_name: None,
+                }),
+            ),
+            (
+                frame(284, 1001),
+                DecodedEvent::TestResult(TestResultEvent {
+                    executor_id: 42,
+                    result_ordinal: Some(0), // 0 = Passed
+                }),
+            ),
+            (
+                frame(798, 2000),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: 99,
+                    class_name: "org.example.MyTest".into(),
+                    method_name: Some("testFail()".into()),
+                    executor_name: None,
+                }),
+            ),
+            (
+                frame(284, 2001),
+                DecodedEvent::TestResult(TestResultEvent {
+                    executor_id: 99,
+                    result_ordinal: Some(1), // 1 = Failed
+                }),
+            ),
+        ];
+        let payload = assemble(events);
+        assert_eq!(payload.tests.len(), 2);
+        assert!(
+            matches!(payload.tests[0].outcome, Some(models::TestOutcome::Passed)),
+            "expected Passed, got {:?}",
+            payload.tests[0].outcome
+        );
+        assert!(
+            matches!(payload.tests[1].outcome, Some(models::TestOutcome::Failed)),
+            "expected Failed, got {:?}",
+            payload.tests[1].outcome
         );
     }
 
