@@ -7,6 +7,14 @@ use uuid::Uuid;
 
 use domain;
 
+fn map_test_outcome(outcome: &models::TestOutcome) -> domain::TestOutcome {
+    match outcome {
+        models::TestOutcome::Passed => domain::TestOutcome::Passed,
+        models::TestOutcome::Failed => domain::TestOutcome::Failed,
+        models::TestOutcome::Skipped => domain::TestOutcome::Skipped,
+    }
+}
+
 pub struct UploadRequest {
     pub scan_id: String,
     pub build_tool_type: Option<String>,
@@ -166,9 +174,37 @@ impl BuildScanService {
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
                 }
 
+                let test_count = payload.tests.len();
+                for test in &payload.tests {
+                    let mut test_builder = domain::TestBuilder::default();
+                    test_builder
+                        .id(Uuid::new_v4())
+                        .scan_id(scan_uuid)
+                        .class_name(test.class_name.clone());
+
+                    if let Some(mn) = &test.method_name {
+                        test_builder.method_name(mn.clone());
+                    }
+                    if let Some(en) = &test.executor_name {
+                        test_builder.executor_name(en.clone());
+                    }
+                    if let Some(o) = &test.outcome {
+                        test_builder.outcome(map_test_outcome(o));
+                    }
+
+                    let domain_test = test_builder
+                        .build()
+                        .map_err(|e| anyhow::anyhow!(e))
+                        .context("failed to build Test")?;
+
+                    db::insert_test(&mut *tx, &domain_test)
+                        .await
+                        .with_context(|| format!("failed to store test {}", test.class_name))?;
+                }
+
                 tx.commit().await.context("failed to commit transaction")?;
 
-                info!(scan_id = %scan_id, task_count = task_count, "Stored build scan successfully");
+                info!(scan_id = %scan_id, task_count = task_count, test_count = test_count, "Stored build scan successfully");
             }
         }
 
@@ -207,5 +243,22 @@ impl BuildScanService {
 
     pub async fn count_build_scans(&self) -> Result<i64> {
         db::count_build_scans(&self.pool).await
+    }
+
+    pub async fn list_tests(
+        &self,
+        scan_id: &str,
+        limit: i64,
+        after_id: Option<&str>,
+    ) -> Result<Vec<domain::Test>> {
+        db::list_tests(&self.pool, scan_id, limit, after_id).await
+    }
+
+    pub async fn count_tests(&self, scan_id: &str) -> Result<i64> {
+        db::count_tests(&self.pool, scan_id).await
+    }
+
+    pub async fn get_test(&self, id: &str) -> Result<Option<domain::Test>> {
+        db::get_test(&self.pool, id).await
     }
 }

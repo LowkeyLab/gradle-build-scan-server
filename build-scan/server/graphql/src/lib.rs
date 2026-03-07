@@ -20,7 +20,7 @@ impl juniper::Context for Context {}
 // ---------------------------------------------------------------------------
 
 #[derive(GraphQLInterface)]
-#[graphql(for = [BuildScan, Task], context = Context)]
+#[graphql(for = [BuildScan, Task, Test], context = Context)]
 pub struct Node {
     pub id: ID,
 }
@@ -164,6 +164,72 @@ impl BuildScan {
             total_count,
         })
     }
+
+    async fn test_count(&self, context: &Context) -> FieldResult<i32> {
+        let count = context
+            .service
+            .count_tests(&self.scan.id.0.to_string())
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+        Ok(count)
+    }
+
+    async fn tests(
+        &self,
+        context: &Context,
+        first: Option<i32>,
+        after: Option<String>,
+    ) -> FieldResult<TestCaseConnection> {
+        let limit = validate_pagination(first).map_err(|e| FieldError::from(e.to_string()))?;
+        let after_id = after
+            .as_deref()
+            .map(Cursor::decode)
+            .transpose()
+            .map_err(|e| FieldError::from(e.to_string()))?
+            .map(|c| c.value);
+
+        let scan_id_str = self.scan.id.0.to_string();
+        let mut tests = context
+            .service
+            .list_tests(&scan_id_str, (limit + 1) as i64, after_id.as_deref())
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+
+        let has_next_page = tests.len() > limit as usize;
+        if has_next_page {
+            tests.pop();
+        }
+
+        let end_cursor = tests
+            .last()
+            .map(|t| Cursor::new(t.id.0.to_string()).encode());
+
+        let edges: Vec<TestCaseEdge> = tests
+            .into_iter()
+            .map(|t| {
+                let cursor = Cursor::new(t.id.0.to_string()).encode();
+                TestCaseEdge {
+                    cursor,
+                    node: Test { test: t },
+                }
+            })
+            .collect();
+
+        let total_count = context
+            .service
+            .count_tests(&scan_id_str)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+
+        Ok(TestCaseConnection {
+            edges,
+            page_info: PageInfo {
+                has_next_page,
+                end_cursor,
+            },
+            total_count,
+        })
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +291,45 @@ impl Task {
 
     fn origin_execution_time(&self) -> Option<f64> {
         self.task.origin_execution_time.map(|d| d.0 as f64)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Test type
+// ---------------------------------------------------------------------------
+
+pub struct Test {
+    pub test: domain::Test,
+}
+
+#[graphql_object(context = Context, impl = NodeValue)]
+impl Test {
+    fn id(&self) -> ID {
+        RelayId::encode("Test", &self.test.id.0.to_string())
+    }
+
+    fn test_id(&self) -> String {
+        self.test.id.0.to_string()
+    }
+
+    fn scan_id(&self) -> String {
+        self.test.scan_id.0.to_string()
+    }
+
+    fn class_name(&self) -> &str {
+        &self.test.class_name.0
+    }
+
+    fn method_name(&self) -> Option<&str> {
+        self.test.method_name.as_ref().map(|m| m.0.as_str())
+    }
+
+    fn executor_name(&self) -> Option<&str> {
+        self.test.executor_name.as_ref().map(|e| e.0.as_str())
+    }
+
+    fn outcome(&self) -> Option<String> {
+        self.test.outcome.map(|o| o.to_string())
     }
 }
 
@@ -331,6 +436,47 @@ impl TaskConnection {
 }
 
 // ---------------------------------------------------------------------------
+// TestCaseConnection / TestCaseEdge
+// ---------------------------------------------------------------------------
+
+pub struct TestCaseEdge {
+    pub cursor: String,
+    pub node: Test,
+}
+
+#[graphql_object(context = Context)]
+impl TestCaseEdge {
+    fn cursor(&self) -> &str {
+        &self.cursor
+    }
+
+    fn node(&self) -> &Test {
+        &self.node
+    }
+}
+
+pub struct TestCaseConnection {
+    pub edges: Vec<TestCaseEdge>,
+    pub page_info: PageInfo,
+    pub total_count: i32,
+}
+
+#[graphql_object(context = Context)]
+impl TestCaseConnection {
+    fn edges(&self) -> &Vec<TestCaseEdge> {
+        &self.edges
+    }
+
+    fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+
+    fn total_count(&self) -> i32 {
+        self.total_count
+    }
+}
+
+// ---------------------------------------------------------------------------
 // QueryRoot
 // ---------------------------------------------------------------------------
 
@@ -365,6 +511,14 @@ impl QueryRoot {
                     .await
                     .map_err(|e| FieldError::from(e.to_string()))?;
                 Ok(task.map(|t| NodeValue::Task(Task { task: t })))
+            }
+            "Test" => {
+                let test = context
+                    .service
+                    .get_test(&relay_id.raw_id)
+                    .await
+                    .map_err(|e| FieldError::from(e.to_string()))?;
+                Ok(test.map(|t| NodeValue::Test(Test { test: t })))
             }
             _ => Ok(None),
         }

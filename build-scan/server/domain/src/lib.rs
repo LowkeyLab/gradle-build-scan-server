@@ -10,6 +10,15 @@ pub struct BuildScanId(pub Uuid);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TaskId(pub Uuid);
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TestId(pub Uuid);
+
+impl From<Uuid> for TestId {
+    fn from(v: Uuid) -> Self {
+        Self(v)
+    }
+}
+
 // === String-wrapped value types ===
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -47,6 +56,15 @@ pub struct CacheKey(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestedTask(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TestClassName(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MethodName(pub String);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ExecutorName(pub String);
 
 // === Numeric value types ===
 
@@ -126,6 +144,21 @@ impl From<String> for CacheKey {
     }
 }
 impl From<String> for RequestedTask {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for TestClassName {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for MethodName {
+    fn from(v: String) -> Self {
+        Self(v)
+    }
+}
+impl From<String> for ExecutorName {
     fn from(v: String) -> Self {
         Self(v)
     }
@@ -215,6 +248,35 @@ impl std::str::FromStr for TaskOutcome {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TestOutcome {
+    Passed,
+    Failed,
+    Skipped,
+}
+
+impl std::fmt::Display for TestOutcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TestOutcome::Passed => write!(f, "Passed"),
+            TestOutcome::Failed => write!(f, "Failed"),
+            TestOutcome::Skipped => write!(f, "Skipped"),
+        }
+    }
+}
+
+impl std::str::FromStr for TestOutcome {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Passed" => Ok(TestOutcome::Passed),
+            "Failed" => Ok(TestOutcome::Failed),
+            "Skipped" => Ok(TestOutcome::Skipped),
+            other => Err(format!("unknown test outcome: '{other}'")),
+        }
+    }
+}
+
 // === Aggregates ===
 
 #[derive(Debug, Clone, Builder)]
@@ -265,4 +327,18 @@ pub struct Task {
     pub cache_key: Option<CacheKey>,
     #[builder(setter(strip_option), default)]
     pub origin_execution_time: Option<Duration>,
+}
+
+#[derive(Debug, Clone, Builder)]
+#[builder(setter(into))]
+pub struct Test {
+    pub id: TestId,
+    pub scan_id: BuildScanId,
+    pub class_name: TestClassName,
+    #[builder(setter(strip_option), default)]
+    pub method_name: Option<MethodName>,
+    #[builder(setter(strip_option), default)]
+    pub executor_name: Option<ExecutorName>,
+    #[builder(setter(strip_option), default)]
+    pub outcome: Option<TestOutcome>,
 }

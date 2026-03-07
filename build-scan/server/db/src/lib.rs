@@ -50,6 +50,16 @@ struct TaskRow {
     origin_execution_time: Option<i64>,
 }
 
+#[derive(Debug, sqlx::FromRow)]
+struct TestRow {
+    id: String,
+    scan_id: String,
+    class_name: String,
+    method_name: Option<String>,
+    executor_name: Option<String>,
+    outcome: Option<String>,
+}
+
 fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>> {
     NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
         .map(|dt| Utc.from_utc_datetime(&dt))
@@ -181,6 +191,45 @@ impl From<&domain::Task> for TaskRow {
             finish_timestamp: task.finish_timestamp.map(|t| t.0),
             cache_key: task.cache_key.as_ref().map(|k| k.0.clone()),
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
+        }
+    }
+}
+
+impl TryFrom<TestRow> for domain::Test {
+    type Error = anyhow::Error;
+    fn try_from(row: TestRow) -> Result<Self, Self::Error> {
+        let id = domain::TestId(
+            uuid::Uuid::parse_str(&row.id)
+                .with_context(|| format!("invalid test id '{}'", row.id))?,
+        );
+        let scan_id = domain::BuildScanId(
+            uuid::Uuid::parse_str(&row.scan_id)
+                .with_context(|| format!("invalid scan_id '{}'", row.scan_id))?,
+        );
+        let outcome = row
+            .outcome
+            .map(|s| s.parse::<domain::TestOutcome>().map_err(anyhow::Error::msg))
+            .transpose()?;
+        Ok(domain::Test {
+            id,
+            scan_id,
+            class_name: domain::TestClassName(row.class_name),
+            method_name: row.method_name.map(domain::MethodName),
+            executor_name: row.executor_name.map(domain::ExecutorName),
+            outcome,
+        })
+    }
+}
+
+impl From<&domain::Test> for TestRow {
+    fn from(test: &domain::Test) -> Self {
+        Self {
+            id: test.id.0.to_string(),
+            scan_id: test.scan_id.0.to_string(),
+            class_name: test.class_name.0.clone(),
+            method_name: test.method_name.as_ref().map(|m| m.0.clone()),
+            executor_name: test.executor_name.as_ref().map(|e| e.0.clone()),
+            outcome: test.outcome.map(|o| o.to_string()),
         }
     }
 }
@@ -349,4 +398,74 @@ pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<domain::Task
     .await?;
 
     row.map(domain::Task::try_from).transpose()
+}
+
+pub async fn insert_test<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
+    test: &domain::Test,
+) -> Result<()> {
+    let row = TestRow::from(test);
+    sqlx::query(
+        "INSERT INTO tests (id, scan_id, class_name, method_name, executor_name, outcome) \
+         VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&row.id)
+    .bind(&row.scan_id)
+    .bind(&row.class_name)
+    .bind(row.method_name.as_deref())
+    .bind(row.executor_name.as_deref())
+    .bind(row.outcome.as_deref())
+    .execute(executor)
+    .await?;
+    Ok(())
+}
+
+pub async fn list_tests(
+    pool: &SqlitePool,
+    scan_id: &str,
+    limit: i64,
+    after_id: Option<&str>,
+) -> Result<Vec<domain::Test>> {
+    let rows = if let Some(cursor) = after_id {
+        sqlx::query_as::<_, TestRow>(
+            "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+             FROM tests WHERE scan_id = ? AND id > ? ORDER BY id LIMIT ?",
+        )
+        .bind(scan_id)
+        .bind(cursor)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?
+    } else {
+        sqlx::query_as::<_, TestRow>(
+            "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+             FROM tests WHERE scan_id = ? ORDER BY id LIMIT ?",
+        )
+        .bind(scan_id)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?
+    };
+    rows.into_iter()
+        .map(domain::Test::try_from)
+        .collect::<Result<Vec<_>>>()
+}
+
+pub async fn count_tests(pool: &SqlitePool, scan_id: &str) -> Result<i64> {
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tests WHERE scan_id = ?")
+        .bind(scan_id)
+        .fetch_one(pool)
+        .await?;
+    Ok(count)
+}
+
+pub async fn get_test(pool: &SqlitePool, id: &str) -> Result<Option<domain::Test>> {
+    let row = sqlx::query_as::<_, TestRow>(
+        "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+         FROM tests WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+    row.map(domain::Test::try_from).transpose()
 }
