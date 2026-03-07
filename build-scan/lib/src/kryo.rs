@@ -87,6 +87,87 @@ pub fn read_task_id(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
     Ok(id)
 }
 
+/// Read a Kryo-encoded long (zigzag varint, up to 9 bytes).
+///
+/// Kryo's long encoding differs from standard LEB128 in one key way: bytes 0–7
+/// use bit 7 as a continuation flag, but byte 8 (the 9th byte) is consumed with
+/// **all 8 bits** as data — there is no 10th byte. The encoded bits are zigzag-decoded
+/// at the end: `decoded = (raw >> 1) ^ -(raw & 1)`.
+pub fn read_kryo_long(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    if *pos >= data.len() {
+        return Err(ParseError::UnexpectedEof { offset: *pos });
+    }
+    let b0 = data[*pos];
+    *pos += 1;
+    let mut result = (b0 & 0x7F) as u64;
+    if b0 & 0x80 != 0 {
+        if *pos >= data.len() {
+            return Err(ParseError::UnexpectedEof { offset: *pos });
+        }
+        let b1 = data[*pos];
+        *pos += 1;
+        result |= ((b1 & 0x7F) as u64) << 7;
+        if b1 & 0x80 != 0 {
+            if *pos >= data.len() {
+                return Err(ParseError::UnexpectedEof { offset: *pos });
+            }
+            let b2 = data[*pos];
+            *pos += 1;
+            result |= ((b2 & 0x7F) as u64) << 14;
+            if b2 & 0x80 != 0 {
+                if *pos >= data.len() {
+                    return Err(ParseError::UnexpectedEof { offset: *pos });
+                }
+                let b3 = data[*pos];
+                *pos += 1;
+                result |= ((b3 & 0x7F) as u64) << 21;
+                if b3 & 0x80 != 0 {
+                    if *pos >= data.len() {
+                        return Err(ParseError::UnexpectedEof { offset: *pos });
+                    }
+                    let b4 = data[*pos];
+                    *pos += 1;
+                    result |= ((b4 & 0x7F) as u64) << 28;
+                    if b4 & 0x80 != 0 {
+                        if *pos >= data.len() {
+                            return Err(ParseError::UnexpectedEof { offset: *pos });
+                        }
+                        let b5 = data[*pos];
+                        *pos += 1;
+                        result |= ((b5 & 0x7F) as u64) << 35;
+                        if b5 & 0x80 != 0 {
+                            if *pos >= data.len() {
+                                return Err(ParseError::UnexpectedEof { offset: *pos });
+                            }
+                            let b6 = data[*pos];
+                            *pos += 1;
+                            result |= ((b6 & 0x7F) as u64) << 42;
+                            if b6 & 0x80 != 0 {
+                                if *pos >= data.len() {
+                                    return Err(ParseError::UnexpectedEof { offset: *pos });
+                                }
+                                let b7 = data[*pos];
+                                *pos += 1;
+                                result |= ((b7 & 0x7F) as u64) << 49;
+                                if b7 & 0x80 != 0 {
+                                    // 9th byte: all 8 bits are data (no continuation flag)
+                                    if *pos >= data.len() {
+                                        return Err(ParseError::UnexpectedEof { offset: *pos });
+                                    }
+                                    let b8 = data[*pos];
+                                    *pos += 1;
+                                    result |= (b8 as u64) << 56;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(varint::zigzag_decode_i64(result))
+}
+
 /// Inverted: bit=0 means field IS present
 pub fn is_field_present(flags: u16, bit: u8) -> bool {
     (flags >> bit) & 1 == 0
@@ -219,6 +300,27 @@ pub fn encode_zigzag_i64(n: i64) -> Vec<u8> {
     buf
 }
 
+/// Encode an i64 as a Kryo-long (zigzag varint, up to 9 bytes).
+/// Matches `read_kryo_long` — the inverse operation used in tests.
+pub fn encode_kryo_long(n: i64) -> Vec<u8> {
+    let zigzag = ((n << 1) ^ (n >> 63)) as u64;
+    let mut result = zigzag;
+    let mut buf = Vec::new();
+    for _ in 0..8 {
+        let b = (result & 0x7F) as u8;
+        result >>= 7;
+        if result != 0 {
+            buf.push(b | 0x80);
+        } else {
+            buf.push(b);
+            return buf;
+        }
+    }
+    // 9th byte: all 8 bits are data
+    buf.push((result & 0xFF) as u8);
+    buf
+}
+
 pub fn encode_unsigned_varint(n: u64) -> Vec<u8> {
     let mut buf = Vec::new();
     let mut value = n;
@@ -239,6 +341,88 @@ pub fn encode_unsigned_varint(n: u64) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_read_kryo_long_small_positive() {
+        // ZigZag(50) = 100 = 0x64, single byte, bit7=0
+        let data = [0x64u8];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long(&data, &mut pos).unwrap(), 50);
+        assert_eq!(pos, 1);
+    }
+
+    #[test]
+    fn test_read_kryo_long_small_negative() {
+        // ZigZag(-49) = 97 = 0x61, single byte
+        let data = [0x61u8];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long(&data, &mut pos).unwrap(), -49);
+        assert_eq!(pos, 1);
+    }
+
+    #[test]
+    fn test_read_kryo_long_nine_byte_roundtrip() {
+        // A value that requires all 9 bytes: large magnitude i64
+        let value: i64 = -8568844071650005894;
+        let encoded = encode_kryo_long(value);
+        assert_eq!(
+            encoded.len(),
+            9,
+            "expected 9-byte encoding for large magnitude"
+        );
+        // The first 8 bytes must all have bit7=1 (continuation), 9th must not be checked
+        for b in &encoded[..8] {
+            assert!(b & 0x80 != 0, "bytes 0-7 must have bit7=1");
+        }
+        let mut pos = 0;
+        assert_eq!(read_kryo_long(&encoded, &mut pos).unwrap(), value);
+        assert_eq!(pos, 9);
+    }
+
+    #[test]
+    fn test_encode_decode_kryo_long_roundtrip() {
+        for &n in &[
+            0i64,
+            1,
+            -1,
+            50,
+            -49,
+            i64::MAX,
+            i64::MIN,
+            -9000000000i64,
+            304549416674991952i64,
+        ] {
+            let encoded = encode_kryo_long(n);
+            let mut pos = 0;
+            let decoded = read_kryo_long(&encoded, &mut pos).unwrap();
+            assert_eq!(decoded, n, "roundtrip failed for {n}");
+            assert_eq!(pos, encoded.len());
+        }
+    }
+
+    #[test]
+    fn test_read_kryo_long_real_payload_bytes() {
+        // Bytes from real wire 798 event #3 body[11:20] — known to decode to 2348116984554971701
+        let data = [0xea, 0x88, 0xaf, 0xb7, 0x9c, 0xfd, 0x97, 0x96, 0x41];
+        let mut pos = 0;
+        assert_eq!(
+            read_kryo_long(&data, &mut pos).unwrap(),
+            2348116984554971701i64
+        );
+        assert_eq!(pos, 9);
+    }
+
+    #[test]
+    fn test_read_kryo_long_real_payload_bytes_negative() {
+        // Bytes from real wire 798 event #3 body[20:29] — known to decode to -8568844071650005894
+        let data = [0x8b, 0xce, 0xc8, 0xa6, 0x92, 0x92, 0xd3, 0xea, 0xed];
+        let mut pos = 0;
+        assert_eq!(
+            read_kryo_long(&data, &mut pos).unwrap(),
+            -8568844071650005894i64
+        );
+        assert_eq!(pos, 9);
+    }
 
     #[test]
     fn test_flags_inverted() {

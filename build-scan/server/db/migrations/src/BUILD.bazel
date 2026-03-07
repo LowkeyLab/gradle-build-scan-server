@@ -6,6 +6,7 @@ rust_library(
     compile_data = [
         "sql/001_initial.sql",
         "sql/002_composite_pagination_index.sql",
+        "sql/003_tests_table.sql",
     ],
     visibility = ["//visibility:public"],
     deps = ["@crates//:sqlx"],

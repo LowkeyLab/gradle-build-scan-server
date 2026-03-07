@@ -26,6 +26,8 @@ pub struct BuildScanPayload {
     pub jvm_version: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub requested_tasks: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tests: Vec<TestCase>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -271,4 +273,22 @@ pub struct ProcessData {
     pub display_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub process_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TestOutcome {
+    Passed,
+    Failed,
+    Skipped,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TestCase {
+    pub class_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub method_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub executor_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<TestOutcome>,
 }
