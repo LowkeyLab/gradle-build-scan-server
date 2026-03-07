@@ -13,12 +13,12 @@ use super::{BodyDecoder, DecodedEvent, TestCaseEvent};
 /// [1..]   ID1  (Kryo-long)
 /// [..]    ID2  (Kryo-long)
 /// [..]    ID3  (Kryo-long)
-/// [..]    ID4  (Kryo-long)
+/// [..]    executor_id  (Kryo-long)
 /// [..]    class_name  (Kryo interned string)
 /// [..]    bool (1 byte, 0x01)
 /// [..]    short_class_name (Kryo interned string)
 /// [..]    null (1 byte, 0x00)
-/// [..]    executor_id (Kryo-long)
+/// [..]    back_ref_id (Kryo-long, links back to executor)
 /// [..]    null (1 byte, 0x00)
 /// ```
 ///
@@ -120,7 +120,9 @@ impl BodyDecoder for TestCaseDecoder {
                     }))
                 }
             }
-            _ => Err(ParseError::UnexpectedEof { offset: 0 }),
+            _ => Err(ParseError::InvalidHeader {
+                reason: "unsupported TestCase flags value",
+            }),
         }
     }
 }
@@ -128,27 +130,6 @@ impl BodyDecoder for TestCaseDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// Encode a Kryo-long (zigzag varint, up to 9 bytes).
-    /// Matches Kryo's writeLong() format used for IDs in wire 798 bodies.
-    fn encode_kryo_long(n: i64) -> Vec<u8> {
-        let zigzag = ((n << 1) ^ (n >> 63)) as u64;
-        let mut result = zigzag;
-        let mut buf = Vec::new();
-        for _ in 0..8 {
-            let b = (result & 0x7F) as u8;
-            result >>= 7;
-            if result != 0 {
-                buf.push(b | 0x80);
-            } else {
-                buf.push(b);
-                return buf;
-            }
-        }
-        // 9th byte: all 8 bits are data
-        buf.push((result & 0xFF) as u8);
-        buf
-    }
 
     fn push_kryo_string(data: &mut Vec<u8>, s: &str) {
         // zigzag-encoded length (positive → ZigZag(n) = n*2), then per-char unsigned varints
@@ -174,13 +155,13 @@ mod tests {
         // flags=0x05, then 3 IDs, then ID4 (bit7=1 in first byte → method-level),
         // then method_name, class_name, trailing_id
         let mut data = vec![0x05u8];
-        data.extend_from_slice(&encode_kryo_long(1111)); // ID1
-        data.extend_from_slice(&encode_kryo_long(50)); // ID2 (1-byte)
-        data.extend_from_slice(&encode_kryo_long(2222)); // ID3
-        data.extend_from_slice(&encode_kryo_long(-9000000000i64)); // ID4 (9-byte, bit7=1 in first byte)
+        data.extend_from_slice(&kryo::encode_kryo_long(1111)); // ID1
+        data.extend_from_slice(&kryo::encode_kryo_long(50)); // ID2 (1-byte)
+        data.extend_from_slice(&kryo::encode_kryo_long(2222)); // ID3
+        data.extend_from_slice(&kryo::encode_kryo_long(-9000000000i64)); // ID4 (9-byte, bit7=1 in first byte)
         push_kryo_string(&mut data, "testMethod()");
         push_kryo_string(&mut data, "com.example.MyTest");
-        data.extend_from_slice(&encode_kryo_long(42)); // trailing executor_id
+        data.extend_from_slice(&kryo::encode_kryo_long(42)); // trailing executor_id
 
         let decoder = TestCaseDecoder;
         let result = decoder.decode(&data).unwrap();
@@ -198,15 +179,15 @@ mod tests {
     fn test_decode_class_level() {
         // flags=0x00, then 4 IDs, then class_name, bool, short_name, null, trailing_id, null
         let mut data = vec![0x00u8];
-        data.extend_from_slice(&encode_kryo_long(32)); // ID1 (1-byte)
-        data.extend_from_slice(&encode_kryo_long(1111)); // ID2
-        data.extend_from_slice(&encode_kryo_long(2222)); // ID3
-        data.extend_from_slice(&encode_kryo_long(3333)); // ID4 (executor_id)
+        data.extend_from_slice(&kryo::encode_kryo_long(32)); // ID1 (1-byte)
+        data.extend_from_slice(&kryo::encode_kryo_long(1111)); // ID2
+        data.extend_from_slice(&kryo::encode_kryo_long(2222)); // ID3
+        data.extend_from_slice(&kryo::encode_kryo_long(3333)); // ID4 (executor_id)
         push_kryo_string(&mut data, "com.example.MyTest");
         data.push(0x01); // bool
         push_kryo_string(&mut data, "MyTest");
         data.push(0x00); // null
-        data.extend_from_slice(&encode_kryo_long(999)); // trailing executor_id
+        data.extend_from_slice(&kryo::encode_kryo_long(999)); // trailing executor_id
         data.push(0x00); // final null
 
         let decoder = TestCaseDecoder;
@@ -226,12 +207,12 @@ mod tests {
         // flags=0x05, then 3 IDs, then executor_name (bit7=0 in first byte → executor-init),
         // then trailing_id
         let mut data = vec![0x05u8];
-        data.extend_from_slice(&encode_kryo_long(1111)); // ID1
-        data.extend_from_slice(&encode_kryo_long(50)); // ID2
-        data.extend_from_slice(&encode_kryo_long(3333)); // ID3
+        data.extend_from_slice(&kryo::encode_kryo_long(1111)); // ID1
+        data.extend_from_slice(&kryo::encode_kryo_long(50)); // ID2
+        data.extend_from_slice(&kryo::encode_kryo_long(3333)); // ID3
         // executor name string — first byte has bit7=0 (it's a length, not a Kryo-long)
         push_kryo_string(&mut data, "Gradle Test Executor 1");
-        data.extend_from_slice(&encode_kryo_long(304549416674991952i64)); // trailing executor_id
+        data.extend_from_slice(&kryo::encode_kryo_long(304549416674991952i64)); // trailing executor_id
 
         let decoder = TestCaseDecoder;
         let result = decoder.decode(&data).unwrap();
