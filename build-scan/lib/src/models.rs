@@ -283,7 +283,7 @@ pub enum TestOutcome {
 }
 
 impl TestOutcome {
-    pub fn from_result_ordinal(ordinal: u64) -> Option<Self> {
+    pub fn from_ordinal(ordinal: u64) -> Option<Self> {
         match ordinal {
             0 => Some(Self::Passed),
             1 => Some(Self::Failed),

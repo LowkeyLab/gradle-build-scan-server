@@ -16,7 +16,7 @@ impl BodyDecoder for TestResultDecoder {
         };
         let result_ordinal = if kryo::is_field_present(flags as u16, 1) {
             let raw = kryo::read_kryo_long(body, &mut pos)?;
-            Some(raw as u64)
+            if raw < 0 { None } else { Some(raw as u64) }
         } else {
             None
         };

@@ -359,7 +359,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             .map(|(executor_id, mut tc)| {
                 tc.outcome = test_results
                     .get(&executor_id)
-                    .and_then(|&ord| models::TestOutcome::from_result_ordinal(ord));
+                    .and_then(|&ord| models::TestOutcome::from_ordinal(ord));
                 tc
             })
             .collect(),
