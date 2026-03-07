@@ -465,10 +465,7 @@ mod tests {
             payload.tests[0].class_name,
             "org.example.list.LinkedListTest"
         );
-        assert_eq!(
-            payload.tests[0].method_name.as_deref(),
-            Some("testAdd()")
-        );
+        assert_eq!(payload.tests[0].method_name.as_deref(), Some("testAdd()"));
         assert_eq!(
             payload.tests[0].executor_name.as_deref(),
             Some("Gradle Test Executor 1")

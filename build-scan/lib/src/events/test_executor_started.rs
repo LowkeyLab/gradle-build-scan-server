@@ -15,9 +15,9 @@ impl BodyDecoder for TestExecutorStartedDecoder {
             0
         };
 
-        Ok(DecodedEvent::TestExecutorStarted(TestExecutorStartedEvent {
-            executor_id,
-        }))
+        Ok(DecodedEvent::TestExecutorStarted(
+            TestExecutorStartedEvent { executor_id },
+        ))
     }
 }
 

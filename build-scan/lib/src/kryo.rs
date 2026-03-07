@@ -365,7 +365,11 @@ mod tests {
         // A value that requires all 9 bytes: large magnitude i64
         let value: i64 = -8568844071650005894;
         let encoded = encode_kryo_long(value);
-        assert_eq!(encoded.len(), 9, "expected 9-byte encoding for large magnitude");
+        assert_eq!(
+            encoded.len(),
+            9,
+            "expected 9-byte encoding for large magnitude"
+        );
         // The first 8 bytes must all have bit7=1 (continuation), 9th must not be checked
         for b in &encoded[..8] {
             assert!(b & 0x80 != 0, "bytes 0-7 must have bit7=1");
@@ -377,7 +381,17 @@ mod tests {
 
     #[test]
     fn test_encode_decode_kryo_long_roundtrip() {
-        for &n in &[0i64, 1, -1, 50, -49, i64::MAX, i64::MIN, -9000000000i64, 304549416674991952i64] {
+        for &n in &[
+            0i64,
+            1,
+            -1,
+            50,
+            -49,
+            i64::MAX,
+            i64::MIN,
+            -9000000000i64,
+            304549416674991952i64,
+        ] {
             let encoded = encode_kryo_long(n);
             let mut pos = 0;
             let decoded = read_kryo_long(&encoded, &mut pos).unwrap();
@@ -391,7 +405,10 @@ mod tests {
         // Bytes from real wire 798 event #3 body[11:20] — known to decode to 2348116984554971701
         let data = [0xea, 0x88, 0xaf, 0xb7, 0x9c, 0xfd, 0x97, 0x96, 0x41];
         let mut pos = 0;
-        assert_eq!(read_kryo_long(&data, &mut pos).unwrap(), 2348116984554971701i64);
+        assert_eq!(
+            read_kryo_long(&data, &mut pos).unwrap(),
+            2348116984554971701i64
+        );
         assert_eq!(pos, 9);
     }
 
@@ -400,7 +417,10 @@ mod tests {
         // Bytes from real wire 798 event #3 body[20:29] — known to decode to -8568844071650005894
         let data = [0x8b, 0xce, 0xc8, 0xa6, 0x92, 0x92, 0xd3, 0xea, 0xed];
         let mut pos = 0;
-        assert_eq!(read_kryo_long(&data, &mut pos).unwrap(), -8568844071650005894i64);
+        assert_eq!(
+            read_kryo_long(&data, &mut pos).unwrap(),
+            -8568844071650005894i64
+        );
         assert_eq!(pos, 9);
     }
 

@@ -175,7 +175,7 @@ mod tests {
         // then method_name, class_name, trailing_id
         let mut data = vec![0x05u8];
         data.extend_from_slice(&encode_kryo_long(1111)); // ID1
-        data.extend_from_slice(&encode_kryo_long(50));   // ID2 (1-byte)
+        data.extend_from_slice(&encode_kryo_long(50)); // ID2 (1-byte)
         data.extend_from_slice(&encode_kryo_long(2222)); // ID3
         data.extend_from_slice(&encode_kryo_long(-9000000000i64)); // ID4 (9-byte, bit7=1 in first byte)
         push_kryo_string(&mut data, "testMethod()");
@@ -198,10 +198,10 @@ mod tests {
     fn test_decode_class_level() {
         // flags=0x00, then 4 IDs, then class_name, bool, short_name, null, trailing_id, null
         let mut data = vec![0x00u8];
-        data.extend_from_slice(&encode_kryo_long(32));    // ID1 (1-byte)
-        data.extend_from_slice(&encode_kryo_long(1111));  // ID2
-        data.extend_from_slice(&encode_kryo_long(2222));  // ID3
-        data.extend_from_slice(&encode_kryo_long(3333));  // ID4 (executor_id)
+        data.extend_from_slice(&encode_kryo_long(32)); // ID1 (1-byte)
+        data.extend_from_slice(&encode_kryo_long(1111)); // ID2
+        data.extend_from_slice(&encode_kryo_long(2222)); // ID3
+        data.extend_from_slice(&encode_kryo_long(3333)); // ID4 (executor_id)
         push_kryo_string(&mut data, "com.example.MyTest");
         data.push(0x01); // bool
         push_kryo_string(&mut data, "MyTest");
@@ -227,7 +227,7 @@ mod tests {
         // then trailing_id
         let mut data = vec![0x05u8];
         data.extend_from_slice(&encode_kryo_long(1111)); // ID1
-        data.extend_from_slice(&encode_kryo_long(50));   // ID2
+        data.extend_from_slice(&encode_kryo_long(50)); // ID2
         data.extend_from_slice(&encode_kryo_long(3333)); // ID3
         // executor name string — first byte has bit7=0 (it's a length, not a Kryo-long)
         push_kryo_string(&mut data, "Gradle Test Executor 1");
