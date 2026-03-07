@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::ExecutorId;
 
 use super::{BodyDecoder, DecodedEvent, TestExecutorIdentityEvent};
 
@@ -11,9 +12,9 @@ impl BodyDecoder for TestExecutorIdentityDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let executor_id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            ExecutorId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            ExecutorId::new(0)
         };
         // Bit 1: hash — read and discard
         if kryo::is_field_present(flags as u16, 1) {
@@ -50,7 +51,7 @@ mod tests {
         let decoder = TestExecutorIdentityDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestExecutorIdentity(e) = result {
-            assert_eq!(e.executor_id, 99);
+            assert_eq!(e.executor_id, ExecutorId::new(99));
             assert_eq!(e.name, "Gradle Test Executor 1");
         } else {
             panic!("expected TestExecutorIdentity");

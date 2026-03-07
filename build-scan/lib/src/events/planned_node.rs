@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, PlannedNodeEvent};
 
@@ -10,27 +11,39 @@ impl BodyDecoder for PlannedNodeDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
         let dependencies = if kryo::is_field_present(flags as u16, 1) {
             kryo::read_list_of_i64(body, &mut pos)?
+                .into_iter()
+                .map(TaskId::new)
+                .collect()
         } else {
             vec![]
         };
         let must_run_after = if kryo::is_field_present(flags as u16, 2) {
             kryo::read_list_of_i64(body, &mut pos)?
+                .into_iter()
+                .map(TaskId::new)
+                .collect()
         } else {
             vec![]
         };
         let should_run_after = if kryo::is_field_present(flags as u16, 3) {
             kryo::read_list_of_i64(body, &mut pos)?
+                .into_iter()
+                .map(TaskId::new)
+                .collect()
         } else {
             vec![]
         };
         let finalized_by = if kryo::is_field_present(flags as u16, 4) {
             kryo::read_list_of_i64(body, &mut pos)?
+                .into_iter()
+                .map(TaskId::new)
+                .collect()
         } else {
             vec![]
         };
@@ -59,8 +72,8 @@ mod tests {
         let decoder = PlannedNodeDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::PlannedNode(e) = result {
-            assert_eq!(e.id, Some(7));
-            assert_eq!(e.dependencies, vec![10, 20]);
+            assert_eq!(e.id, Some(TaskId::new(7)));
+            assert_eq!(e.dependencies, vec![TaskId::new(10), TaskId::new(20)]);
             assert!(e.must_run_after.is_empty());
         } else {
             panic!("expected PlannedNode");
