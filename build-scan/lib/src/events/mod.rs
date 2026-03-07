@@ -32,6 +32,11 @@ pub mod task_inputs_snapshotting_started;
 pub mod task_inputs_value_properties;
 pub mod task_registration_summary;
 pub mod task_started;
+pub mod test_case;
+pub mod test_executor_finished;
+pub mod test_executor_identity;
+pub mod test_executor_started;
+pub mod test_result;
 pub mod transform_execution_finished;
 pub mod transform_execution_request;
 pub mod transform_execution_started;
@@ -77,6 +82,11 @@ pub enum DecodedEvent {
     TaskRegistrationSummary(TaskRegistrationSummaryEvent),
     BasicMemoryStats(BasicMemoryStatsEvent),
     ResourceUsage(ResourceUsageEvent),
+    TestCase(TestCaseEvent),
+    TestExecutorIdentity(TestExecutorIdentityEvent),
+    TestExecutorStarted(TestExecutorStartedEvent),
+    TestExecutorFinished(TestExecutorFinishedEvent),
+    TestResult(TestResultEvent),
     Raw(RawEvent),
 }
 
@@ -418,6 +428,36 @@ pub struct ProcessEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct TestCaseEvent {
+    pub executor_id: i64,
+    pub class_name: String,
+    pub method_name: Option<String>,
+    pub executor_name: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TestExecutorIdentityEvent {
+    pub executor_id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct TestExecutorStartedEvent {
+    pub executor_id: i64,
+}
+
+#[derive(Debug, Clone)]
+pub struct TestExecutorFinishedEvent {
+    pub executor_id: i64,
+}
+
+#[derive(Debug, Clone)]
+pub struct TestResultEvent {
+    pub executor_id: i64,
+    pub result_ordinal: Option<u64>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -517,6 +557,20 @@ impl DecoderRegistry {
         registry.register(516, Box::new(build_modes::BuildModesDecoder));
         registry.register(1563, Box::new(task_started::TaskStartedDecoder));
         registry.register(2074, Box::new(task_finished::TaskFinishedDecoder));
+        registry.register(
+            127,
+            Box::new(test_executor_identity::TestExecutorIdentityDecoder),
+        );
+        registry.register(
+            128,
+            Box::new(test_executor_started::TestExecutorStartedDecoder),
+        );
+        registry.register(284, Box::new(test_result::TestResultDecoder));
+        registry.register(798, Box::new(test_case::TestCaseDecoder));
+        registry.register(
+            803,
+            Box::new(test_executor_finished::TestExecutorFinishedDecoder),
+        );
         registry
     }
 
