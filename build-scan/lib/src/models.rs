@@ -282,6 +282,17 @@ pub enum TestOutcome {
     Skipped,
 }
 
+impl TestOutcome {
+    pub fn from_result_ordinal(ordinal: u64) -> Option<Self> {
+        match ordinal {
+            0 => Some(Self::Passed),
+            1 => Some(Self::Failed),
+            2 => Some(Self::Skipped),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestCase {
     pub class_name: String,
