@@ -1,5 +1,5 @@
 use error::ParseError;
-use models::TaskId;
+use models::{FileRefId, TaskId};
 
 use super::{BodyDecoder, DecodedEvent, TaskInputsFilePropertyEvent};
 
@@ -29,7 +29,7 @@ impl BodyDecoder for TaskInputsFilePropertyDecoder {
         let roots = if kryo::is_field_present(flags as u16, 3) {
             kryo::read_list_of_i64(body, &mut pos)?
                 .into_iter()
-                .map(TaskId::new)
+                .map(FileRefId::new)
                 .collect()
         } else {
             vec![]
@@ -67,7 +67,7 @@ mod tests {
             assert_eq!(e.id, Some(TaskId::new(4)));
             assert_eq!(e.attributes, vec!["INCREMENTAL"]);
             assert_eq!(e.hash, Some(vec![0xFF, 0x00]));
-            assert_eq!(e.roots, vec![TaskId::new(100)]);
+            assert_eq!(e.roots, vec![FileRefId::new(100)]);
         } else {
             panic!("expected TaskInputsFileProperty");
         }

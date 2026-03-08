@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use error::ParseError;
-use models::{ExecutorId, FailureId, TaskId, TransformId};
+use models::{ExecutorId, FailureId, FileRefId, TaskId, TransformId};
 
 pub mod basic_memory_stats;
 pub mod build_agent;
@@ -168,7 +168,7 @@ pub struct TaskInputsFilePropertyEvent {
     pub id: Option<TaskId>,
     pub attributes: Vec<String>,
     pub hash: Option<Vec<u8>>,
-    pub roots: Vec<TaskId>,
+    pub roots: Vec<FileRefId>,
 }
 
 #[derive(Debug, Clone)]

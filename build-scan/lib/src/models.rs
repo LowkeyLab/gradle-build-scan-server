@@ -40,6 +40,16 @@ impl FailureId {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct FileRefId(pub(crate) i64);
+
+impl FileRefId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildScanPayload {
     pub tasks: Vec<Task>,
@@ -191,7 +201,7 @@ pub struct TaskInputsFilePropertyData {
     pub attributes: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<Vec<u8>>,
-    pub roots: Vec<TaskId>,
+    pub roots: Vec<FileRefId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
