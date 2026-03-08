@@ -2,29 +2,32 @@ use std::collections::HashMap;
 
 use events::DecodedEvent;
 use framing::FramedEvent;
-use models::{BuildScanPayload, RawEventSummary, Task, TaskOutcome};
+use models::{BuildScanPayload, ExecutorId, RawEventSummary, Task, TaskId, TaskOutcome};
 
 pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
-    let mut identities: HashMap<i64, (String, String)> = HashMap::new();
-    let mut started: HashMap<i64, (String, Option<String>, i64)> = HashMap::new();
-    let mut finished: HashMap<i64, FinishedInfo> = HashMap::new();
+    let mut identities: HashMap<TaskId, (String, String)> = HashMap::new();
+    let mut started: HashMap<TaskId, (String, Option<String>, i64)> = HashMap::new();
+    let mut finished: HashMap<TaskId, FinishedInfo> = HashMap::new();
     let mut raw_counts: HashMap<u16, usize> = HashMap::new();
-    let mut property_names_map: HashMap<i64, events::TaskInputsPropertyNamesEvent> = HashMap::new();
-    let mut implementation_map: HashMap<i64, events::TaskInputsImplementationEvent> =
+    let mut property_names_map: HashMap<TaskId, events::TaskInputsPropertyNamesEvent> =
         HashMap::new();
-    let mut value_properties_map: HashMap<i64, events::TaskInputsValuePropertiesEvent> =
+    let mut implementation_map: HashMap<TaskId, events::TaskInputsImplementationEvent> =
         HashMap::new();
-    let mut file_property_roots_map: HashMap<i64, Vec<events::TaskInputsFilePropertyRootEvent>> =
+    let mut value_properties_map: HashMap<TaskId, events::TaskInputsValuePropertiesEvent> =
         HashMap::new();
-    let mut file_properties_map: HashMap<i64, Vec<events::TaskInputsFilePropertyEvent>> =
+    let mut file_property_roots_map: HashMap<TaskId, Vec<events::TaskInputsFilePropertyRootEvent>> =
         HashMap::new();
-    let mut snapshotting_finished_map: HashMap<i64, events::TaskInputsSnapshottingFinishedEvent> =
+    let mut file_properties_map: HashMap<TaskId, Vec<events::TaskInputsFilePropertyEvent>> =
         HashMap::new();
+    let mut snapshotting_finished_map: HashMap<
+        TaskId,
+        events::TaskInputsSnapshottingFinishedEvent,
+    > = HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
-    let mut test_cases: Vec<(i64, models::TestCase)> = Vec::new();
-    let mut executor_names: HashMap<i64, String> = HashMap::new();
-    let mut test_results: HashMap<i64, u64> = HashMap::new();
+    let mut test_cases: Vec<(ExecutorId, models::TestCase)> = Vec::new();
+    let mut executor_names: HashMap<ExecutorId, String> = HashMap::new();
+    let mut test_results: HashMap<ExecutorId, u64> = HashMap::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
     let mut resource_usage: Option<events::ResourceUsageEvent> = None;
@@ -435,6 +438,7 @@ struct FinishedInfo {
 mod tests {
     use super::*;
     use events::*;
+    use models::{ExecutorId, TaskId};
 
     fn frame(wire_id: u16, ts: i64) -> FramedEvent {
         FramedEvent {
@@ -451,14 +455,14 @@ mod tests {
             (
                 frame(127, 1000),
                 DecodedEvent::TestExecutorIdentity(TestExecutorIdentityEvent {
-                    executor_id: 42,
+                    executor_id: ExecutorId::new(42),
                     name: "Gradle Test Executor 1".into(),
                 }),
             ),
             (
                 frame(798, 2000),
                 DecodedEvent::TestCase(TestCaseEvent {
-                    executor_id: 42,
+                    executor_id: ExecutorId::new(42),
                     class_name: "org.example.list.LinkedListTest".into(),
                     method_name: Some("testAdd()".into()),
                     executor_name: Some("Gradle Test Executor 1".into()),
@@ -467,7 +471,7 @@ mod tests {
             (
                 frame(798, 2001),
                 DecodedEvent::TestCase(TestCaseEvent {
-                    executor_id: 42,
+                    executor_id: ExecutorId::new(42),
                     class_name: "org.example.list.LinkedListTest".into(),
                     method_name: None,
                     executor_name: None,
@@ -494,7 +498,7 @@ mod tests {
             (
                 frame(798, 1000),
                 DecodedEvent::TestCase(TestCaseEvent {
-                    executor_id: 42,
+                    executor_id: ExecutorId::new(42),
                     class_name: "org.example.MyTest".into(),
                     method_name: Some("testPass()".into()),
                     executor_name: None,
@@ -503,14 +507,14 @@ mod tests {
             (
                 frame(284, 1001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    executor_id: 42,
+                    executor_id: ExecutorId::new(42),
                     result_ordinal: Some(0), // 0 = Passed
                 }),
             ),
             (
                 frame(798, 2000),
                 DecodedEvent::TestCase(TestCaseEvent {
-                    executor_id: 99,
+                    executor_id: ExecutorId::new(99),
                     class_name: "org.example.MyTest".into(),
                     method_name: Some("testFail()".into()),
                     executor_name: None,
@@ -519,7 +523,7 @@ mod tests {
             (
                 frame(284, 2001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    executor_id: 99,
+                    executor_id: ExecutorId::new(99),
                     result_ordinal: Some(1), // 1 = Failed
                 }),
             ),
@@ -544,7 +548,7 @@ mod tests {
             (
                 frame(117, 1000),
                 DecodedEvent::TaskIdentity(TaskIdentityEvent {
-                    id: 1,
+                    id: TaskId::new(1),
                     build_path: ":".into(),
                     task_path: ":app:build".into(),
                 }),
@@ -552,7 +556,7 @@ mod tests {
             (
                 frame(1563, 2000),
                 DecodedEvent::TaskStarted(TaskStartedEvent {
-                    id: 1,
+                    id: TaskId::new(1),
                     build_path: ":".into(),
                     path: ":app:build".into(),
                     class_name: Some("org.gradle.DefaultTask".into()),
@@ -561,7 +565,7 @@ mod tests {
             (
                 frame(2074, 3000),
                 DecodedEvent::TaskFinished(TaskFinishedEvent {
-                    id: 1,
+                    id: TaskId::new(1),
                     path: ":app:build".into(),
                     outcome: Some(3),
                     cacheable: Some(false),

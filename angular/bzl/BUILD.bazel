@@ -1,1 +1,3 @@
+# gazelle:exclude
+
 exports_files(["ng.bzl"])

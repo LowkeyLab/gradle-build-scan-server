@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use error::ParseError;
+use models::{ExecutorId, FailureId, FileRefId, TaskId, TransformId};
 
 pub mod basic_memory_stats;
 pub mod build_agent;
@@ -92,14 +93,14 @@ pub enum DecodedEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskIdentityEvent {
-    pub id: i64,
+    pub id: TaskId,
     pub build_path: String,
     pub task_path: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskStartedEvent {
-    pub id: i64,
+    pub id: TaskId,
     pub build_path: String,
     pub path: String,
     pub class_name: Option<String>,
@@ -107,7 +108,7 @@ pub struct TaskStartedEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskFinishedEvent {
-    pub id: i64,
+    pub id: TaskId,
     pub path: String,
     pub outcome: Option<u64>,
     pub cacheable: Option<bool>,
@@ -121,34 +122,34 @@ pub struct TaskFinishedEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsSnapshottingStartedEvent {
-    pub task: i64,
+    pub task: TaskId,
 }
 
 #[derive(Debug, Clone)]
 pub struct TransformExecutionRequestEvent {
-    pub node_id: Option<i64>,
-    pub identification_id: Option<i64>,
-    pub execution_id: Option<i64>,
+    pub node_id: Option<TaskId>,
+    pub identification_id: Option<TransformId>,
+    pub execution_id: Option<TransformId>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PlannedNodeEvent {
-    pub id: Option<i64>,
-    pub dependencies: Vec<i64>,
-    pub must_run_after: Vec<i64>,
-    pub should_run_after: Vec<i64>,
-    pub finalized_by: Vec<i64>,
+    pub id: Option<TaskId>,
+    pub dependencies: Vec<TaskId>,
+    pub must_run_after: Vec<TaskId>,
+    pub should_run_after: Vec<TaskId>,
+    pub finalized_by: Vec<TaskId>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsValuePropertiesEvent {
-    pub id: Option<i64>,
+    pub id: Option<TaskId>,
     pub hashes: Vec<Vec<u8>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsPropertyNamesEvent {
-    pub id: Option<i64>,
+    pub id: Option<TaskId>,
     pub value_inputs: Vec<String>,
     pub file_inputs: Vec<String>,
     pub outputs: Vec<String>,
@@ -156,7 +157,7 @@ pub struct TaskInputsPropertyNamesEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsImplementationEvent {
-    pub id: Option<i64>,
+    pub id: Option<TaskId>,
     pub class_loader_hash: Option<Vec<u8>>,
     pub action_class_loader_hashes: Vec<Vec<u8>>,
     pub action_class_names: Vec<String>,
@@ -164,31 +165,31 @@ pub struct TaskInputsImplementationEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsFilePropertyEvent {
-    pub id: Option<i64>,
+    pub id: Option<TaskId>,
     pub attributes: Vec<String>,
     pub hash: Option<Vec<u8>>,
-    pub roots: Vec<i64>,
+    pub roots: Vec<FileRefId>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsSnapshottingFinishedEvent {
-    pub task: Option<i64>,
+    pub task: Option<TaskId>,
     pub result: Option<TaskInputsSnapshottingResult>,
-    pub failure_id: Option<i64>,
+    pub failure_id: Option<FailureId>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsSnapshottingResult {
     pub hash: Option<Vec<u8>>,
-    pub implementation: Option<i64>,
-    pub property_names: Option<i64>,
-    pub value_inputs: Option<i64>,
-    pub file_inputs: Vec<i64>,
+    pub implementation: Option<TaskId>,
+    pub property_names: Option<TaskId>,
+    pub value_inputs: Option<TaskId>,
+    pub file_inputs: Vec<TaskId>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TaskInputsFilePropertyRootEvent {
-    pub id: Option<i64>,
+    pub id: Option<TaskId>,
     pub file: FileRef,
     pub root_hash: Option<Vec<u8>>,
     pub children: Vec<FilePropertyRootChild>,
@@ -209,19 +210,19 @@ pub struct FilePropertyRootChild {
 
 #[derive(Debug, Clone)]
 pub struct JavaToolchainUsageEvent {
-    pub task_id: i64,
+    pub task_id: TaskId,
     pub toolchain_id: i64,
     pub tool_name: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct TransformExecutionStartedEvent {
-    pub id: i64,
+    pub id: TransformId,
 }
 
 #[derive(Debug, Clone)]
 pub struct TransformIdentificationEvent {
-    pub id: i64,
+    pub id: TransformId,
     pub component_identity: i32,
     pub input_artifact_name: String,
     pub transform_action_class: String,
@@ -231,8 +232,8 @@ pub struct TransformIdentificationEvent {
 
 #[derive(Debug, Clone)]
 pub struct TransformExecutionFinishedEvent {
-    pub id: i64,
-    pub failure_id: Option<i64>,
+    pub id: TransformId,
+    pub failure_id: Option<FailureId>,
     pub outcome: Option<u64>,
     pub execution_reasons: Vec<String>,
     pub caching_disabled_reason_category: Option<String>,
@@ -273,7 +274,7 @@ pub struct BuildRequestedTasksEvent {
 
 #[derive(Debug, Clone)]
 pub struct BuildFinishedEvent {
-    pub failure_id: Option<i64>,
+    pub failure_id: Option<FailureId>,
 }
 
 #[derive(Debug, Clone)]
@@ -429,7 +430,7 @@ pub struct ProcessEvent {
 
 #[derive(Debug, Clone)]
 pub struct TestCaseEvent {
-    pub executor_id: i64,
+    pub executor_id: ExecutorId,
     pub class_name: String,
     pub method_name: Option<String>,
     pub executor_name: Option<String>,
@@ -437,23 +438,23 @@ pub struct TestCaseEvent {
 
 #[derive(Debug, Clone)]
 pub struct TestExecutorIdentityEvent {
-    pub executor_id: i64,
+    pub executor_id: ExecutorId,
     pub name: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct TestExecutorStartedEvent {
-    pub executor_id: i64,
+    pub executor_id: ExecutorId,
 }
 
 #[derive(Debug, Clone)]
 pub struct TestExecutorFinishedEvent {
-    pub executor_id: i64,
+    pub executor_id: ExecutorId,
 }
 
 #[derive(Debug, Clone)]
 pub struct TestResultEvent {
-    pub executor_id: i64,
+    pub executor_id: ExecutorId,
     pub result_ordinal: Option<u64>,
 }
 

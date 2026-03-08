@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::ExecutorId;
 
 use super::{BodyDecoder, DecodedEvent, TestCaseEvent};
 
@@ -58,7 +59,7 @@ impl BodyDecoder for TestCaseDecoder {
                 let _id1 = kryo::read_kryo_long(body, &mut pos)?;
                 let _id2 = kryo::read_kryo_long(body, &mut pos)?;
                 let _id3 = kryo::read_kryo_long(body, &mut pos)?;
-                let executor_id = kryo::read_kryo_long(body, &mut pos)?;
+                let executor_id = ExecutorId::new(kryo::read_kryo_long(body, &mut pos)?);
                 let class_name = table.read_string(body, &mut pos)?;
                 // bool byte (0x01 = has short name)
                 if pos < body.len() {
@@ -96,7 +97,7 @@ impl BodyDecoder for TestCaseDecoder {
 
                 if has_fourth_id {
                     // Method-level: ID4 then method_name, class_name, executor_id
-                    let executor_id = kryo::read_kryo_long(body, &mut pos)?;
+                    let executor_id = ExecutorId::new(kryo::read_kryo_long(body, &mut pos)?);
                     let method_name = table.read_string(body, &mut pos)?;
                     let class_name = table.read_string(body, &mut pos)?;
                     let _trailing_id = kryo::read_kryo_long(body, &mut pos)?;
@@ -113,7 +114,7 @@ impl BodyDecoder for TestCaseDecoder {
                     let _trailing_id = kryo::read_kryo_long(body, &mut pos)?;
                     let _ = pos;
                     Ok(DecodedEvent::TestCase(TestCaseEvent {
-                        executor_id: 0,
+                        executor_id: ExecutorId::new(0),
                         class_name: String::new(),
                         method_name: None,
                         executor_name: Some(executor_name),
@@ -166,7 +167,7 @@ mod tests {
         let decoder = TestCaseDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestCase(e) = result {
-            assert_eq!(e.executor_id, -9000000000i64);
+            assert_eq!(e.executor_id, ExecutorId::new(-9000000000i64));
             assert_eq!(e.class_name, "com.example.MyTest");
             assert_eq!(e.method_name.as_deref(), Some("testMethod()"));
             assert_eq!(e.executor_name, None);
@@ -193,7 +194,7 @@ mod tests {
         let decoder = TestCaseDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestCase(e) = result {
-            assert_eq!(e.executor_id, 3333);
+            assert_eq!(e.executor_id, ExecutorId::new(3333));
             assert_eq!(e.class_name, "com.example.MyTest");
             assert_eq!(e.method_name, None);
             assert_eq!(e.executor_name, None);
@@ -217,7 +218,7 @@ mod tests {
         let decoder = TestCaseDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestCase(e) = result {
-            assert_eq!(e.executor_id, 0);
+            assert_eq!(e.executor_id, ExecutorId::new(0));
             assert_eq!(e.class_name, "");
             assert_eq!(e.method_name, None);
             assert_eq!(e.executor_name.as_deref(), Some("Gradle Test Executor 1"));

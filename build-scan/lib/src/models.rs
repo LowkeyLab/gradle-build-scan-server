@@ -1,5 +1,55 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct TaskId(pub(crate) i64);
+
+impl TaskId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct TransformId(pub(crate) i64);
+
+impl TransformId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ExecutorId(pub(crate) i64);
+
+impl ExecutorId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct FailureId(pub(crate) i64);
+
+impl FailureId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct FileRefId(pub(crate) i64);
+
+impl FileRefId {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildScanPayload {
     pub tasks: Vec<Task>,
@@ -32,7 +82,7 @@ pub struct BuildScanPayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
-    pub id: i64,
+    pub id: TaskId,
     pub build_path: String,
     pub task_path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -151,7 +201,7 @@ pub struct TaskInputsFilePropertyData {
     pub attributes: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<Vec<u8>>,
-    pub roots: Vec<i64>,
+    pub roots: Vec<FileRefId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,32 +209,32 @@ pub struct TaskInputsSnapshottingResultData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<Vec<u8>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub implementation: Option<i64>,
+    pub implementation: Option<TaskId>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub property_names: Option<i64>,
+    pub property_names: Option<TaskId>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub value_inputs: Option<i64>,
-    pub file_inputs: Vec<i64>,
+    pub value_inputs: Option<TaskId>,
+    pub file_inputs: Vec<TaskId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlannedNodeData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<i64>,
-    pub dependencies: Vec<i64>,
-    pub must_run_after: Vec<i64>,
-    pub should_run_after: Vec<i64>,
-    pub finalized_by: Vec<i64>,
+    pub id: Option<TaskId>,
+    pub dependencies: Vec<TaskId>,
+    pub must_run_after: Vec<TaskId>,
+    pub should_run_after: Vec<TaskId>,
+    pub finalized_by: Vec<TaskId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransformExecutionRequestData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub node_id: Option<i64>,
+    pub node_id: Option<TaskId>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub identification_id: Option<i64>,
+    pub identification_id: Option<TransformId>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub execution_id: Option<i64>,
+    pub execution_id: Option<TransformId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

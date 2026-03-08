@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::{FailureId, TaskId};
 
 use super::{
     BodyDecoder, DecodedEvent, TaskInputsSnapshottingFinishedEvent, TaskInputsSnapshottingResult,
@@ -14,22 +15,25 @@ fn decode_result(body: &[u8], pos: &mut usize) -> Result<TaskInputsSnapshottingR
         None
     };
     let implementation = if kryo::is_field_present(flags as u16, 1) {
-        Some(kryo::read_task_id(body, pos)?)
+        Some(TaskId::new(kryo::read_task_id(body, pos)?))
     } else {
         None
     };
     let property_names = if kryo::is_field_present(flags as u16, 2) {
-        Some(kryo::read_task_id(body, pos)?)
+        Some(TaskId::new(kryo::read_task_id(body, pos)?))
     } else {
         None
     };
     let value_inputs = if kryo::is_field_present(flags as u16, 3) {
-        Some(kryo::read_task_id(body, pos)?)
+        Some(TaskId::new(kryo::read_task_id(body, pos)?))
     } else {
         None
     };
     let file_inputs = if kryo::is_field_present(flags as u16, 4) {
         kryo::read_list_of_i64(body, pos)?
+            .into_iter()
+            .map(TaskId::new)
+            .collect()
     } else {
         vec![]
     };
@@ -47,7 +51,7 @@ impl BodyDecoder for TaskInputsSnapshottingFinishedDecoder {
         let mut pos = 0;
         let flags = kryo::read_flags_byte(body, &mut pos)?;
         let task = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -57,7 +61,7 @@ impl BodyDecoder for TaskInputsSnapshottingFinishedDecoder {
             None
         };
         let failure_id = if kryo::is_field_present(flags as u16, 2) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(FailureId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -88,12 +92,12 @@ mod tests {
         let decoder = TaskInputsSnapshottingFinishedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskInputsSnapshottingFinished(e) = result {
-            assert_eq!(e.task, Some(42));
+            assert_eq!(e.task, Some(TaskId::new(42)));
             let r = e.result.unwrap();
             assert_eq!(r.hash, Some(vec![0x01, 0x02, 0x03, 0x04]));
-            assert_eq!(r.implementation, Some(10));
-            assert_eq!(r.property_names, Some(11));
-            assert_eq!(r.value_inputs, Some(12));
+            assert_eq!(r.implementation, Some(TaskId::new(10)));
+            assert_eq!(r.property_names, Some(TaskId::new(11)));
+            assert_eq!(r.value_inputs, Some(TaskId::new(12)));
             assert!(r.file_inputs.is_empty());
             assert_eq!(e.failure_id, None);
         } else {

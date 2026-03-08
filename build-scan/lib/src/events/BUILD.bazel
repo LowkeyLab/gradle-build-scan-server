@@ -50,6 +50,7 @@ rust_library(
     deps = [
         "//build-scan/lib/src:error",
         "//build-scan/lib/src:kryo",
+        "//build-scan/lib/src:models",
         "//build-scan/lib/src:varint",
         "@crates//:tracing",
     ],

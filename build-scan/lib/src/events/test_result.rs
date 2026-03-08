@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::ExecutorId;
 
 use super::{BodyDecoder, DecodedEvent, TestResultEvent};
 
@@ -10,9 +11,9 @@ impl BodyDecoder for TestResultDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let executor_id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_kryo_long(body, &mut pos)?
+            ExecutorId::new(kryo::read_kryo_long(body, &mut pos)?)
         } else {
-            0
+            ExecutorId::new(0)
         };
         let result_ordinal = if kryo::is_field_present(flags as u16, 1) {
             let raw = kryo::read_kryo_long(body, &mut pos)?;
@@ -43,7 +44,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.executor_id, 5);
+            assert_eq!(e.executor_id, ExecutorId::new(5));
             assert_eq!(e.result_ordinal, Some(2));
         } else {
             panic!("expected TestResult");
@@ -59,7 +60,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.executor_id, 8);
+            assert_eq!(e.executor_id, ExecutorId::new(8));
             assert_eq!(e.result_ordinal, None);
         } else {
             panic!("expected TestResult");
@@ -77,7 +78,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.executor_id, -9000000000i64);
+            assert_eq!(e.executor_id, ExecutorId::new(-9000000000i64));
             assert_eq!(e.result_ordinal, Some(2));
         } else {
             panic!("expected TestResult");

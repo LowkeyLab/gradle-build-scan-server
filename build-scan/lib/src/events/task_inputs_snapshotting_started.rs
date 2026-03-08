@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskInputsSnapshottingStartedEvent};
 
@@ -7,7 +8,7 @@ pub struct TaskInputsSnapshottingStartedDecoder;
 impl BodyDecoder for TaskInputsSnapshottingStartedDecoder {
     fn decode(&self, body: &[u8]) -> Result<DecodedEvent, ParseError> {
         let mut pos = 0;
-        let task = kryo::read_task_id(body, &mut pos)?;
+        let task = TaskId::new(kryo::read_task_id(body, &mut pos)?);
         Ok(DecodedEvent::TaskInputsSnapshottingStarted(
             TaskInputsSnapshottingStartedEvent { task },
         ))
@@ -24,7 +25,7 @@ mod tests {
         let decoder = TaskInputsSnapshottingStartedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskInputsSnapshottingStarted(e) = result {
-            assert_eq!(e.task, 42);
+            assert_eq!(e.task, TaskId::new(42));
         } else {
             panic!("expected TaskInputsSnapshottingStarted");
         }

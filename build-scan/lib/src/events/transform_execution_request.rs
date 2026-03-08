@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::{TaskId, TransformId};
 
 use super::{BodyDecoder, DecodedEvent, TransformExecutionRequestEvent};
 
@@ -10,17 +11,17 @@ impl BodyDecoder for TransformExecutionRequestDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let node_id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
         let identification_id = if kryo::is_field_present(flags as u16, 1) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TransformId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
         let execution_id = if kryo::is_field_present(flags as u16, 2) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TransformId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -48,9 +49,9 @@ mod tests {
         let decoder = TransformExecutionRequestDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformExecutionRequest(e) = result {
-            assert_eq!(e.node_id, Some(1));
-            assert_eq!(e.identification_id, Some(2));
-            assert_eq!(e.execution_id, Some(3));
+            assert_eq!(e.node_id, Some(TaskId::new(1)));
+            assert_eq!(e.identification_id, Some(TransformId::new(2)));
+            assert_eq!(e.execution_id, Some(TransformId::new(3)));
         } else {
             panic!("expected TransformExecutionRequest");
         }

@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::{FailureId, TransformId};
 
 use super::{BodyDecoder, DecodedEvent, TransformExecutionFinishedEvent};
 
@@ -11,13 +12,15 @@ impl BodyDecoder for TransformExecutionFinishedDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags, 0) {
-            kryo::read_zigzag_i64(body, &mut pos)?
+            TransformId::new(kryo::read_zigzag_i64(body, &mut pos)?)
         } else {
-            0
+            TransformId::new(0)
         };
 
         let failure_id = if kryo::is_field_present(flags, 1) {
-            Some(kryo::read_positive_varint_i64(body, &mut pos)?)
+            Some(FailureId::new(kryo::read_positive_varint_i64(
+                body, &mut pos,
+            )?))
         } else {
             None
         };
@@ -97,7 +100,7 @@ mod tests {
         let decoder = TransformExecutionFinishedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformExecutionFinished(e) = result {
-            assert_eq!(e.id, 99);
+            assert_eq!(e.id, TransformId::new(99));
             assert_eq!(e.failure_id, None);
             assert_eq!(e.outcome, Some(2));
             assert!(e.execution_reasons.is_empty());
@@ -118,7 +121,7 @@ mod tests {
         let decoder = TransformExecutionFinishedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformExecutionFinished(e) = result {
-            assert_eq!(e.id, 0);
+            assert_eq!(e.id, TransformId::new(0));
             assert_eq!(e.failure_id, None);
             assert_eq!(e.outcome, None);
             assert!(e.execution_reasons.is_empty());
