@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskInputsImplementationEvent};
 
@@ -11,7 +12,7 @@ impl BodyDecoder for TaskInputsImplementationDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -65,7 +66,7 @@ mod tests {
         let decoder = TaskInputsImplementationDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskInputsImplementation(e) = result {
-            assert_eq!(e.id, Some(9));
+            assert_eq!(e.id, Some(TaskId::new(9)));
             assert_eq!(e.class_loader_hash, Some(vec![0xDE, 0xAD]));
             assert_eq!(e.action_class_loader_hashes, vec![vec![0xBE, 0xEF]]);
             assert_eq!(e.action_class_names, vec!["MyAction"]);

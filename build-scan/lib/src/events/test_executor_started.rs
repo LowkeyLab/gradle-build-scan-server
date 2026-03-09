@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::ExecutorId;
 
 use super::{BodyDecoder, DecodedEvent, TestExecutorStartedEvent};
 
@@ -10,9 +11,9 @@ impl BodyDecoder for TestExecutorStartedDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let executor_id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            ExecutorId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            ExecutorId::new(0)
         };
 
         Ok(DecodedEvent::TestExecutorStarted(
@@ -34,7 +35,7 @@ mod tests {
         let decoder = TestExecutorStartedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestExecutorStarted(e) = result {
-            assert_eq!(e.executor_id, 13);
+            assert_eq!(e.executor_id, ExecutorId::new(13));
         } else {
             panic!("expected TestExecutorStarted");
         }

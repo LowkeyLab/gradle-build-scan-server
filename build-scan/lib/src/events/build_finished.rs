@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::FailureId;
 
 use super::{BodyDecoder, BuildFinishedEvent, DecodedEvent};
 
@@ -11,7 +12,7 @@ impl BodyDecoder for BuildFinishedDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let failure_id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_zigzag_i64(body, &mut pos)?)
+            Some(FailureId::new(kryo::read_zigzag_i64(body, &mut pos)?))
         } else {
             None
         };
@@ -44,7 +45,7 @@ mod tests {
         let decoder = BuildFinishedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::BuildFinished(e) = result {
-            assert_eq!(e.failure_id, Some(10));
+            assert_eq!(e.failure_id, Some(FailureId::new(10)));
         } else {
             panic!("expected BuildFinished");
         }

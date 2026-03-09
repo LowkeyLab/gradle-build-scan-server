@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskInputsPropertyNamesEvent};
 
@@ -11,7 +12,7 @@ impl BodyDecoder for TaskInputsPropertyNamesDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -62,7 +63,7 @@ mod tests {
         let decoder = TaskInputsPropertyNamesDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskInputsPropertyNames(e) = result {
-            assert_eq!(e.id, Some(3));
+            assert_eq!(e.id, Some(TaskId::new(3)));
             assert_eq!(e.value_inputs, vec!["enabled"]);
             assert_eq!(e.file_inputs, vec!["classpath"]);
             assert_eq!(e.outputs, vec!["outputDir"]);

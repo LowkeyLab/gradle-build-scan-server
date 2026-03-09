@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::ExecutorId;
 
 use super::{BodyDecoder, DecodedEvent, TestExecutorIdentityEvent};
 
@@ -11,13 +12,13 @@ impl BodyDecoder for TestExecutorIdentityDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let executor_id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            ExecutorId::new(kryo::read_kryo_long(body, &mut pos)?)
         } else {
-            0
+            ExecutorId::new(0)
         };
         // Bit 1: hash — read and discard
         if kryo::is_field_present(flags as u16, 1) {
-            let _ = kryo::read_task_id(body, &mut pos)?;
+            let _ = kryo::read_kryo_long(body, &mut pos)?;
         }
         let name = if kryo::is_field_present(flags as u16, 2) {
             table.read_string(body, &mut pos)?
@@ -40,7 +41,7 @@ mod tests {
         // Flags are inverted: bit=0 means field IS present.
         // executor_id (bit 0)=0, hash (bit 1)=1 (absent/skip), name (bit 2)=0 → flags = 0x02
         let mut data = vec![0x02];
-        data.extend_from_slice(&99i64.to_le_bytes()); // executor_id
+        data.extend_from_slice(&kryo::encode_kryo_long(99)); // executor_id as Kryo-long
         // name "Gradle Test Executor 1" → len=22, zigzag(22)=44=0x2C
         let name = "Gradle Test Executor 1";
         let zigzag_len = (name.len() as u64) * 2;
@@ -50,7 +51,7 @@ mod tests {
         let decoder = TestExecutorIdentityDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestExecutorIdentity(e) = result {
-            assert_eq!(e.executor_id, 99);
+            assert_eq!(e.executor_id, ExecutorId::new(99));
             assert_eq!(e.name, "Gradle Test Executor 1");
         } else {
             panic!("expected TestExecutorIdentity");

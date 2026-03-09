@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TransformId;
 
 use super::{BodyDecoder, DecodedEvent, TransformIdentificationEvent};
 
@@ -11,9 +12,9 @@ impl BodyDecoder for TransformIdentificationDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            TransformId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            TransformId::new(0)
         };
 
         let component_identity = if kryo::is_field_present(flags as u16, 1) {
@@ -87,7 +88,7 @@ mod tests {
         let decoder = TransformIdentificationDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformIdentification(e) = result {
-            assert_eq!(e.id, 10);
+            assert_eq!(e.id, TransformId::new(10));
             assert_eq!(e.component_identity, 3);
             assert_eq!(e.input_artifact_name, "in");
             assert_eq!(e.transform_action_class, "TC");
@@ -105,7 +106,7 @@ mod tests {
         let decoder = TransformIdentificationDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformIdentification(e) = result {
-            assert_eq!(e.id, 0);
+            assert_eq!(e.id, TransformId::new(0));
             assert_eq!(e.component_identity, 0);
             assert_eq!(e.input_artifact_name, "");
             assert_eq!(e.transform_action_class, "");

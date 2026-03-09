@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskFinishedEvent};
 
@@ -11,9 +12,9 @@ impl BodyDecoder for TaskFinishedDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            TaskId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            TaskId::new(0)
         };
 
         let path = if kryo::is_field_present(flags, 1) {
@@ -131,7 +132,7 @@ mod tests {
         let decoder = TaskFinishedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskFinished(e) = result {
-            assert_eq!(e.id, 1);
+            assert_eq!(e.id, TaskId::new(1));
             assert_eq!(e.path, ":app:build");
             assert_eq!(e.outcome, Some(3)); // SUCCESS
             assert_eq!(e.cacheable, Some(false)); // bit4=1 means absent → false

@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, JavaToolchainUsageEvent};
 
@@ -11,9 +12,9 @@ impl BodyDecoder for JavaToolchainUsageDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let task_id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            TaskId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            TaskId::new(0)
         };
 
         let toolchain_id = if kryo::is_field_present(flags as u16, 1) {
@@ -54,7 +55,7 @@ mod tests {
         let decoder = JavaToolchainUsageDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::JavaToolchainUsage(e) = result {
-            assert_eq!(e.task_id, 42);
+            assert_eq!(e.task_id, TaskId::new(42));
             assert_eq!(e.toolchain_id, 7);
             assert_eq!(e.tool_name, "javac");
         } else {
@@ -69,7 +70,7 @@ mod tests {
         let decoder = JavaToolchainUsageDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::JavaToolchainUsage(e) = result {
-            assert_eq!(e.task_id, 0);
+            assert_eq!(e.task_id, TaskId::new(0));
             assert_eq!(e.toolchain_id, 0);
             assert_eq!(e.tool_name, "");
         } else {

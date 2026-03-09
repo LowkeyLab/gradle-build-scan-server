@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskStartedEvent};
 
@@ -11,9 +12,9 @@ impl BodyDecoder for TaskStartedDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            TaskId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            TaskId::new(0)
         };
         let build_path = if kryo::is_field_present(flags as u16, 1) {
             table.read_string(body, &mut pos)?
@@ -77,7 +78,7 @@ mod tests {
         let decoder = TaskStartedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskStarted(e) = result {
-            assert_eq!(e.id, 1);
+            assert_eq!(e.id, TaskId::new(1));
             assert_eq!(e.path, ":app:compileKotlin");
             assert_eq!(
                 e.class_name.as_deref(),

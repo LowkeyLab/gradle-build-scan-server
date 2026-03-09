@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TaskInputsValuePropertiesEvent};
 
@@ -10,7 +11,7 @@ impl BodyDecoder for TaskInputsValuePropertiesDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_task_id(body, &mut pos)?)
+            Some(TaskId::new(kryo::read_task_id(body, &mut pos)?))
         } else {
             None
         };
@@ -40,7 +41,7 @@ mod tests {
         let decoder = TaskInputsValuePropertiesDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskInputsValueProperties(e) = result {
-            assert_eq!(e.id, Some(5));
+            assert_eq!(e.id, Some(TaskId::new(5)));
             assert_eq!(e.hashes, vec![vec![0xAA, 0xBB, 0xCC]]);
         } else {
             panic!("expected TaskInputsValueProperties");

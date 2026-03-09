@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TransformId;
 
 use super::{BodyDecoder, DecodedEvent, TransformExecutionStartedEvent};
 
@@ -9,7 +10,7 @@ impl BodyDecoder for TransformExecutionStartedDecoder {
         let mut pos = 0;
 
         // No flags byte. Single field always present.
-        let id = kryo::read_zigzag_i64(body, &mut pos)?;
+        let id = TransformId::new(kryo::read_zigzag_i64(body, &mut pos)?);
 
         Ok(DecodedEvent::TransformExecutionStarted(
             TransformExecutionStartedEvent { id },
@@ -28,7 +29,7 @@ mod tests {
         let decoder = TransformExecutionStartedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformExecutionStarted(e) = result {
-            assert_eq!(e.id, 5);
+            assert_eq!(e.id, TransformId::new(5));
         } else {
             panic!("expected TransformExecutionStarted");
         }
@@ -40,7 +41,7 @@ mod tests {
         let decoder = TransformExecutionStartedDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TransformExecutionStarted(e) = result {
-            assert_eq!(e.id, -3);
+            assert_eq!(e.id, TransformId::new(-3));
         } else {
             panic!("expected TransformExecutionStarted");
         }
