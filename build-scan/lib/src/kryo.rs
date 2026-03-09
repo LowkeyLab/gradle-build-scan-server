@@ -168,6 +168,87 @@ pub fn read_kryo_long(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
     Ok(varint::zigzag_decode_i64(result))
 }
 
+/// Read a Kryo-encoded long with `optimizePositive=true` (no zigzag, up to 9 bytes).
+///
+/// Same wire format as `read_kryo_long` but the raw value is reinterpreted
+/// directly as `i64` instead of being zigzag-decoded. This matches Kryo's
+/// `Input.readLong(true)` / `Output.writeLong(value, true)`. For example,
+/// nine `0xFF` bytes → `u64::MAX` → `i64` value `-1`, which the JVM uses
+/// as a sentinel for "undefined" memory pool max.
+pub fn read_kryo_long_unsigned(data: &[u8], pos: &mut usize) -> Result<i64, ParseError> {
+    if *pos >= data.len() {
+        return Err(ParseError::UnexpectedEof { offset: *pos });
+    }
+    let b0 = data[*pos];
+    *pos += 1;
+    let mut result = (b0 & 0x7F) as u64;
+    if b0 & 0x80 != 0 {
+        if *pos >= data.len() {
+            return Err(ParseError::UnexpectedEof { offset: *pos });
+        }
+        let b1 = data[*pos];
+        *pos += 1;
+        result |= ((b1 & 0x7F) as u64) << 7;
+        if b1 & 0x80 != 0 {
+            if *pos >= data.len() {
+                return Err(ParseError::UnexpectedEof { offset: *pos });
+            }
+            let b2 = data[*pos];
+            *pos += 1;
+            result |= ((b2 & 0x7F) as u64) << 14;
+            if b2 & 0x80 != 0 {
+                if *pos >= data.len() {
+                    return Err(ParseError::UnexpectedEof { offset: *pos });
+                }
+                let b3 = data[*pos];
+                *pos += 1;
+                result |= ((b3 & 0x7F) as u64) << 21;
+                if b3 & 0x80 != 0 {
+                    if *pos >= data.len() {
+                        return Err(ParseError::UnexpectedEof { offset: *pos });
+                    }
+                    let b4 = data[*pos];
+                    *pos += 1;
+                    result |= ((b4 & 0x7F) as u64) << 28;
+                    if b4 & 0x80 != 0 {
+                        if *pos >= data.len() {
+                            return Err(ParseError::UnexpectedEof { offset: *pos });
+                        }
+                        let b5 = data[*pos];
+                        *pos += 1;
+                        result |= ((b5 & 0x7F) as u64) << 35;
+                        if b5 & 0x80 != 0 {
+                            if *pos >= data.len() {
+                                return Err(ParseError::UnexpectedEof { offset: *pos });
+                            }
+                            let b6 = data[*pos];
+                            *pos += 1;
+                            result |= ((b6 & 0x7F) as u64) << 42;
+                            if b6 & 0x80 != 0 {
+                                if *pos >= data.len() {
+                                    return Err(ParseError::UnexpectedEof { offset: *pos });
+                                }
+                                let b7 = data[*pos];
+                                *pos += 1;
+                                result |= ((b7 & 0x7F) as u64) << 49;
+                                if b7 & 0x80 != 0 {
+                                    if *pos >= data.len() {
+                                        return Err(ParseError::UnexpectedEof { offset: *pos });
+                                    }
+                                    let b8 = data[*pos];
+                                    *pos += 1;
+                                    result |= (b8 as u64) << 56;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(result as i64)
+}
+
 /// Inverted: bit=0 means field IS present
 pub fn is_field_present(flags: u16, bit: u8) -> bool {
     (flags >> bit) & 1 == 0
@@ -421,6 +502,33 @@ mod tests {
             read_kryo_long(&data, &mut pos).unwrap(),
             -8568844071650005894i64
         );
+        assert_eq!(pos, 9);
+    }
+
+    #[test]
+    fn test_read_kryo_long_unsigned_single_byte() {
+        // 100 fits in 7 data bits → single byte 0x64
+        let data = [0x64u8];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), 100);
+        assert_eq!(pos, 1);
+    }
+
+    #[test]
+    fn test_read_kryo_long_unsigned_multi_byte() {
+        // 512 → 0x80 0x04 (continuation bit set on first byte)
+        let data = [0x80u8, 0x04];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), 512);
+        assert_eq!(pos, 2);
+    }
+
+    #[test]
+    fn test_read_kryo_long_unsigned_nine_byte_sentinel() {
+        // JVM "-1 = undefined" sentinel: nine 0xFF bytes → u64::MAX → i64 -1
+        let data = [0xFFu8; 9];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), -1);
         assert_eq!(pos, 9);
     }
 

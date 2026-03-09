@@ -12,7 +12,7 @@ impl BodyDecoder for TransformIdentificationDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let id = if kryo::is_field_present(flags as u16, 0) {
-            TransformId::new(kryo::read_zigzag_i64(body, &mut pos)?)
+            TransformId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
             TransformId::new(0)
         };
@@ -63,13 +63,11 @@ impl BodyDecoder for TransformIdentificationDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kryo::encode_zigzag_i64;
-
     #[test]
     fn test_decode_all_present() {
         // flags = 0x00: all 6 bits present
         let mut data = vec![0x00];
-        data.extend_from_slice(&encode_zigzag_i64(10)); // id = 10
+        data.extend_from_slice(&10i64.to_le_bytes()); // id = 10 (8-byte LE)
         data.push(0x03); // component_identity = 3 (unsigned varint)
         // input_artifact_name = "in" → zigzag(2)=4, then 'i'=105, 'n'=110
         data.push(0x04);

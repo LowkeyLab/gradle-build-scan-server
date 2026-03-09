@@ -12,13 +12,13 @@ impl BodyDecoder for JavaToolchainUsageDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let task_id = if kryo::is_field_present(flags as u16, 0) {
-            TaskId::new(kryo::read_zigzag_i64(body, &mut pos)?)
+            TaskId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
             TaskId::new(0)
         };
 
         let toolchain_id = if kryo::is_field_present(flags as u16, 1) {
-            kryo::read_zigzag_i64(body, &mut pos)?
+            kryo::read_task_id(body, &mut pos)?
         } else {
             0
         };
@@ -40,14 +40,12 @@ impl BodyDecoder for JavaToolchainUsageDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kryo::encode_zigzag_i64;
-
     #[test]
     fn test_decode_all_present() {
         // flags = 0x00: all three bits present
         let mut data = vec![0x00];
-        data.extend_from_slice(&encode_zigzag_i64(42)); // task_id = 42
-        data.extend_from_slice(&encode_zigzag_i64(7)); // toolchain_id = 7
+        data.extend_from_slice(&42i64.to_le_bytes()); // task_id = 42 (8-byte LE)
+        data.extend_from_slice(&7i64.to_le_bytes()); // toolchain_id = 7 (8-byte LE)
         // tool_name = "javac" → zigzag(5)=10, then chars
         data.push(0x0A);
         for &c in b"javac" {
