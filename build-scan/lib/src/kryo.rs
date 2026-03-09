@@ -506,6 +506,33 @@ mod tests {
     }
 
     #[test]
+    fn test_read_kryo_long_unsigned_single_byte() {
+        // 100 fits in 7 data bits → single byte 0x64
+        let data = [0x64u8];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), 100);
+        assert_eq!(pos, 1);
+    }
+
+    #[test]
+    fn test_read_kryo_long_unsigned_multi_byte() {
+        // 512 → 0x80 0x04 (continuation bit set on first byte)
+        let data = [0x80u8, 0x04];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), 512);
+        assert_eq!(pos, 2);
+    }
+
+    #[test]
+    fn test_read_kryo_long_unsigned_nine_byte_sentinel() {
+        // JVM "-1 = undefined" sentinel: nine 0xFF bytes → u64::MAX → i64 -1
+        let data = [0xFFu8; 9];
+        let mut pos = 0;
+        assert_eq!(read_kryo_long_unsigned(&data, &mut pos).unwrap(), -1);
+        assert_eq!(pos, 9);
+    }
+
+    #[test]
     fn test_flags_inverted() {
         assert!(is_field_present(0x00, 0));
         assert!(is_field_present(0x00, 1));
