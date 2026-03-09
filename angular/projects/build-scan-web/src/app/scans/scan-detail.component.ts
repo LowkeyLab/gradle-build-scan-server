@@ -6,7 +6,7 @@ import { filter, map, switchMap } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 const GET_BUILD_SCAN = gql`
-  query GetBuildScan($id: ID!, $first: Int!, $after: String) {
+  query GetBuildScan($id: ID!, $firstTasks: Int!, $afterTasks: String, $firstTests: Int!, $afterTests: String) {
     buildScan(id: $id) {
       id
       scanId
@@ -21,7 +21,9 @@ const GET_BUILD_SCAN = gql`
       jvmVendor
       jvmVersion
       requestedTasks
-      tasks(first: $first, after: $after) {
+      taskCount
+      testCount
+      tasks(first: $firstTasks, after: $afterTasks) {
         edges {
           node {
             id
@@ -38,7 +40,22 @@ const GET_BUILD_SCAN = gql`
           hasNextPage
           endCursor
         }
-        totalCount
+      }
+      tests(first: $firstTests, after: $afterTests) {
+        edges {
+          node {
+            id
+            className
+            methodName
+            executorName
+            outcome
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
       }
     }
   }
@@ -107,7 +124,7 @@ const GET_BUILD_SCAN = gql`
         </div>
 
         <h3 class="text-xl font-bold mb-4">
-          Tasks ({{ scan.tasks.totalCount }})
+          Tasks ({{ scan.taskCount }})
         </h3>
 
         <div class="overflow-x-auto">
@@ -142,6 +159,42 @@ const GET_BUILD_SCAN = gql`
             </tbody>
           </table>
         </div>
+
+        @if (scan.testCount > 0) {
+          <h3 class="text-xl font-bold mb-4 mt-8">
+            Tests ({{ scan.testCount }})
+          </h3>
+
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Class Name</th>
+                  <th>Method Name</th>
+                  <th>Outcome</th>
+                  <th>Executor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (edge of scan.tests.edges; track edge.node.id) {
+                  <tr>
+                    <td class="font-mono text-sm">{{ edge.node.className }}</td>
+                    <td class="font-mono text-sm">{{ edge.node.methodName || '—' }}</td>
+                    <td>
+                      <span class="badge badge-sm"
+                        [class.badge-success]="edge.node.outcome === 'Passed'"
+                        [class.badge-error]="edge.node.outcome === 'Failed'"
+                        [class.badge-warning]="edge.node.outcome === 'Skipped'">
+                        {{ edge.node.outcome || '—' }}
+                      </span>
+                    </td>
+                    <td class="text-xs opacity-60">{{ edge.node.executorName || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       }
     </div>
   `,
@@ -154,7 +207,7 @@ export class ScanDetailComponent {
     switchMap(id =>
       this.apollo.watchQuery<any>({
         query: GET_BUILD_SCAN,
-        variables: { id, first: 100 },
+        variables: { id, firstTasks: 100, firstTests: 100 },
         errorPolicy: 'all',
       }).valueChanges
     ),

@@ -18,6 +18,7 @@ const GET_BUILD_SCANS = gql`
           createdAt
           hostname
           taskCount
+          testCount
         }
         cursor
       }
@@ -48,6 +49,7 @@ const GET_BUILD_SCANS = gql`
                 <th>Build Tool</th>
                 <th>Hostname</th>
                 <th>Tasks</th>
+                <th>Tests</th>
               </tr>
             </thead>
             <tbody>
@@ -69,6 +71,7 @@ const GET_BUILD_SCANS = gql`
                   <td>{{ edge.node.buildToolType }} {{ edge.node.buildToolVersion }}</td>
                   <td>{{ edge.node.hostname || '—' }}</td>
                   <td>{{ edge.node.taskCount }}</td>
+                  <td>{{ edge.node.testCount }}</td>
                 </tr>
               }
             </tbody>
