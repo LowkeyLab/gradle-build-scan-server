@@ -149,19 +149,13 @@ impl BuildScan {
             })
             .collect();
 
-        let total_count = context
-            .service
-            .count_tasks(&scan_id_str)
-            .await
-            .map_err(|e| FieldError::from(e.to_string()))? as i32;
-
         Ok(TaskConnection {
+            scan_id: scan_id_str,
             edges,
             page_info: PageInfo {
                 has_next_page,
                 end_cursor,
             },
-            total_count,
         })
     }
 
@@ -215,19 +209,13 @@ impl BuildScan {
             })
             .collect();
 
-        let total_count = context
-            .service
-            .count_tests(&scan_id_str)
-            .await
-            .map_err(|e| FieldError::from(e.to_string()))? as i32;
-
         Ok(TestCaseConnection {
+            scan_id: scan_id_str,
             edges,
             page_info: PageInfo {
                 has_next_page,
                 end_cursor,
             },
-            total_count,
         })
     }
 }
@@ -376,7 +364,6 @@ impl BuildScanEdge {
 pub struct BuildScanConnection {
     pub edges: Vec<BuildScanEdge>,
     pub page_info: PageInfo,
-    pub total_count: i32,
 }
 
 #[graphql_object(context = Context)]
@@ -389,8 +376,13 @@ impl BuildScanConnection {
         &self.page_info
     }
 
-    fn total_count(&self) -> i32 {
-        self.total_count
+    async fn total_count(&self, context: &Context) -> FieldResult<i32> {
+        let count = context
+            .service
+            .count_build_scans()
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+        Ok(count)
     }
 }
 
@@ -415,9 +407,9 @@ impl TaskEdge {
 }
 
 pub struct TaskConnection {
+    pub scan_id: String,
     pub edges: Vec<TaskEdge>,
     pub page_info: PageInfo,
-    pub total_count: i32,
 }
 
 #[graphql_object(context = Context)]
@@ -430,8 +422,13 @@ impl TaskConnection {
         &self.page_info
     }
 
-    fn total_count(&self) -> i32 {
-        self.total_count
+    async fn total_count(&self, context: &Context) -> FieldResult<i32> {
+        let count = context
+            .service
+            .count_tasks(&self.scan_id)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+        Ok(count)
     }
 }
 
@@ -456,9 +453,9 @@ impl TestCaseEdge {
 }
 
 pub struct TestCaseConnection {
+    pub scan_id: String,
     pub edges: Vec<TestCaseEdge>,
     pub page_info: PageInfo,
-    pub total_count: i32,
 }
 
 #[graphql_object(context = Context)]
@@ -471,8 +468,13 @@ impl TestCaseConnection {
         &self.page_info
     }
 
-    fn total_count(&self) -> i32 {
-        self.total_count
+    async fn total_count(&self, context: &Context) -> FieldResult<i32> {
+        let count = context
+            .service
+            .count_tests(&self.scan_id)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))? as i32;
+        Ok(count)
     }
 }
 
@@ -579,19 +581,12 @@ impl QueryRoot {
             })
             .collect();
 
-        let total_count = context
-            .service
-            .count_build_scans()
-            .await
-            .map_err(|e| FieldError::from(e.to_string()))? as i32;
-
         Ok(BuildScanConnection {
             edges,
             page_info: PageInfo {
                 has_next_page,
                 end_cursor,
             },
-            total_count,
         })
     }
 
