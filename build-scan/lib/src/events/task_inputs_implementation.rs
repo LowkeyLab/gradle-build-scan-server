@@ -16,7 +16,10 @@ impl BodyDecoder for TaskInputsImplementationDecoder {
             None
         };
         let class_loader_hash = if kryo::is_field_present(flags as u16, 1) {
-            Some(kryo::read_byte_array(body, &mut pos)?)
+            let hash = kryo::read_byte_array(body, &mut pos)?;
+            // Trailing varint after the hash bytes (type/version indicator, discarded)
+            let _ = kryo::read_positive_varint_i32(body, &mut pos)?;
+            Some(hash)
         } else {
             None
         };
@@ -48,15 +51,16 @@ mod tests {
 
     #[test]
     fn test_decode_all_present() {
-        let mut data = vec![0x00];
-        data.extend_from_slice(&9i64.to_le_bytes());
-        data.push(0x02);
+        let mut data = vec![0x00]; // all 4 bits present
+        data.extend_from_slice(&9i64.to_le_bytes()); // id (8-byte LE)
+        data.push(0x02); // class_loader_hash: 2 bytes
         data.extend_from_slice(&[0xDE, 0xAD]);
-        data.push(0x01);
-        data.push(0x02);
+        data.push(0x00); // trailing type indicator for class_loader_hash
+        data.push(0x01); // action_class_loader_hashes: 1 element
+        data.push(0x02); // first element: 2 bytes
         data.extend_from_slice(&[0xBE, 0xEF]);
-        data.push(0x01);
-        data.push(0x10);
+        data.push(0x01); // action_class_names: 1 element
+        data.push(0x10); // string: zigzag(16)=8 chars
         data.extend_from_slice(b"MyAction");
         let decoder = TaskInputsImplementationDecoder;
         let result = decoder.decode(&data).unwrap();

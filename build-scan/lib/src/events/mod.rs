@@ -583,10 +583,17 @@ impl DecoderRegistry {
             Some(decoder) => match decoder.decode(body) {
                 Ok(event) => Ok(event),
                 Err(e) => {
+                    let hex_preview: String = body
+                        .iter()
+                        .take(64)
+                        .map(|b| format!("{:02x}", b))
+                        .collect::<Vec<_>>()
+                        .join(" ");
                     tracing::warn!(
                         wire_id,
                         error = %e,
                         body_len = body.len(),
+                        body_hex = %hex_preview,
                         "Failed to decode event, treating as raw"
                     );
                     Ok(DecodedEvent::Raw(RawEvent {

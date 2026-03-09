@@ -12,19 +12,19 @@ impl BodyDecoder for BasicMemoryStatsDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let free = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_zigzag_i64(body, &mut pos)?)
+            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
         } else {
             None
         };
 
         let total = if kryo::is_field_present(flags as u16, 1) {
-            Some(kryo::read_zigzag_i64(body, &mut pos)?)
+            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
         } else {
             None
         };
 
         let max = if kryo::is_field_present(flags as u16, 2) {
-            Some(kryo::read_zigzag_i64(body, &mut pos)?)
+            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
         } else {
             None
         };
@@ -41,7 +41,7 @@ impl BodyDecoder for BasicMemoryStatsDecoder {
         };
 
         let gc_time = if kryo::is_field_present(flags as u16, 4) {
-            Some(kryo::read_zigzag_i64(body, &mut pos)?)
+            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
         } else {
             None
         };
@@ -73,25 +73,25 @@ fn decode_memory_pool_snapshot(
     let heap = kryo::is_field_present(flags as u16, 1);
 
     let init = if kryo::is_field_present(flags as u16, 2) {
-        Some(kryo::read_zigzag_i64(body, pos)?)
+        Some(kryo::read_kryo_long_unsigned(body, pos)?)
     } else {
         None
     };
 
     let used = if kryo::is_field_present(flags as u16, 3) {
-        Some(kryo::read_zigzag_i64(body, pos)?)
+        Some(kryo::read_kryo_long_unsigned(body, pos)?)
     } else {
         None
     };
 
     let committed = if kryo::is_field_present(flags as u16, 4) {
-        Some(kryo::read_zigzag_i64(body, pos)?)
+        Some(kryo::read_kryo_long_unsigned(body, pos)?)
     } else {
         None
     };
 
     let max = if kryo::is_field_present(flags as u16, 5) {
-        Some(kryo::read_zigzag_i64(body, pos)?)
+        Some(kryo::read_kryo_long_unsigned(body, pos)?)
     } else {
         None
     };
@@ -129,20 +129,17 @@ mod tests {
 
     #[test]
     fn test_decode_free_total_max_present() {
-        // flags = 0b00000000 → bits 0,1,2 present (free, total, max), bits 3,4 absent
-        // But we want only free/total/max present (bits 3,4 absent = set in flags)
-        // flags bits: bit=0 means present, bit=1 means absent
         // bits 3 and 4 absent (set), bits 0,1,2 present (clear) → 0b00011000 = 0x18
         let mut data = vec![0x18u8];
-        // free = 100 → zigzag: 100*2 = 200 → varint 200 = 0xC8 0x01
-        data.push(0xC8);
-        data.push(0x01);
-        // total = 512 → zigzag: 512*2 = 1024 → varint 1024 = 0x80 0x08
+        // Kryo long unsigned: value is written directly as unsigned varint (no zigzag)
+        // free = 100 → unsigned varint 100 = 0x64
+        data.push(0x64);
+        // total = 512 → unsigned varint 512 = 0x80 0x04
+        data.push(0x80);
+        data.push(0x04);
+        // max = 1024 → unsigned varint 1024 = 0x80 0x08
         data.push(0x80);
         data.push(0x08);
-        // max = 1024 → zigzag: 1024*2 = 2048 → varint 2048 = 0x80 0x10
-        data.push(0x80);
-        data.push(0x10);
 
         let decoder = BasicMemoryStatsDecoder;
         let result = decoder.decode(&data).unwrap();
@@ -187,15 +184,15 @@ mod tests {
     fn test_decode_all_fields_present() {
         // flags = 0b00000000 → all 5 bits clear → all fields present
         let mut data = vec![0x00u8];
-        // free = 100 → zigzag(100) = 200 = 0xC8 0x01
-        data.push(0xC8);
-        data.push(0x01);
-        // total = 512 → zigzag(512) = 1024 = 0x80 0x08
+        // Kryo long unsigned encoding (no zigzag)
+        // free = 100 → unsigned varint 100 = 0x64
+        data.push(0x64);
+        // total = 512 → unsigned varint 512 = 0x80 0x04
+        data.push(0x80);
+        data.push(0x04);
+        // max = 1024 → unsigned varint 1024 = 0x80 0x08
         data.push(0x80);
         data.push(0x08);
-        // max = 1024 → zigzag(1024) = 2048 = 0x80 0x10
-        data.push(0x80);
-        data.push(0x10);
         // peak_snapshots: count = 2
         data.push(0x02);
 
@@ -207,36 +204,35 @@ mod tests {
             data.push(ch);
         }
         // heap = true (bit 1 clear, no payload)
-        // init = 50 → zigzag(50) = 100 = 0x64
-        data.push(0x64);
-        // used = 200 → zigzag(200) = 400 = 0x90 0x03
-        data.push(0x90);
-        data.push(0x03);
-        // committed = 256 → zigzag(256) = 512 = 0x80 0x04
+        // init = 50 → unsigned varint 50 = 0x32
+        data.push(0x32);
+        // used = 200 → unsigned varint 200 = 0xC8 0x01
+        data.push(0xC8);
+        data.push(0x01);
+        // committed = 256 → unsigned varint 256 = 0x80 0x02
+        data.push(0x80);
+        data.push(0x02);
+        // max = 512 → unsigned varint 512 = 0x80 0x04
         data.push(0x80);
         data.push(0x04);
-        // max = 512 → zigzag(512) = 1024 = 0x80 0x08
-        data.push(0x80);
-        data.push(0x08);
 
         // Snapshot 2: name back-refs to "Eden Space", heap = false (bit 1 set)
         // flags: bit 1 set (heap=false), rest clear → 0b00000010 = 0x02
         data.push(0x02);
         // name = back-ref to index 0 → zigzag(-1) = 1
         data.push(0x01);
-        // init = 10 → zigzag(10) = 20 = 0x14
-        data.push(0x14);
-        // used = 30 → zigzag(30) = 60 = 0x3C
-        data.push(0x3C);
-        // committed = 64 → zigzag(64) = 128 = 0x80 0x01
+        // init = 10 → unsigned varint 10 = 0x0A
+        data.push(0x0A);
+        // used = 30 → unsigned varint 30 = 0x1E
+        data.push(0x1E);
+        // committed = 64 → unsigned varint 64 = 0x40
+        data.push(0x40);
+        // max = 128 → unsigned varint 128 = 0x80 0x01
         data.push(0x80);
         data.push(0x01);
-        // max = 128 → zigzag(128) = 256 = 0x80 0x02
-        data.push(0x80);
-        data.push(0x02);
 
-        // gc_time = 42 → zigzag(42) = 84 = 0x54
-        data.push(0x54);
+        // gc_time = 42 → unsigned varint 42 = 0x2A
+        data.push(0x2A);
 
         let decoder = BasicMemoryStatsDecoder;
         let result = decoder.decode(&data).unwrap();
