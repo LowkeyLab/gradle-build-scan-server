@@ -40,7 +40,6 @@ const GET_BUILD_SCAN = gql`
           hasNextPage
           endCursor
         }
-        totalCount
       }
       tests(first: $firstTests, after: $afterTests) {
         edges {
@@ -57,7 +56,6 @@ const GET_BUILD_SCAN = gql`
           hasNextPage
           endCursor
         }
-        totalCount
       }
     }
   }

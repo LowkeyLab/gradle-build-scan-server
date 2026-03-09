@@ -37,12 +37,10 @@ function buildMockScan(overrides: Record<string, unknown> = {}) {
         },
       ],
       pageInfo: { hasNextPage: false, endCursor: null },
-      totalCount: 1,
     },
     tests: {
       edges: [],
       pageInfo: { hasNextPage: false, endCursor: null },
-      totalCount: 0,
     },
     ...overrides,
   };
@@ -102,7 +100,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge()],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const headings = fixture.nativeElement.querySelectorAll('h3');
@@ -116,7 +113,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge()],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -136,7 +132,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge()],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -154,7 +149,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge({ outcome: 'Passed' })],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -168,7 +162,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge({ outcome: 'Failed' })],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -182,7 +175,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge({ outcome: 'Skipped' })],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -196,7 +188,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge({ methodName: null })],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -210,7 +201,6 @@ describe('ScanDetailComponent', () => {
       tests: {
         edges: [buildTestEdge({ executorName: null })],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 1,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
@@ -236,7 +226,6 @@ describe('ScanDetailComponent', () => {
           },
         ],
         pageInfo: { hasNextPage: false, endCursor: null },
-        totalCount: 2,
       },
     });
     const tables = fixture.nativeElement.querySelectorAll('table');
