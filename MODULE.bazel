@@ -6,6 +6,8 @@ bazel_dep(name = "apple_support", version = "2.2.0")
 bazel_dep(name = "aspect_rules_lint", version = "2.0.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.2.1.1")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_oci", version = "2.2.7")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_multitool", version = "1.11.1")
 bazel_dep(name = "bazel_env.bzl", version = "0.5.0")
 bazel_dep(name = "bazelrc-preset.bzl", version = "1.8.0")
@@ -79,3 +81,16 @@ npm.npm_translate_lock(
 use_repo(npm, "npm")
 
 register_toolchains("//tools/toolchains:all")
+
+##########################
+# Container images
+oci_extension = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci_extension.pull(
+    name = "distroless_cc",
+    digest = "sha256:8c1a496b055d36c222e95ebd5c53bdd1fee447689a97ad889febca8380d578ec",
+    image = "gcr.io/distroless/cc-debian13",
+    platforms = [
+        "linux/amd64",
+    ],
+)
+use_repo(oci_extension, "distroless_cc", "distroless_cc_linux_amd64")
