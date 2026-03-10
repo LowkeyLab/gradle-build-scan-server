@@ -10,8 +10,6 @@ on:
     types:
       - completed
     branches: [main]
-env:
-  MISE_EXPERIMENTAL: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
