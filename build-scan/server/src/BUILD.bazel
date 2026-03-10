@@ -44,6 +44,8 @@ oci_image(
     base = "@distroless_cc",
     entrypoint = ["/main"],
     env = {
+        "DATABASE_URL": "sqlite:///data/build-scans.db?mode=rwc",
+        "PORT": "8080",
         "SPA_DIR": "/app/browser",
     },
     tars = [
