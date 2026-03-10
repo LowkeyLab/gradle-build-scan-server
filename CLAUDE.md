@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 aspect build //...                       # Build all targets
 aspect build //echo-server/src:main      # Build a specific target
-aspect run //echo-server/src:main        # Run the echo server
+bazel run //echo-server/src:main         # Run the echo server
 ibazel run //echo-server/src:main        # Hot-reload during development
 ```
 

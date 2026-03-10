@@ -8,7 +8,7 @@ Axum-based HTTP server that ingests Gradle build scans, stores them in SQLite, e
 
 ```bash
 ibazel run //build-scan/server/src:main   # Hot-reload
-aspect run //build-scan/server/src:main    # Single run
+bazel run //build-scan/server/src:main    # Single run
 ```
 
 ### Docker Image
