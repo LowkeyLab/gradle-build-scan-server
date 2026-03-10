@@ -1,3 +1,5 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
 rust_binary(
@@ -17,4 +19,50 @@ rust_binary(
         "@crates//:tracing",
         "@crates//:tracing-subscriber",
     ],
+)
+
+# Docker Image Targets
+# ===================
+
+# Package the binary into a tar layer
+pkg_tar(
+    name = "binary_layer",
+    srcs = [":main"],
+)
+
+# Package the Angular frontend into a tar layer
+pkg_tar(
+    name = "frontend_layer",
+    srcs = ["//angular/projects/build-scan-web"],
+    package_dir = "/app",
+    strip_prefix = "/angular/projects/build-scan-web/dist",
+)
+
+# Create a container image with the build scan server and embedded frontend
+oci_image(
+    name = "image",
+    base = "@distroless_cc",
+    entrypoint = ["/main"],
+    env = {
+        "SPA_DIR": "/app/browser",
+    },
+    tars = [
+        ":binary_layer",
+        ":frontend_layer",
+    ],
+)
+
+# Push the image to GitHub Container Registry
+oci_push(
+    name = "push_image",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/lowkeylab/build-scan-server",
+)
+
+# Load the image into the local Docker daemon
+oci_load(
+    name = "load_image",
+    image = ":image",
+    repo_tags = ["local/build-scan-server:latest"],
 )
