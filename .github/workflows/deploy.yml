@@ -16,6 +16,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: bazel-contrib/setup-bazel@30962902d2fd41169beb19c051e47c540c7d052a
         with:
           bazelisk-cache: true
