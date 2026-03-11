@@ -1,0 +1,16 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "service",
+    srcs = ["lib.rs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/db/src:db",  # keep
+        "//proxy/domain/src:domain",  # keep
+        "//proxy/format/src:format",  # keep
+        "@crates//:anyhow",
+        "@crates//:serde_json",
+        "@crates//:sqlx",
+        "@crates//:uuid",
+    ],
+)
