@@ -3,7 +3,7 @@ import { provideApollo } from 'apollo-angular';
 import { HttpLink } from 'apollo-angular/http';
 import { InMemoryCache } from '@apollo/client/core';
 
-const GRAPHQL_URI = '/graphql';
+const GRAPHQL_URI = new URL('graphql', document.baseURI).toString();
 
 export function provideGraphql() {
   return provideApollo(() => {
