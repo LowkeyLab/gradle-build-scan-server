@@ -24,11 +24,14 @@ const RUNFILES_SPA_PATH: &str = "_main/angular/projects/build-scan-web/dist";
 fn resolve_spa_dir() -> Option<PathBuf> {
     if let Ok(dir) = std::env::var("SPA_DIR") {
         let path = PathBuf::from(dir);
-        if path.is_dir() {
+        if !path.is_dir() {
+            warn!(path = %path.display(), "SPA_DIR is not a directory; falling back to runfiles");
+        } else if !is_spa_dir(&path) {
+            warn!(path = %path.display(), "SPA_DIR does not contain index.html; falling back to runfiles");
+        } else {
             info!(path = %path.display(), "Serving SPA from SPA_DIR");
             return Some(path);
         }
-        warn!(path = %path.display(), "SPA_DIR is not a directory; falling back to runfiles");
     }
 
     if let Some(path) = resolve_from_runfiles() {
@@ -44,10 +47,11 @@ fn resolve_from_runfiles() -> Option<PathBuf> {
     let r = Runfiles::create().ok()?;
     let dist_path = rlocation!(r, RUNFILES_SPA_PATH)?;
     let path = dist_path.join("browser");
-    if path.is_dir() {
-        return Some(path);
-    }
-    None
+    is_spa_dir(&path).then_some(path)
+}
+
+fn is_spa_dir(path: &PathBuf) -> bool {
+    path.join("index.html").is_file()
 }
 
 impl Config {
