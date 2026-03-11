@@ -1,21 +1,30 @@
-use axum::{Router, body::Body, extract::Request, extract::State, response::Response};
+extern crate format as proxy_format;
+
+use std::net::SocketAddr;
+use std::sync::Arc;
+
+use axum::body::Body;
+use axum::extract::{Request, State};
+use axum::response::Response;
+use axum::{Extension, Router};
 use base64::Engine as _;
 use chrono::Utc;
-use std::net::SocketAddr;
 use tokio::signal;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
 use config::Config;
-use format::{Payload, RequestData, ResponseData};
+use proxy_format::{Payload, RequestData, ResponseData};
+use service::ProxyService;
 
 const MAX_BODY_SIZE: usize = 10 * 1024 * 1024; // 10 MB
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct AppState {
     config: Config,
     client: reqwest::Client,
+    service: Arc<ProxyService>,
 }
 
 #[tokio::main]
@@ -25,8 +34,23 @@ async fn main() {
             EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
+
     let config = Config::from_env();
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+
+    // Connect to database
+    let pool = db::connect(&config.database_url)
+        .await
+        .expect("Failed to connect to database");
+    info!("Connected to database: {}", config.database_url);
+
+    let service = Arc::new(ProxyService::new(pool));
+
+    // GraphQL
+    let schema = Arc::new(graphql::create_schema());
+    let gql_context = Arc::new(graphql::Context {
+        service: service.clone(),
+    });
 
     let client = reqwest::Client::builder()
         .no_gzip()
@@ -40,9 +64,22 @@ async fn main() {
     let state = AppState {
         config: config.clone(),
         client,
+        service,
     };
 
-    let app = Router::new().fallback(proxy_handler).with_state(state);
+    let app = Router::new()
+        .route(
+            "/graphql",
+            axum::routing::get(graphql::graphql_handler).post(graphql::graphql_handler),
+        )
+        .route(
+            "/graphiql",
+            axum::routing::get(juniper_axum::graphiql("/graphql", None::<&str>)),
+        )
+        .fallback(proxy_handler)
+        .layer(Extension(schema))
+        .layer(Extension(gql_context))
+        .with_state(state);
 
     let listener = match tokio::net::TcpListener::bind(addr).await {
         Ok(l) => l,
@@ -250,7 +287,7 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
         }
     };
 
-    // Save payload (best-effort)
+    // Store payload to database (best-effort)
     let payload = Payload {
         request_id: request_id.clone(),
         timestamp: timestamp.clone(),
@@ -263,22 +300,13 @@ async fn proxy_handler(State(state): State<AppState>, request: Request<Body>) ->
         response: response_data,
     };
 
-    let dir = &state.config.payload_dir;
-    if let Err(e) = tokio::fs::create_dir_all(dir).await {
-        error!("Failed to create directory {:?}: {}", dir, e);
+    if let Err(e) = state.service.store_payload(&payload).await {
+        error!("Failed to store payload: {}", e);
     } else {
-        let filename = format!("{}-{}.json", timestamp, request_id);
-        let path = dir.join(&filename);
-        match serde_json::to_string_pretty(&payload) {
-            Ok(s) => {
-                if let Err(e) = tokio::fs::write(&path, &s).await {
-                    error!("Failed to write payload: {}", e);
-                } else {
-                    info!("Saved payload to: {:?}", path);
-                }
-            }
-            Err(e) => error!("Failed to serialize payload: {}", e),
-        }
+        info!(
+            "Stored payload {} for {} {}",
+            request_id, method, path_and_query
+        );
     }
 
     http_response

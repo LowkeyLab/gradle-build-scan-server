@@ -5,10 +5,14 @@ rust_binary(
     srcs = ["main.rs"],
     deps = [
         "//proxy/config/src:config",  # keep
-        "//proxy/format/src:format",
+        "//proxy/db/src:db",  # keep
+        "//proxy/format/src:format",  # keep
+        "//proxy/graphql/src:graphql",  # keep
+        "//proxy/service/src:service",  # keep
         "@crates//:axum",
         "@crates//:base64",
         "@crates//:chrono",
+        "@crates//:juniper_axum",
         "@crates//:reqwest",
         "@crates//:serde_json",
         "@crates//:tokio",
