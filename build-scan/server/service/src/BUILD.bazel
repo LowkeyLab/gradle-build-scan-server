@@ -8,7 +8,7 @@ rust_library(
         "//build-scan/lib/src:lib",
         "//build-scan/lib/src:models",
         "//build-scan/server/db/src:db",
-        "//build-scan/server/domain/src:domain",
+        "//build-scan/server/domain/src:domain",  # keep
         "@crates//:anyhow",
         "@crates//:chrono",
         "@crates//:hex",

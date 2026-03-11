@@ -1,14 +1,14 @@
 load("@rules_rust//rust:defs.bzl", "rust_library")
 
 rust_library(
-    name = "db",
+    name = "service",
     srcs = ["lib.rs"],
     visibility = ["//visibility:public"],
     deps = [
-        "//build-scan/server/db/migrations/src:migrations",  # keep
-        "//build-scan/server/domain/src:domain",  # keep
+        "//proxy/db/src:db",  # keep
+        "//proxy/domain/src:domain",  # keep
+        "//proxy/format/src:format",  # keep
         "@crates//:anyhow",
-        "@crates//:chrono",
         "@crates//:serde_json",
         "@crates//:sqlx",
         "@crates//:uuid",
