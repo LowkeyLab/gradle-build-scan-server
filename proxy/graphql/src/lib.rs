@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use axum::Extension;
 use juniper::{
-    EmptyMutation, EmptySubscription, FieldError, FieldResult, ID, RootNode, graphql_object,
+    EmptyMutation, EmptySubscription, FieldError, FieldResult, GraphQLInterface, ID, RootNode,
+    graphql_object,
 };
 use juniper_axum::{extract::JuniperRequest, response::JuniperResponse};
 
@@ -17,6 +18,16 @@ pub struct Context {
 impl juniper::Context for Context {}
 
 // ---------------------------------------------------------------------------
+// Node interface (Relay Global Object Identification)
+// ---------------------------------------------------------------------------
+
+#[derive(GraphQLInterface)]
+#[graphql(for = [Payload], context = Context)]
+pub struct Node {
+    pub id: ID,
+}
+
+// ---------------------------------------------------------------------------
 // Payload type
 // ---------------------------------------------------------------------------
 
@@ -24,7 +35,7 @@ pub struct Payload {
     pub payload: domain::Payload,
 }
 
-#[graphql_object(context = Context)]
+#[graphql_object(context = Context, impl = NodeValue)]
 impl Payload {
     fn id(&self) -> ID {
         RelayId::encode("Payload", &self.payload.id.0.to_string())
@@ -218,7 +229,7 @@ pub struct QueryRoot;
 
 #[graphql_object(context = Context)]
 impl QueryRoot {
-    async fn node(context: &Context, id: ID) -> FieldResult<Option<Payload>> {
+    async fn node(context: &Context, id: ID) -> FieldResult<Option<NodeValue>> {
         let relay_id = RelayId::decode(&id).map_err(|e| FieldError::from(e.to_string()))?;
         match relay_id.type_name.as_str() {
             "Payload" => {
@@ -227,7 +238,7 @@ impl QueryRoot {
                     .get_payload(&relay_id.raw_id)
                     .await
                     .map_err(|e| FieldError::from(e.to_string()))?;
-                Ok(payload.map(|p| Payload { payload: p }))
+                Ok(payload.map(|p| NodeValue::Payload(Payload { payload: p })))
             }
             _ => Ok(None),
         }
