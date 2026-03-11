@@ -83,15 +83,22 @@ struct PayloadRow {
     created_at: String,
 }
 
-fn parse_headers(json: &str) -> Vec<Header> {
-    serde_json::from_str::<Vec<serde_json::Value>>(json)
-        .unwrap_or_default()
+fn parse_headers(json: &str) -> Result<Vec<Header>> {
+    let values: Vec<serde_json::Value> = serde_json::from_str(json)?;
+    values
         .into_iter()
-        .filter_map(|v| {
-            Some(Header {
-                name: v.get("name")?.as_str()?.to_string(),
-                value: v.get("value")?.as_str()?.to_string(),
-            })
+        .map(|v| {
+            let name = v
+                .get("name")
+                .and_then(|n| n.as_str())
+                .ok_or_else(|| anyhow::anyhow!("missing or invalid 'name' in header JSON"))?
+                .to_string();
+            let value = v
+                .get("value")
+                .and_then(|n| n.as_str())
+                .ok_or_else(|| anyhow::anyhow!("missing or invalid 'value' in header JSON"))?
+                .to_string();
+            Ok(Header { name, value })
         })
         .collect()
 }
@@ -105,12 +112,16 @@ fn row_to_payload(row: PayloadRow) -> Result<Payload> {
         request: RequestData {
             method: row.method,
             uri: row.uri,
-            headers: parse_headers(&row.request_headers),
+            headers: parse_headers(&row.request_headers)?,
             body: row.request_body,
         },
         response: ResponseData {
             status: row.response_status,
-            headers: row.response_headers.as_deref().map(parse_headers),
+            headers: row
+                .response_headers
+                .as_deref()
+                .map(parse_headers)
+                .transpose()?,
             body: row.response_body,
             error: row.response_error,
         },
@@ -137,6 +148,16 @@ pub async fn list_payloads(
     // Order by rowid (monotonically increasing insertion order) for chronological pagination.
     // UUID-based ordering would produce random page order since UUIDs are v4 (random).
     let rows = if let Some(after_id) = after_id {
+        // Verify the cursor target exists; return an error for invalid/expired cursors
+        // instead of silently returning an empty dataset.
+        let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM payloads WHERE id = ?)")
+            .bind(after_id)
+            .fetch_one(pool)
+            .await?;
+        if !exists {
+            anyhow::bail!("cursor references non-existent payload id: {after_id}");
+        }
+
         sqlx::query_as::<_, PayloadRow>(
             "SELECT id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error, created_at FROM payloads WHERE rowid > (SELECT rowid FROM payloads WHERE id = ?) ORDER BY rowid ASC LIMIT ?"
         )
