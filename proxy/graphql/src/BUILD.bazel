@@ -1,0 +1,15 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+rust_library(
+    name = "graphql",
+    srcs = ["lib.rs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/domain/src:domain",  # keep
+        "//proxy/graphql/relay/src:relay",  # keep
+        "//proxy/service/src:service",  # keep
+        "@crates//:axum",
+        "@crates//:juniper",
+        "@crates//:juniper_axum",
+    ],
+)
