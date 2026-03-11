@@ -32,15 +32,19 @@ pub async fn insert_payload(pool: &SqlitePool, payload: &Payload) -> Result<()> 
             .map(|h| serde_json::json!({"name": h.name, "value": h.value}))
             .collect::<Vec<_>>(),
     )?;
-    let response_headers = payload.response.headers.as_ref().map(|headers| {
-        serde_json::to_string(
-            &headers
-                .iter()
-                .map(|h| serde_json::json!({"name": h.name, "value": h.value}))
-                .collect::<Vec<_>>(),
-        )
-        .unwrap_or_default()
-    });
+    let response_headers = payload
+        .response
+        .headers
+        .as_ref()
+        .map(|headers| {
+            serde_json::to_string(
+                &headers
+                    .iter()
+                    .map(|h| serde_json::json!({"name": h.name, "value": h.value}))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .transpose()?;
 
     sqlx::query(
         "INSERT INTO payloads (id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error)
@@ -130,9 +134,11 @@ pub async fn list_payloads(
     limit: i64,
     after_id: Option<&str>,
 ) -> Result<Vec<Payload>> {
+    // Order by rowid (monotonically increasing insertion order) for chronological pagination.
+    // UUID-based ordering would produce random page order since UUIDs are v4 (random).
     let rows = if let Some(after_id) = after_id {
         sqlx::query_as::<_, PayloadRow>(
-            "SELECT id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error, created_at FROM payloads WHERE id > ? ORDER BY id ASC LIMIT ?"
+            "SELECT id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error, created_at FROM payloads WHERE rowid > (SELECT rowid FROM payloads WHERE id = ?) ORDER BY rowid ASC LIMIT ?"
         )
         .bind(after_id)
         .bind(limit)
@@ -140,7 +146,7 @@ pub async fn list_payloads(
         .await?
     } else {
         sqlx::query_as::<_, PayloadRow>(
-            "SELECT id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error, created_at FROM payloads ORDER BY id ASC LIMIT ?"
+            "SELECT id, request_id, timestamp, method, uri, request_headers, request_body, response_status, response_headers, response_body, response_error, created_at FROM payloads ORDER BY rowid ASC LIMIT ?"
         )
         .bind(limit)
         .fetch_all(pool)
