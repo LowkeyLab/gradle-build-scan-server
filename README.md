@@ -2,6 +2,40 @@
 
 A self-hosted server for receiving and viewing Gradle build scans.
 
+## Getting Started
+
+### 1. Start the server
+
+```bash
+docker run -p 8080:8080 -v build-scan-data:/data ghcr.io/lowkeylab/build-scan-server:latest
+```
+
+### 2. Configure your Gradle project
+
+Add the [Develocity plugin](https://docs.gradle.com/develocity/gradle-plugin/) to your `settings.gradle.kts`:
+
+```kotlin
+plugins {
+    id("com.gradle.develocity") version "4.3.2"
+}
+
+develocity {
+    server = "http://localhost:8080"
+    buildScan {
+        publishing.onlyIf { true }
+        uploadInBackground = false
+    }
+}
+```
+
+### 3. Run a build
+
+```bash
+./gradlew build
+```
+
+The build scan will be uploaded to your server and viewable at `http://localhost:8080`.
+
 ## Docker
 
 ### Pull and run
