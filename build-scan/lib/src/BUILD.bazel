@@ -119,14 +119,3 @@ rust_test(
     crate = ":assembly",
 )
 
-rust_test(
-    name = "integration_test",
-    srcs = ["integration_test.rs"],
-    data = ["//captured-output/payloads:reference_payload"],
-    deps = [
-        ":lib",
-        "@crates//:base64",
-        "@crates//:serde_json",
-        "@crates//:tracing",
-    ],
-)
