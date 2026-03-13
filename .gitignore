@@ -23,3 +23,13 @@ rust-project.json
 
 # JavaScript / Node.js
 node_modules/
+
+# Runtime database
+build-scans.db
+
+# Brainstorm artifacts
+.superpowers/
+
+# Ad-hoc scripts and captured payloads
+script/
+captured-output/
