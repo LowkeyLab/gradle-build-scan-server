@@ -75,6 +75,13 @@ async fn main() {
                 graphql::graphql_handler,
             ),
         )
+        .route(
+            "/web/graphql",
+            on(
+                MethodFilter::GET.or(MethodFilter::POST),
+                graphql::graphql_handler,
+            ),
+        )
         .route("/graphiql", get(graphiql("/graphql", None::<&str>)))
         .layer(Extension(schema))
         .layer(Extension(context))
