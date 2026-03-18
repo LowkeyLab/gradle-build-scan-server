@@ -54,5 +54,11 @@ All are baked into the Docker image with sensible defaults. Override with `-e` a
 - `POST /scans/publish/{tool_type}/{version}/upload` — Upload build scan
 - `GET /usage/users/check` — Usage check
 - `GET|POST /graphql` — GraphQL API
+- `GET|POST /web/graphql` — GraphQL API (SPA-relative path, same handler)
 - `GET /graphiql` — GraphiQL IDE
 - `GET /web/*` — Angular SPA (when `SPA_DIR` is set)
+
+## Gotchas
+
+- **SPA GraphQL path**: The Angular frontend resolves its GraphQL endpoint via `new URL('graphql', document.baseURI)`. Since the SPA is served at `/web/` with `<base href="/web/">`, this resolves to `/web/graphql`. Both `/graphql` and `/web/graphql` are registered to the same handler.
+- **Gazelle `# keep` directives**: Many internal crate deps (service, db, graphql, relay) need `# keep` comments in BUILD.bazel files. Without them, `bazel run gazelle` strips these deps because the Rust gazelle plugin can't resolve ambiguous crate names across the monorepo. Always run a build after gazelle to verify.
