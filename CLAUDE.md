@@ -41,7 +41,7 @@ This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 ### Build system
 
 - **Bazel** with `rules_rust` and `rules_rs` for Cargo crate integration.
-- **Gazelle** with `gazelle_rust` plugin auto-generates `BUILD.bazel` files from Rust source — always run `bazel run gazelle` after source changes.
+- **Gazelle** with `gazelle_rust` plugin auto-generates `BUILD.bazel` files from Rust source — always run `bazel run gazelle` after source changes. **Important**: Gazelle may strip internal workspace deps it cannot resolve (ambiguous crate names across `build-scan/` and `proxy/`). Use `# keep` comments on these deps and always verify with a build after running gazelle.
 - Crates are sourced from `Cargo.toml`/`Cargo.lock` via `@crates//` label prefix.
 - `MODULE.bazel` is the Bzlmod dependency manifest.
 - `//tools:bazel_env` exports dev tools (`format`,  `buildifier`) to a `bin/` tree for PATH use via `direnv`.

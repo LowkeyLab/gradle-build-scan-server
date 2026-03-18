@@ -8,10 +8,10 @@ rust_binary(
     data = ["//angular/projects/build-scan-web"],
     deps = [
         "//build-scan/server/config/src:config",  # keep
-        "//build-scan/server/db/src:db",
-        "//build-scan/server/graphql/src:graphql",
+        "//build-scan/server/db/src:db",  # keep
+        "//build-scan/server/graphql/src:graphql",  # keep
         "//build-scan/server/ingest/src:ingest",
-        "//build-scan/server/service/src:service",
+        "//build-scan/server/service/src:service",  # keep
         "@crates//:axum",
         "@crates//:juniper_axum",
         "@crates//:tokio",

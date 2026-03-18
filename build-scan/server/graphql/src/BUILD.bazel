@@ -6,8 +6,8 @@ rust_library(
     visibility = ["//visibility:public"],
     deps = [
         "//build-scan/server/domain/src:domain",  # keep
-        "//build-scan/server/graphql/relay/src:relay",
-        "//build-scan/server/service/src:service",
+        "//build-scan/server/graphql/relay/src:relay",  # keep
+        "//build-scan/server/service/src:service",  # keep
         "@crates//:axum",
         "@crates//:juniper",
         "@crates//:juniper_axum",
