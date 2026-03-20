@@ -327,6 +327,10 @@ pub struct Task {
     pub cache_key: Option<CacheKey>,
     #[builder(setter(strip_option), default)]
     pub origin_execution_time: Option<Duration>,
+    #[builder(setter(strip_option), default)]
+    pub caching_disabled_reason: Option<String>,
+    #[builder(setter(strip_option), default)]
+    pub caching_disabled_explanation: Option<String>,
 }
 
 #[derive(Debug, Clone, Builder)]

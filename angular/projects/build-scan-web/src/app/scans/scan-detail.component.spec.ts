@@ -32,6 +32,8 @@ function buildMockScan(overrides: Record<string, unknown> = {}) {
             cacheable: true,
             durationMs: 120,
             cacheKey: 'abc123',
+            cachingDisabledReason: null,
+            cachingDisabledExplanation: null,
           },
           cursor: 'c1',
         },

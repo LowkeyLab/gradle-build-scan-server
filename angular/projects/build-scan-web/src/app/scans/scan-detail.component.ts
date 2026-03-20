@@ -33,6 +33,8 @@ const GET_BUILD_SCAN = gql`
             cacheable
             durationMs
             cacheKey
+            cachingDisabledReason
+            cachingDisabledExplanation
           }
           cursor
         }
@@ -135,6 +137,7 @@ const GET_BUILD_SCAN = gql`
                 <th>Outcome</th>
                 <th>Duration</th>
                 <th>Cacheable</th>
+                <th>Caching Reason</th>
                 <th>Class</th>
               </tr>
             </thead>
@@ -153,6 +156,21 @@ const GET_BUILD_SCAN = gql`
                   </td>
                   <td>{{ edge.node.durationMs != null ? edge.node.durationMs + 'ms' : '—' }}</td>
                   <td>{{ edge.node.cacheable ? 'Yes' : 'No' }}</td>
+                  <td class="text-xs">
+                    @if (edge.node.outcome === 'FromCache') {
+                      <span class="badge badge-sm badge-info">Cache Hit</span>
+                    } @else if (edge.node.outcome === 'UpToDate') {
+                      <span class="badge badge-sm badge-success">Up-to-date</span>
+                    } @else if (edge.node.cachingDisabledReason) {
+                      <span class="tooltip" [attr.data-tip]="edge.node.cachingDisabledExplanation || ''">
+                        <span class="badge badge-sm badge-warning">{{ edge.node.cachingDisabledReason }}</span>
+                      </span>
+                    } @else if (edge.node.cacheable) {
+                      <span class="badge badge-sm badge-ghost">Executed</span>
+                    } @else {
+                      <span class="opacity-40">—</span>
+                    }
+                  </td>
                   <td class="text-xs opacity-60">{{ edge.node.className }}</td>
                 </tr>
               }

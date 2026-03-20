@@ -48,6 +48,8 @@ struct TaskRow {
     finish_timestamp: Option<i64>,
     cache_key: Option<String>,
     origin_execution_time: Option<i64>,
+    caching_disabled_reason: Option<String>,
+    caching_disabled_explanation: Option<String>,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -144,6 +146,8 @@ impl TryFrom<TaskRow> for domain::Task {
             finish_timestamp: row.finish_timestamp.map(domain::Timestamp),
             cache_key: row.cache_key.map(domain::CacheKey),
             origin_execution_time: row.origin_execution_time.map(domain::Duration),
+            caching_disabled_reason: row.caching_disabled_reason,
+            caching_disabled_explanation: row.caching_disabled_explanation,
         })
     }
 }
@@ -191,6 +195,8 @@ impl From<&domain::Task> for TaskRow {
             finish_timestamp: task.finish_timestamp.map(|t| t.0),
             cache_key: task.cache_key.as_ref().map(|k| k.0.clone()),
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
+            caching_disabled_reason: task.caching_disabled_reason.clone(),
+            caching_disabled_explanation: task.caching_disabled_explanation.clone(),
         }
     }
 }
@@ -274,8 +280,8 @@ pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     let cacheable_int: Option<i64> = row.cacheable.map(|b| if b { 1 } else { 0 });
 
     sqlx::query(
-        "INSERT INTO tasks (id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tasks (id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&row.id)
     .bind(&row.scan_id)
@@ -287,6 +293,8 @@ pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     .bind(row.finish_timestamp)
     .bind(row.cache_key.as_deref())
     .bind(row.origin_execution_time)
+    .bind(row.caching_disabled_reason.as_deref())
+    .bind(row.caching_disabled_explanation.as_deref())
     .execute(executor)
     .await?;
 
@@ -347,7 +355,7 @@ pub async fn list_tasks(
 ) -> Result<Vec<domain::Task>> {
     let rows = if let Some(cursor) = after_id {
         sqlx::query_as::<_, TaskRow>(
-            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
+            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
              FROM tasks WHERE scan_id = ? AND id > ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -357,7 +365,7 @@ pub async fn list_tasks(
         .await?
     } else {
         sqlx::query_as::<_, TaskRow>(
-            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
+            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
              FROM tasks WHERE scan_id = ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -390,7 +398,7 @@ pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64> {
 
 pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<domain::Task>> {
     let row = sqlx::query_as::<_, TaskRow>(
-        "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time \
+        "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
          FROM tasks WHERE id = ?",
     )
     .bind(id)
