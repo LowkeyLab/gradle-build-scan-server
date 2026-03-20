@@ -163,6 +163,12 @@ impl BuildScanService {
                     if let Some(ck) = cache_key_str {
                         task_builder.cache_key(ck);
                     }
+                    if let Some(ref r) = task.caching_disabled_reason {
+                        task_builder.caching_disabled_reason(r.clone());
+                    }
+                    if let Some(ref e) = task.caching_disabled_explanation {
+                        task_builder.caching_disabled_explanation(e.clone());
+                    }
 
                     let domain_task = task_builder
                         .build()

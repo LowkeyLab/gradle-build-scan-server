@@ -118,4 +118,3 @@ rust_test(
     name = "assembly_test",
     crate = ":assembly",
 )
-

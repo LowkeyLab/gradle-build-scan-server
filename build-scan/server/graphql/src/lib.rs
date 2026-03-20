@@ -280,6 +280,14 @@ impl Task {
     fn origin_execution_time(&self) -> Option<f64> {
         self.task.origin_execution_time.map(|d| d.0 as f64)
     }
+
+    fn caching_disabled_reason(&self) -> Option<&str> {
+        self.task.caching_disabled_reason.as_deref()
+    }
+
+    fn caching_disabled_explanation(&self) -> Option<&str> {
+        self.task.caching_disabled_explanation.as_deref()
+    }
 }
 
 // ---------------------------------------------------------------------------
