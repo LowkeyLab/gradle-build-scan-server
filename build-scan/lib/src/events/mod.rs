@@ -454,7 +454,7 @@ pub struct TestExecutorFinishedEvent {
 
 #[derive(Debug, Clone)]
 pub struct TestResultEvent {
-    pub task: i64,
+    pub task: TaskId,
     pub id: i64,
     pub failed: bool,
     pub skipped: bool,

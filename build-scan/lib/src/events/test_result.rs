@@ -1,4 +1,5 @@
 use error::ParseError;
+use models::TaskId;
 
 use super::{BodyDecoder, DecodedEvent, TestResultEvent};
 
@@ -27,9 +28,9 @@ impl BodyDecoder for TestResultDecoder {
         let flags = kryo::read_flags_byte(body, &mut pos)?;
 
         let task = if kryo::is_field_present(flags as u16, 0) {
-            kryo::read_task_id(body, &mut pos)?
+            TaskId::new(kryo::read_task_id(body, &mut pos)?)
         } else {
-            0
+            TaskId::new(0)
         };
         let id = if kryo::is_field_present(flags as u16, 1) {
             kryo::read_task_id(body, &mut pos)?
@@ -41,7 +42,9 @@ impl BodyDecoder for TestResultDecoder {
         let failed = kryo::is_field_present(flags as u16, 2);
         let skipped = kryo::is_field_present(flags as u16, 3);
 
-        // Skip failureId if present (bit 4)
+        // Bit 4 indicates the presence of a failureId field in the wire format.
+        // We read-and-discard it because the bytes must be consumed to keep `pos`
+        // correct, but no downstream consumer currently uses failureId.
         if kryo::is_field_present(flags as u16, 4) {
             let _failure_id = kryo::read_task_id(body, &mut pos)?;
         }
@@ -71,7 +74,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.task, 42);
+            assert_eq!(e.task, TaskId::new(42));
             assert_eq!(e.id, 100);
             assert!(!e.failed);
             assert!(!e.skipped);
@@ -92,7 +95,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.task, 7);
+            assert_eq!(e.task, TaskId::new(7));
             assert_eq!(e.id, 55);
             assert!(e.failed);
             assert!(!e.skipped);
@@ -113,7 +116,7 @@ mod tests {
         let decoder = TestResultDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TestResult(e) = result {
-            assert_eq!(e.task, 3);
+            assert_eq!(e.task, TaskId::new(3));
             assert_eq!(e.id, 99);
             assert!(!e.failed);
             assert!(e.skipped);
@@ -158,7 +161,9 @@ mod tests {
             // task = i64 from bytes [64,30,61,7b,bb,68,62,10]
             assert_eq!(
                 e.task,
-                i64::from_le_bytes([0x64, 0x30, 0x61, 0x7b, 0xbb, 0x68, 0x62, 0x10])
+                TaskId::new(i64::from_le_bytes([
+                    0x64, 0x30, 0x61, 0x7b, 0xbb, 0x68, 0x62, 0x10
+                ]))
             );
         } else {
             panic!("expected TestResult");

@@ -367,21 +367,30 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         jvm_vendor: jvm_event.as_ref().and_then(|j| j.vendor.clone()),
         jvm_version: jvm_event.and_then(|j| j.version),
         requested_tasks,
-        tests: all_test_cases
-            .into_iter()
-            .zip(
-                test_results
-                    .into_iter()
-                    .map(Some)
-                    .chain(std::iter::repeat(None)),
-            )
-            .filter_map(|(tc, outcome)| {
-                tc.map(|mut test_case| {
-                    test_case.outcome = outcome;
-                    test_case
+        tests: {
+            debug_assert_eq!(
+                all_test_cases.len(),
+                test_results.len(),
+                "TestCase/TestResult count mismatch: {} cases vs {} results",
+                all_test_cases.len(),
+                test_results.len(),
+            );
+            all_test_cases
+                .into_iter()
+                .zip(
+                    test_results
+                        .into_iter()
+                        .map(Some)
+                        .chain(std::iter::repeat(None)),
+                )
+                .filter_map(|(tc, outcome)| {
+                    tc.map(|mut test_case| {
+                        test_case.outcome = outcome;
+                        test_case
+                    })
                 })
-            })
-            .collect(),
+                .collect()
+        },
         resource_usage: resource_usage.map(|e| models::ResourceUsageData {
             timestamps: e.timestamps,
             build_process_cpu: assemble_normalized_samples(e.build_process_cpu),
@@ -487,7 +496,7 @@ mod tests {
             (
                 frame(284, 2000),
                 DecodedEvent::TestResult(TestResultEvent {
-                    task: 1,
+                    task: TaskId::new(1),
                     id: 100,
                     failed: false,
                     skipped: false,
@@ -505,7 +514,7 @@ mod tests {
             (
                 frame(284, 2001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    task: 1,
+                    task: TaskId::new(1),
                     id: 101,
                     failed: false,
                     skipped: false,
@@ -542,7 +551,7 @@ mod tests {
             (
                 frame(284, 1001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    task: 1,
+                    task: TaskId::new(1),
                     id: 100,
                     failed: false,
                     skipped: false,
@@ -560,7 +569,7 @@ mod tests {
             (
                 frame(284, 2001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    task: 1,
+                    task: TaskId::new(1),
                     id: 200,
                     failed: true,
                     skipped: false,
