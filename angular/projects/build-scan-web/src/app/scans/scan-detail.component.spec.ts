@@ -31,6 +31,8 @@ function buildMockScan(overrides: Record<string, unknown> = {}) {
             outcome: 'Success',
             cacheable: true,
             durationMs: 120,
+            startTimestamp: 1000,
+            finishTimestamp: 1120,
             cacheKey: 'abc123',
             cachingDisabledReason: null,
             cachingDisabledExplanation: null,
@@ -57,6 +59,8 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
       outcome: 'Success',
       cacheable: true,
       durationMs: 120,
+      startTimestamp: 1000,
+      finishTimestamp: 1120,
       cacheKey: 'abc123',
       cachingDisabledReason: null,
       cachingDisabledExplanation: null,
@@ -322,5 +326,58 @@ describe('ScanDetailComponent', () => {
     const tables = fixture.nativeElement.querySelectorAll('table');
     const rows = tables[1].querySelectorAll('tbody tr');
     expect(rows.length).toBe(2);
+  });
+
+  it('should render timeline section when tasks have timestamps', () => {
+    flushQuery({
+      taskCount: 2,
+      tasks: {
+        edges: [
+          buildTaskEdge({ id: 'T1', taskPath: ':compileJava', startTimestamp: 1000, finishTimestamp: 1120 }),
+          buildTaskEdge({ id: 'T2', taskPath: ':processResources', startTimestamp: 1050, finishTimestamp: 1080, cursor: 'c2' }),
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      },
+    });
+    const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
+    expect(timeline).toBeTruthy();
+    const heading = timeline.querySelector('h4');
+    expect(heading.textContent.trim()).toBe('Timeline');
+  });
+
+  it('should color-code timeline bars by outcome', () => {
+    flushQuery({
+      taskCount: 3,
+      tasks: {
+        edges: [
+          buildTaskEdge({ id: 'T1', taskPath: ':a', outcome: 'Success', startTimestamp: 0, finishTimestamp: 100 }),
+          buildTaskEdge({ id: 'T2', taskPath: ':b', outcome: 'FromCache', startTimestamp: 50, finishTimestamp: 150 }),
+          buildTaskEdge({ id: 'T3', taskPath: ':c', outcome: 'Failed', startTimestamp: 100, finishTimestamp: 200 }),
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      },
+    });
+    const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
+    const bars = timeline.querySelectorAll('.rounded');
+    expect(bars[0].classList.contains('bg-success')).toBe(true);
+    expect(bars[1].classList.contains('bg-info')).toBe(true);
+    expect(bars[2].classList.contains('bg-error')).toBe(true);
+  });
+
+  it('should exclude tasks without timestamps from timeline', () => {
+    flushQuery({
+      taskCount: 2,
+      tasks: {
+        edges: [
+          buildTaskEdge({ id: 'T1', taskPath: ':compileJava', startTimestamp: 1000, finishTimestamp: 1120 }),
+          buildTaskEdge({ id: 'T2', taskPath: ':noTimestamps', startTimestamp: null, finishTimestamp: null }),
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      },
+    });
+    const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
+    expect(timeline).toBeTruthy();
+    const bars = timeline.querySelectorAll('.rounded');
+    expect(bars.length).toBe(1);
   });
 });

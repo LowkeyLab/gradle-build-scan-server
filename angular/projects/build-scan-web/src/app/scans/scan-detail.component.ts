@@ -32,6 +32,8 @@ const GET_BUILD_SCAN = gql`
             outcome
             cacheable
             durationMs
+            startTimestamp
+            finishTimestamp
             cacheKey
             cachingDisabledReason
             cachingDisabledExplanation
@@ -128,6 +130,43 @@ const GET_BUILD_SCAN = gql`
         <h3 class="text-xl font-bold mb-4">
           Tasks ({{ scan.taskCount }})
         </h3>
+
+        @if (getTimelineTasks(scan.tasks.edges).length > 0) {
+          <div class="card bg-base-200 mb-6">
+            <div class="card-body p-4">
+              <h4 class="font-semibold mb-2">Timeline</h4>
+              @for (item of getTimelineData(scan.tasks.edges); track item.id) {
+                <div class="flex items-center gap-2 py-0.5">
+                  <span class="font-mono text-xs w-48 truncate text-right shrink-0" [title]="item.taskPath">{{ item.taskPath }}</span>
+                  <div class="relative flex-1 h-5">
+                    <div
+                      class="absolute top-0 h-full rounded tooltip"
+                      [class.bg-success]="item.outcome === 'Success'"
+                      [class.opacity-60]="item.outcome === 'UpToDate'"
+                      [class.bg-info]="item.outcome === 'FromCache'"
+                      [class.bg-error]="item.outcome === 'Failed'"
+                      [class.bg-warning]="item.outcome === 'Skipped'"
+                      [class.bg-neutral]="item.outcome !== 'Success' && item.outcome !== 'UpToDate' && item.outcome !== 'FromCache' && item.outcome !== 'Failed' && item.outcome !== 'Skipped'"
+                      [attr.data-tip]="item.taskPath + ' — ' + formatDuration(item.durationMs)"
+                      [style.left.%]="item.leftPct"
+                      [style.width.%]="item.widthPct">
+                    </div>
+                  </div>
+                </div>
+              }
+              <div class="flex items-center gap-2 pt-1">
+                <span class="w-48 shrink-0"></span>
+                <div class="relative flex-1 flex justify-between text-xs opacity-50">
+                  <span>0ms</span>
+                  @if (getTimelineDuration(scan.tasks.edges) > 0) {
+                    <span>{{ formatDuration(getTimelineDuration(scan.tasks.edges) / 2) }}</span>
+                    <span>{{ formatDuration(getTimelineDuration(scan.tasks.edges)) }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
 
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full">
@@ -232,4 +271,51 @@ export class ScanDetailComponent {
     filter(result => !!result.data),
     map(result => result.data.buildScan)
   );
+
+  getTimelineTasks(edges: any[]): any[] {
+    return edges.filter(
+      (e: any) => e.node.startTimestamp != null && e.node.finishTimestamp != null
+    );
+  }
+
+  getTimelineDuration(edges: any[]): number {
+    const tasks = this.getTimelineTasks(edges);
+    if (tasks.length === 0) return 0;
+    const minStart = Math.min(...tasks.map((e: any) => e.node.startTimestamp));
+    const maxFinish = Math.max(...tasks.map((e: any) => e.node.finishTimestamp));
+    return maxFinish - minStart;
+  }
+
+  getTimelineData(edges: any[]): any[] {
+    const tasks = this.getTimelineTasks(edges);
+    if (tasks.length === 0) return [];
+    const minStart = Math.min(...tasks.map((e: any) => e.node.startTimestamp));
+    const totalDuration = this.getTimelineDuration(edges);
+    if (totalDuration === 0) return tasks.map((e: any) => ({
+      id: e.node.id,
+      taskPath: e.node.taskPath,
+      outcome: e.node.outcome,
+      durationMs: e.node.durationMs,
+      leftPct: 0,
+      widthPct: 100,
+    }));
+    return tasks.map((e: any) => {
+      const start = e.node.startTimestamp - minStart;
+      const duration = e.node.finishTimestamp - e.node.startTimestamp;
+      const widthPct = Math.max((duration / totalDuration) * 100, 0.5);
+      return {
+        id: e.node.id,
+        taskPath: e.node.taskPath,
+        outcome: e.node.outcome,
+        durationMs: e.node.durationMs,
+        leftPct: (start / totalDuration) * 100,
+        widthPct,
+      };
+    });
+  }
+
+  formatDuration(ms: number): string {
+    if (ms < 1000) return ms + 'ms';
+    return (ms / 1000).toFixed(1) + 's';
+  }
 }
