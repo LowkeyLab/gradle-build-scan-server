@@ -32,6 +32,12 @@ Raw Bytes → OuterHeader → Gzip → Framing (wire_id + body) → Event Decodi
 | `assembly.rs` | Maps decoded events into `BuildScanPayload` |
 | `models.rs` | Data structures (Task, TestCase, TaskOutcome, etc.) |
 
+#### Event Decoder Gotchas
+
+- **TestCase/TestResult pairing**: Events are strictly interleaved 1:1 (each TestCase followed by its TestResult). Assembly uses **sequential positional pairing**, not ID-based matching — the ID spaces are different between these event types.
+- **TestFinished_1_1 (wire 284)**: The `failed`/`skipped` booleans are encoded **in the flags byte** (bits 2, 3), not as separate data fields. The `task` and `id` fields use fixed 8-byte LE encoding (`read_task_id`), not Kryo-long.
+- **Cached test tasks**: When Gradle test tasks resolve FROM-CACHE/UP-TO-DATE, **no test events are emitted**. Use `./gradlew clean test --rerun --no-build-cache` to force test execution and generate test events.
+
 ### CLI (`cli/`)
 
 Standalone tool that reads an echo-server JSON payload file, decodes the base64 build scan body, and prints parsed JSON.
