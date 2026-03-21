@@ -46,6 +46,10 @@ This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 - `MODULE.bazel` is the Bzlmod dependency manifest.
 - `//tools:bazel_env` exports dev tools (`format`,  `buildifier`) to a `bin/` tree for PATH use via `direnv`.
 
+### Worktree Builds
+
+Bazel remote cache can serve stale artifacts when building in a git worktree. Use `--noremote_accept_cached --disk_cache=""` after `bazel clean` to force local compilation.
+
 ### Pre-commit hook
 
 Located at `githooks/pre-commit`. Automatically formats staged files on commit. If the formatter modifies staged files, the commit is rejected — stage the formatting changes and commit again.

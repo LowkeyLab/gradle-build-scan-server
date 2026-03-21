@@ -30,6 +30,14 @@ DEVELOCITY_SERVER_URL=http://localhost:3000 ./gradlew build
 | `list/` | Library | Custom doubly-linked list implementation |
 | `build-logic/` | Convention plugins | Shared build configuration (Kotlin JVM, Java 21 toolchain, JUnit 5) |
 
+## Generating Test Data for Build Scan Server
+
+```bash
+DEVELOCITY_SERVER_URL=http://localhost:3000 ./gradlew clean test --rerun --no-build-cache
+```
+
+Without `--rerun --no-build-cache`, test tasks may resolve from cache and emit **no test events** in the build scan payload.
+
 ## Build Configuration
 
 - **Gradle** with Kotlin DSL and convention plugins
