@@ -334,7 +334,7 @@ describe('ScanDetailComponent', () => {
       tasks: {
         edges: [
           buildTaskEdge({ id: 'T1', taskPath: ':compileJava', startTimestamp: 1000, finishTimestamp: 1120 }),
-          buildTaskEdge({ id: 'T2', taskPath: ':processResources', startTimestamp: 1050, finishTimestamp: 1080, cursor: 'c2' }),
+          buildTaskEdge({ id: 'T2', taskPath: ':processResources', startTimestamp: 1050, finishTimestamp: 1080 }),
         ],
         pageInfo: { hasNextPage: false, endCursor: null },
       },
