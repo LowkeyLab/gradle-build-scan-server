@@ -454,8 +454,10 @@ pub struct TestExecutorFinishedEvent {
 
 #[derive(Debug, Clone)]
 pub struct TestResultEvent {
-    pub executor_id: ExecutorId,
-    pub result_ordinal: Option<u64>,
+    pub task: i64,
+    pub id: i64,
+    pub failed: bool,
+    pub skipped: bool,
 }
 
 #[derive(Debug, Clone)]

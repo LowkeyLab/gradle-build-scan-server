@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use events::DecodedEvent;
 use framing::FramedEvent;
-use models::{BuildScanPayload, ExecutorId, RawEventSummary, Task, TaskId, TaskOutcome};
+use models::{BuildScanPayload, RawEventSummary, Task, TaskId, TaskOutcome};
 
 pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut identities: HashMap<TaskId, (String, String)> = HashMap::new();
@@ -25,9 +25,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     > = HashMap::new();
     let mut planned_nodes: Vec<events::PlannedNodeEvent> = Vec::new();
     let mut transform_requests: Vec<events::TransformExecutionRequestEvent> = Vec::new();
-    let mut test_cases: Vec<(ExecutorId, models::TestCase)> = Vec::new();
-    let mut executor_names: HashMap<ExecutorId, String> = HashMap::new();
-    let mut test_results: HashMap<ExecutorId, u64> = HashMap::new();
+    // Test events are strictly interleaved: each TestCase is followed by its TestResult.
+    // We collect all TestCase events (including non-method metadata) and all TestResult events
+    // in order, then pair them positionally to assign outcomes.
+    let mut all_test_cases: Vec<Option<models::TestCase>> = Vec::new();
+    let mut test_results: Vec<models::TestOutcome> = Vec::new();
+    let mut executor_names: HashMap<models::ExecutorId, String> = HashMap::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
     let mut resource_usage: Option<events::ResourceUsageEvent> = None;
@@ -156,29 +159,36 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 executor_names.insert(e.executor_id, e.name.clone());
             }
             DecodedEvent::TestCase(e) => {
-                // Only method-level events become test cases (class-level are metadata)
+                // Track ALL TestCase events (including non-method metadata) to maintain
+                // positional correspondence with TestResult events.
                 if e.method_name.is_some() {
                     let executor_name = e
                         .executor_name
                         .clone()
                         .or_else(|| executor_names.get(&e.executor_id).cloned());
-                    test_cases.push((
-                        e.executor_id,
-                        models::TestCase {
-                            class_name: e.class_name.clone(),
-                            method_name: e.method_name.clone(),
-                            executor_name,
-                            outcome: None,
-                        },
-                    ));
+                    all_test_cases.push(Some(models::TestCase {
+                        class_name: e.class_name.clone(),
+                        method_name: e.method_name.clone(),
+                        executor_name,
+                        outcome: None,
+                    }));
+                } else {
+                    // Non-method event (class-level or executor-init): placeholder to
+                    // keep positional alignment with TestResult events.
+                    all_test_cases.push(None);
                 }
             }
             DecodedEvent::TestExecutorStarted(_) => {}
             DecodedEvent::TestExecutorFinished(_) => {}
             DecodedEvent::TestResult(e) => {
-                if let Some(ordinal) = e.result_ordinal {
-                    test_results.insert(e.executor_id, ordinal);
-                }
+                let outcome = if e.failed {
+                    models::TestOutcome::Failed
+                } else if e.skipped {
+                    models::TestOutcome::Skipped
+                } else {
+                    models::TestOutcome::Passed
+                };
+                test_results.push(outcome);
             }
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
@@ -357,13 +367,19 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         jvm_vendor: jvm_event.as_ref().and_then(|j| j.vendor.clone()),
         jvm_version: jvm_event.and_then(|j| j.version),
         requested_tasks,
-        tests: test_cases
+        tests: all_test_cases
             .into_iter()
-            .map(|(executor_id, mut tc)| {
-                tc.outcome = test_results
-                    .get(&executor_id)
-                    .and_then(|&ord| models::TestOutcome::from_ordinal(ord));
-                tc
+            .zip(
+                test_results
+                    .into_iter()
+                    .map(Some)
+                    .chain(std::iter::repeat(None)),
+            )
+            .filter_map(|(tc, outcome)| {
+                tc.map(|mut test_case| {
+                    test_case.outcome = outcome;
+                    test_case
+                })
             })
             .collect(),
         resource_usage: resource_usage.map(|e| models::ResourceUsageData {
@@ -469,12 +485,30 @@ mod tests {
                 }),
             ),
             (
+                frame(284, 2000),
+                DecodedEvent::TestResult(TestResultEvent {
+                    task: 1,
+                    id: 100,
+                    failed: false,
+                    skipped: false,
+                }),
+            ),
+            (
                 frame(798, 2001),
                 DecodedEvent::TestCase(TestCaseEvent {
                     executor_id: ExecutorId::new(42),
                     class_name: "org.example.list.LinkedListTest".into(),
                     method_name: None,
                     executor_name: None,
+                }),
+            ),
+            (
+                frame(284, 2001),
+                DecodedEvent::TestResult(TestResultEvent {
+                    task: 1,
+                    id: 101,
+                    failed: false,
+                    skipped: false,
                 }),
             ),
         ];
@@ -494,6 +528,7 @@ mod tests {
 
     #[test]
     fn test_assemble_test_cases_with_outcome() {
+        // Events are interleaved: TestCase followed by its TestResult
         let events = vec![
             (
                 frame(798, 1000),
@@ -507,8 +542,10 @@ mod tests {
             (
                 frame(284, 1001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    executor_id: ExecutorId::new(42),
-                    result_ordinal: Some(0), // 0 = Passed
+                    task: 1,
+                    id: 100,
+                    failed: false,
+                    skipped: false,
                 }),
             ),
             (
@@ -523,8 +560,10 @@ mod tests {
             (
                 frame(284, 2001),
                 DecodedEvent::TestResult(TestResultEvent {
-                    executor_id: ExecutorId::new(99),
-                    result_ordinal: Some(1), // 1 = Failed
+                    task: 1,
+                    id: 200,
+                    failed: true,
+                    skipped: false,
                 }),
             ),
         ];
