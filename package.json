@@ -1,0 +1,13 @@
+{
+  "name": "gradle-build-scan-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gradle Build Scan server",
+  "// dependencies": "in the root package, only dependencies for monorepo-wide tooling should appear",
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

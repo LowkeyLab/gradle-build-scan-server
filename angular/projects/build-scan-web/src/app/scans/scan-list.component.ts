@@ -1,9 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Apollo, gql } from 'apollo-angular';
-import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map } from 'rxjs';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from "@angular/core";
+import { RouterLink } from "@angular/router";
+import { Apollo, gql } from "apollo-angular";
+import { DatePipe } from "@angular/common";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { filter, map } from "rxjs";
 
 const GET_BUILD_SCANS = gql`
   query GetBuildScans($first: Int!, $after: String) {
@@ -32,7 +37,7 @@ const GET_BUILD_SCANS = gql`
 `;
 
 @Component({
-  selector: 'app-scan-list',
+  selector: "app-scan-list",
   imports: [RouterLink, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -56,20 +61,30 @@ const GET_BUILD_SCANS = gql`
               @for (edge of data.edges; track edge.node.id) {
                 <tr class="hover cursor-pointer">
                   <td>
-                    <a [routerLink]="['/scans', edge.node.scanId]" class="link link-primary">
-                      {{ edge.node.createdAt | date:'medium' }}
+                    <a
+                      [routerLink]="['/scans', edge.node.scanId]"
+                      class="link link-primary"
+                    >
+                      {{ edge.node.createdAt | date: "medium" }}
                     </a>
                   </td>
                   <td>
-                    <span class="badge"
+                    <span
+                      class="badge"
                       [class.badge-success]="edge.node.outcome === 'success'"
                       [class.badge-error]="edge.node.outcome === 'failed'"
-                      [class.badge-warning]="edge.node.outcome === 'parse_error'">
+                      [class.badge-warning]="
+                        edge.node.outcome === 'parse_error'
+                      "
+                    >
                       {{ edge.node.outcome }}
                     </span>
                   </td>
-                  <td>{{ edge.node.buildToolType }} {{ edge.node.buildToolVersion }}</td>
-                  <td>{{ edge.node.hostname || '—' }}</td>
+                  <td>
+                    {{ edge.node.buildToolType }}
+                    {{ edge.node.buildToolVersion }}
+                  </td>
+                  <td>{{ edge.node.hostname || "—" }}</td>
                   <td>{{ edge.node.taskCount }}</td>
                   <td>{{ edge.node.testCount }}</td>
                 </tr>
@@ -80,7 +95,9 @@ const GET_BUILD_SCANS = gql`
 
         @if (hasNextPage()) {
           <div class="mt-4">
-            <button class="btn btn-outline" (click)="loadMore()">Load More</button>
+            <button class="btn btn-outline" (click)="loadMore()">
+              Load More
+            </button>
           </div>
         }
       }
@@ -92,13 +109,15 @@ export class ScanListComponent {
   private queryRef = this.apollo.watchQuery<any>({
     query: GET_BUILD_SCANS,
     variables: { first: 20 },
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
-  scans = toSignal(this.queryRef.valueChanges.pipe(
-    filter(r => !!r.data),
-    map(r => r.data.buildScans)
-  ));
+  scans = toSignal(
+    this.queryRef.valueChanges.pipe(
+      filter((r) => !!r.data),
+      map((r) => r.data.buildScans),
+    ),
+  );
 
   hasNextPage = computed(() => this.scans()?.pageInfo.hasNextPage ?? false);
   endCursor = computed(() => this.scans()?.pageInfo.endCursor ?? null);

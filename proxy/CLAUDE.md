@@ -13,24 +13,24 @@ bazel run //proxy/src:main    # Single run
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | Server listen port |
-| `UPSTREAM_URL` | *(required)* | Upstream build scan server URL |
-| `DATABASE_URL` | `sqlite:proxy.db` | SQLite connection string |
+| Variable       | Default           | Description                    |
+| -------------- | ----------------- | ------------------------------ |
+| `PORT`         | `8080`            | Server listen port             |
+| `UPSTREAM_URL` | _(required)_      | Upstream build scan server URL |
+| `DATABASE_URL` | `sqlite:proxy.db` | SQLite connection string       |
 
 ## Crate Layout
 
-| Crate | Path | Purpose |
-|-------|------|---------|
-| `main` | `src/` | Axum router, proxy handler, server entrypoint |
-| `config` | `config/src/` | Env-based configuration |
-| `db` | `db/src/` | SQLite pool + CRUD queries (sqlx) |
-| `domain` | `domain/src/` | Domain models (Payload, RequestData, ResponseData) |
-| `format` | `format/src/` | Wire format types for JSON serialization |
-| `service` | `service/src/` | Business logic — transforms format types to domain |
-| `graphql` | `graphql/src/` | Juniper schema + resolvers |
-| `relay` | `graphql/relay/src/` | Relay Global Object ID + cursor pagination |
+| Crate     | Path                 | Purpose                                            |
+| --------- | -------------------- | -------------------------------------------------- |
+| `main`    | `src/`               | Axum router, proxy handler, server entrypoint      |
+| `config`  | `config/src/`        | Env-based configuration                            |
+| `db`      | `db/src/`            | SQLite pool + CRUD queries (sqlx)                  |
+| `domain`  | `domain/src/`        | Domain models (Payload, RequestData, ResponseData) |
+| `format`  | `format/src/`        | Wire format types for JSON serialization           |
+| `service` | `service/src/`       | Business logic — transforms format types to domain |
+| `graphql` | `graphql/src/`       | Juniper schema + resolvers                         |
+| `relay`   | `graphql/relay/src/` | Relay Global Object ID + cursor pagination         |
 
 ## Data Flow
 

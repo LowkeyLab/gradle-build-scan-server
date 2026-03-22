@@ -1,15 +1,17 @@
-import { Routes } from '@angular/router';
+import { Routes } from "@angular/router";
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/scans', pathMatch: 'full' },
+  { path: "", redirectTo: "/scans", pathMatch: "full" },
   {
-    path: 'scans',
+    path: "scans",
     loadComponent: () =>
-      import('./scans/scan-list.component').then(m => m.ScanListComponent),
+      import("./scans/scan-list.component").then((m) => m.ScanListComponent),
   },
   {
-    path: 'scans/:id',
+    path: "scans/:id",
     loadComponent: () =>
-      import('./scans/scan-detail.component').then(m => m.ScanDetailComponent),
+      import("./scans/scan-detail.component").then(
+        (m) => m.ScanDetailComponent,
+      ),
   },
 ];

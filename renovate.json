@@ -1,11 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":approveMajorUpdates",
-    ":automergeAll"
-  ],
-  "postUpdateOptions": [
-    "gomodTidy"
-  ]
+  "extends": ["config:recommended", ":approveMajorUpdates", ":automergeAll"],
+  "postUpdateOptions": ["gomodTidy"]
 }

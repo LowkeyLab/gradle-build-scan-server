@@ -20,17 +20,17 @@ Raw Bytes → OuterHeader → Gzip → Framing (wire_id + body) → Event Decodi
 
 #### Key Source Files
 
-| File | Purpose |
-|------|---------|
-| `lib.rs` | Entry point: `parse(raw_bytes) → BuildScanPayload` |
-| `outer_header.rs` | Parses outer header, finds gzip offset |
-| `decompress.rs` | Gzip decompression |
-| `framing.rs` | Reads delta-encoded event frames |
-| `varint.rs` | LEB128 varint + ZigZag encoding |
-| `kryo.rs` | Kryo serialization helpers (per-event string interning) |
-| `events/mod.rs` | DecoderRegistry — 40+ wire_id → BodyDecoder mappings |
-| `assembly.rs` | Maps decoded events into `BuildScanPayload` |
-| `models.rs` | Data structures (Task, TestCase, TaskOutcome, etc.) |
+| File              | Purpose                                                 |
+| ----------------- | ------------------------------------------------------- |
+| `lib.rs`          | Entry point: `parse(raw_bytes) → BuildScanPayload`      |
+| `outer_header.rs` | Parses outer header, finds gzip offset                  |
+| `decompress.rs`   | Gzip decompression                                      |
+| `framing.rs`      | Reads delta-encoded event frames                        |
+| `varint.rs`       | LEB128 varint + ZigZag encoding                         |
+| `kryo.rs`         | Kryo serialization helpers (per-event string interning) |
+| `events/mod.rs`   | DecoderRegistry — 40+ wire_id → BodyDecoder mappings    |
+| `assembly.rs`     | Maps decoded events into `BuildScanPayload`             |
+| `models.rs`       | Data structures (Task, TestCase, TaskOutcome, etc.)     |
 
 #### Event Decoder Gotchas
 

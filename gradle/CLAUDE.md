@@ -23,11 +23,11 @@ DEVELOCITY_SERVER_URL=http://localhost:3000 ./gradlew build
 
 ## Module Structure
 
-| Module | Type | Purpose |
-|--------|------|---------|
-| `app/` | Application | CLI entry point — splits, joins, and capitalizes strings |
-| `utilities/` | Library | String utility facades (split/join via LinkedList) |
-| `list/` | Library | Custom doubly-linked list implementation |
+| Module         | Type               | Purpose                                                             |
+| -------------- | ------------------ | ------------------------------------------------------------------- |
+| `app/`         | Application        | CLI entry point — splits, joins, and capitalizes strings            |
+| `utilities/`   | Library            | String utility facades (split/join via LinkedList)                  |
+| `list/`        | Library            | Custom doubly-linked list implementation                            |
 | `build-logic/` | Convention plugins | Shared build configuration (Kotlin JVM, Java 21 toolchain, JUnit 5) |
 
 ## Generating Test Data for Build Scan Server
