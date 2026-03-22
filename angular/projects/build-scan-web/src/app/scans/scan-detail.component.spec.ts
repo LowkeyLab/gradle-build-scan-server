@@ -364,6 +364,25 @@ describe('ScanDetailComponent', () => {
     expect(bars[2].classList.contains('bg-error')).toBe(true);
   });
 
+  it('should sort timeline tasks by start time', () => {
+    flushQuery({
+      taskCount: 3,
+      tasks: {
+        edges: [
+          buildTaskEdge({ id: 'T3', taskPath: ':late', startTimestamp: 200, finishTimestamp: 300 }),
+          buildTaskEdge({ id: 'T1', taskPath: ':early', startTimestamp: 0, finishTimestamp: 100 }),
+          buildTaskEdge({ id: 'T2', taskPath: ':middle', startTimestamp: 100, finishTimestamp: 200 }),
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      },
+    });
+    const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
+    const labels = timeline.querySelectorAll('span.font-mono');
+    expect(labels[0].textContent.trim()).toBe(':early');
+    expect(labels[1].textContent.trim()).toBe(':middle');
+    expect(labels[2].textContent.trim()).toBe(':late');
+  });
+
   it('should exclude tasks without timestamps from timeline', () => {
     flushQuery({
       taskCount: 2,
