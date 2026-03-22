@@ -287,9 +287,12 @@ export class ScanDetailComponent {
     const duration = maxFinish - minStart;
 
     if (duration === 0) {
+      const sorted = [...tasks].sort(
+        (a: any, b: any) => a.node.startTimestamp - b.node.startTimestamp
+      );
       return {
         duration: 0,
-        items: tasks.map((e: any) => ({
+        items: sorted.map((e: any) => ({
           id: e.node.id,
           taskPath: e.node.taskPath,
           outcome: e.node.outcome,
@@ -300,9 +303,13 @@ export class ScanDetailComponent {
       };
     }
 
+    const sorted = [...tasks].sort(
+      (a: any, b: any) => a.node.startTimestamp - b.node.startTimestamp
+    );
+
     return {
       duration,
-      items: tasks.map((e: any) => {
+      items: sorted.map((e: any) => {
         const start = e.node.startTimestamp - minStart;
         const taskDuration = Math.max(e.node.finishTimestamp - e.node.startTimestamp, 0);
         const leftPct = (start / duration) * 100;
