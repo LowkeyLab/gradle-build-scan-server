@@ -15,13 +15,28 @@
             "outputPath": { "base": "projects/build-scan-web/dist" },
             "browser": "projects/build-scan-web/src/main.ts",
             "tsConfig": "projects/build-scan-web/tsconfig.app.json",
-            "assets": [{ "glob": "**/*", "input": "projects/build-scan-web/public" }],
+            "assets": [
+              { "glob": "**/*", "input": "projects/build-scan-web/public" }
+            ],
             "styles": ["projects/build-scan-web/src/processed_styles.css"],
             "baseHref": "/web/"
           },
           "configurations": {
-            "production": { "outputHashing": "all", "budgets": [{ "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" }] },
-            "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+            "production": {
+              "outputHashing": "all",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
           },
           "defaultConfiguration": "production"
         },
@@ -35,7 +50,9 @@
         },
         "test": {
           "builder": "@angular/build:unit-test",
-          "options": { "tsConfig": "projects/build-scan-web/tsconfig.spec.json" }
+          "options": {
+            "tsConfig": "projects/build-scan-web/tsconfig.spec.json"
+          }
         }
       }
     }

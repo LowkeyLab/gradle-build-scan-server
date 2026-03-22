@@ -49,10 +49,10 @@ The server will be available at `http://localhost:8080`.
 
 ### Configuration
 
-| Variable | Default | Description |
-|---|---|---|
+| Variable       | Default                         | Description          |
+| -------------- | ------------------------------- | -------------------- |
 | `DATABASE_URL` | `sqlite:///data/build_scans.db` | SQLite database path |
-| `PORT` | `8080` | HTTP listen port |
+| `PORT`         | `8080`                          | HTTP listen port     |
 
 Mount a volume at `/data` for persistent storage:
 

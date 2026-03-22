@@ -22,8 +22,8 @@ aspect test //...           # Run all tests
 ### Format & Lint
 
 ```bash
-bazel run //tools/format    # Format all files (Rust + Starlark)
-aspect lint --fix           # Run clippy with auto-fix
+bazel run //tools/format    # Format all files (Rust, Starlark, JS/TS, CSS, HTML, Markdown, YAML)
+aspect lint --fix           # Run clippy + ESLint with auto-fix
 ```
 
 ### Dependency Management
@@ -32,6 +32,12 @@ After editing `Cargo.toml` or adding Rust source files, regenerate BUILD files:
 
 ```bash
 bazel run gazelle           # MUST run after editing .rs, BUILD, or other source files
+```
+
+After adding npm packages, update the pnpm lock file:
+
+```bash
+pnpm install                # Run from repo root after editing pnpm-workspace.yaml catalog or package.json
 ```
 
 ## Architecture
@@ -53,11 +59,11 @@ This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 - **Gazelle** with `gazelle_rust` plugin auto-generates `BUILD.bazel` files from Rust source — always run `bazel run gazelle` after source changes. **Important**: Gazelle may strip internal workspace deps it cannot resolve (ambiguous crate names across `build-scan/` and `proxy/`). Use `# keep` comments on these deps and always verify with a build after running gazelle.
 - Crates are sourced from `Cargo.toml`/`Cargo.lock` via `@crates//` label prefix.
 - `MODULE.bazel` is the Bzlmod dependency manifest.
-- `//tools:bazel_env` exports dev tools (`format`,  `buildifier`) to a `bin/` tree for PATH use via `direnv`.
+- `//tools:bazel_env` exports dev tools (`format`, `buildifier`) to a `bin/` tree for PATH use via `direnv`.
 
 ### Worktree Builds
 
-Bazel remote cache can serve stale artifacts when building in a git worktree. Use `--noremote_accept_cached --disk_cache=""` after `bazel clean` to force local compilation.
+Bazel remote cache can serve stale artifacts when building in a git worktree. Use `bazel build --noremote_accept_cached --disk_cache=""` after `bazel clean` to force local compilation. Note: these flags only work with `bazel`, not the `aspect` CLI.
 
 ### Pre-commit hook
 

@@ -6,15 +6,18 @@ description: Use when you need to capture the JSON payloads sent by a Gradle bui
 # Capturing Gradle Payloads
 
 ## Overview
+
 This skill provides a standard way to intercept and record JSON payloads emitted by a Gradle build when `--scan` is run. It uses the project's proxy-based `echo-server` to forward traffic to `scans.gradle.com` while silently saving copies of requests and responses.
 
 ## When to Use
+
 - You need to see the exact structure of a Gradle build scan payload.
 - You are debugging discrepancies between local builds and Gradle Enterprise/Develocity.
 - You are adding new reverse-engineering models for build scan metrics.
 - A user asks to "run the echo-server" to capture output.
 
 ## Core Principle
+
 Instead of manually wiring up port bindings, environment variables, and manual file copies, always use the automated capture script bundled with this skill. It sets up the environment, builds the server, kicks off Gradle, cleans up the processes, and extracts the results into a single directory.
 
 ## Implementation
@@ -27,6 +30,7 @@ The process is fully automated by a bash script bundled with this skill.
 ```
 
 **What it does:**
+
 1. Cleans the temporary payload directory (`/tmp/gradle-payloads`).
 2. Builds `//echo-server/src:main` using Bazel.
 3. Spawns the `echo-server` in the background (proxying to `https://scans.gradle.com` on port `8080`).
@@ -48,15 +52,16 @@ You can route browser traffic through the local echo-server proxy (on port `8080
 
 ## Common Mistakes
 
-| Mistake | Correction |
-|---------|------------|
-| Leaving the server running | The `capture.sh` script automatically tracks and kills the background PID. Don't run it manually if possible to avoid zombie processes. |
-| Missing `UPSTREAM_URL` | The server requires this env var. The script injects it automatically. |
-| Missing `DEVELOCITY_SERVER_URL` | The Gradle build only points to the local proxy if this env var is set. The script injects it automatically. |
-| Forgetting `--no-build-cache` | Gradle might skip the scan entirely if everything is cached. The script ensures a full run. |
-| Not closing browser sessions | Always close your browser session when done to avoid leaked processes. |
+| Mistake                         | Correction                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Leaving the server running      | The `capture.sh` script automatically tracks and kills the background PID. Don't run it manually if possible to avoid zombie processes. |
+| Missing `UPSTREAM_URL`          | The server requires this env var. The script injects it automatically.                                                                  |
+| Missing `DEVELOCITY_SERVER_URL` | The Gradle build only points to the local proxy if this env var is set. The script injects it automatically.                            |
+| Forgetting `--no-build-cache`   | Gradle might skip the scan entirely if everything is cached. The script ensures a full run.                                             |
+| Not closing browser sessions    | Always close your browser session when done to avoid leaked processes.                                                                  |
 
 ## Quick Reference
+
 - **Script Location**: `./.opencode/skills/capturing-gradle-payloads/capture.sh`
 - **Output Directory**: `./captured-output/`
 - **Payload Location**: `./captured-output/payloads/*.json`

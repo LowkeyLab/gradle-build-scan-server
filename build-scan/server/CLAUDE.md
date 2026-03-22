@@ -27,26 +27,26 @@ docker run -p 8080:8080 -v ./data:/data local/build-scan-server:latest
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | Server listen port |
-| `DATABASE_URL` | `sqlite:///data/build-scans.db?mode=rwc` | SQLite connection string |
-| `SPA_DIR` | `/app/browser` | Path to Angular frontend dist |
-| `BASE_URL` | `http://localhost:{PORT}` | Public URL for scan upload tokens |
+| Variable       | Default                                  | Description                       |
+| -------------- | ---------------------------------------- | --------------------------------- |
+| `PORT`         | `8080`                                   | Server listen port                |
+| `DATABASE_URL` | `sqlite:///data/build-scans.db?mode=rwc` | SQLite connection string          |
+| `SPA_DIR`      | `/app/browser`                           | Path to Angular frontend dist     |
+| `BASE_URL`     | `http://localhost:{PORT}`                | Public URL for scan upload tokens |
 
 All are baked into the Docker image with sensible defaults. Override with `-e` at runtime.
 
 ## Crate Layout
 
-| Crate | Path | Purpose |
-|-------|------|---------|
-| `main` | `src/` | Axum router, server entrypoint |
-| `config` | `config/src/` | Env-based configuration |
-| `db` | `db/src/` | SQLite pool + queries (sqlx) |
-| `domain` | `domain/src/` | Domain models |
-| `graphql` | `graphql/src/` | Juniper schema + resolvers |
-| `ingest` | `ingest/src/` | Build scan upload protocol |
-| `service` | `service/src/` | Business logic layer |
+| Crate     | Path           | Purpose                        |
+| --------- | -------------- | ------------------------------ |
+| `main`    | `src/`         | Axum router, server entrypoint |
+| `config`  | `config/src/`  | Env-based configuration        |
+| `db`      | `db/src/`      | SQLite pool + queries (sqlx)   |
+| `domain`  | `domain/src/`  | Domain models                  |
+| `graphql` | `graphql/src/` | Juniper schema + resolvers     |
+| `ingest`  | `ingest/src/`  | Build scan upload protocol     |
+| `service` | `service/src/` | Business logic layer           |
 
 ## Endpoints
 

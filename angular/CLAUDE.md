@@ -18,13 +18,13 @@ aspect test //angular/projects/build-scan-web:test   # Run Vitest unit tests
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Angular 21 (standalone components, zoneless change detection) |
-| State | Apollo Client (GraphQL-centric, no NgRx) |
-| Styling | Tailwind CSS + DaisyUI |
-| Testing | Vitest |
-| Build | Bazel via custom `ng_application` / `ng_test` macros in `bzl/ng.bzl` |
+| Layer     | Technology                                                           |
+| --------- | -------------------------------------------------------------------- |
+| Framework | Angular 21 (standalone components, zoneless change detection)        |
+| State     | Apollo Client (GraphQL-centric, no NgRx)                             |
+| Styling   | Tailwind CSS + DaisyUI                                               |
+| Testing   | Vitest                                                               |
+| Build     | Bazel via custom `ng_application` / `ng_test` macros in `bzl/ng.bzl` |
 
 ## Project Structure
 
@@ -43,9 +43,9 @@ angular/
 
 ## Routes
 
-| Route | Component | Description |
-|-------|-----------|-------------|
-| `/scans` | ScanListComponent | Paginated list of build scans (20/page) |
+| Route        | Component           | Description                              |
+| ------------ | ------------------- | ---------------------------------------- |
+| `/scans`     | ScanListComponent   | Paginated list of build scans (20/page)  |
 | `/scans/:id` | ScanDetailComponent | Scan details with tasks and tests tables |
 
 ## GraphQL Queries

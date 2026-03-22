@@ -38,3 +38,7 @@ catalog:
   vite: ^8.0.0
   vitest: ^4.0.0
   jsdom: ^28.0.0
+  '@eslint/js': ^10.0.0
+  eslint: ^10.0.0
+  prettier: ^3.7.0
+  typescript-eslint: ^8.49.0

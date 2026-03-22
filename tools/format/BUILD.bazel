@@ -5,12 +5,28 @@ we don't want to trigger eager fetches of these for builds that don't want to ru
 """
 
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@npm//:prettier/package_json.bzl", prettier = "bin")
 
 # gazelle:exclude
 package(default_visibility = ["//:__subpackages__"])
 
+prettier.prettier_binary(
+    name = "prettier",
+    data = ["//:prettierrc"],
+    env = {"BAZEL_BINDIR": "."},
+    fixed_args = [
+        "--config=\"$$JS_BINARY__RUNFILES\"/$(rlocationpath //:prettierrc)",
+        "--log-level=warn",
+    ],
+)
+
 format_multirun(
     name = "format",
+    css = ":prettier",
+    html = ":prettier",
+    javascript = ":prettier",
+    markdown = ":prettier",
     rust = "@rules_rust//tools/upstream_wrapper:rustfmt",
     starlark = "@buildifier_prebuilt//:buildifier",
+    yaml = ":prettier",
 )
