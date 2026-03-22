@@ -328,7 +328,7 @@ describe('ScanDetailComponent', () => {
     expect(rows.length).toBe(2);
   });
 
-  it('should render timeline section when tasks have timestamps', () => {
+  it('should render timeline with worker lanes for overlapping tasks', () => {
     flushQuery({
       taskCount: 2,
       tasks: {
@@ -342,10 +342,37 @@ describe('ScanDetailComponent', () => {
     const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
     expect(timeline).toBeTruthy();
     const heading = timeline.querySelector('h4');
-    expect(heading.textContent.trim()).toBe('Timeline');
+    expect(heading.textContent).toContain('Timeline');
+    expect(heading.textContent).toContain('2 workers');
+    // Overlapping tasks should be in separate lanes
+    const workerLabels = timeline.querySelectorAll('.opacity-50');
+    // First two .opacity-50 spans are worker labels
+    expect(workerLabels[0].textContent.trim()).toBe('Worker 1');
+    expect(workerLabels[1].textContent.trim()).toBe('Worker 2');
+  });
+
+  it('should assign sequential tasks to the same lane', () => {
+    flushQuery({
+      taskCount: 2,
+      tasks: {
+        edges: [
+          buildTaskEdge({ id: 'T1', taskPath: ':a', startTimestamp: 0, finishTimestamp: 100 }),
+          buildTaskEdge({ id: 'T2', taskPath: ':b', startTimestamp: 100, finishTimestamp: 200 }),
+        ],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      },
+    });
+    const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
+    expect(timeline.textContent).toContain('1 worker');
+    // Both tasks in one lane = one row with relative positioning
+    const bars = timeline.querySelectorAll('.rounded-sm');
+    expect(bars.length).toBe(2);
   });
 
   it('should color-code timeline bars by outcome', () => {
+    // T1 and T2 overlap, so they go to separate lanes.
+    // T3 starts when T1 ends, so it joins lane 1.
+    // Lane 1: [T1(Success), T3(Failed)], Lane 2: [T2(FromCache)]
     flushQuery({
       taskCount: 3,
       tasks: {
@@ -358,10 +385,11 @@ describe('ScanDetailComponent', () => {
       },
     });
     const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
-    const bars = timeline.querySelectorAll('.rounded');
-    expect(bars[0].classList.contains('bg-success')).toBe(true);
-    expect(bars[1].classList.contains('bg-info')).toBe(true);
-    expect(bars[2].classList.contains('bg-error')).toBe(true);
+    const bars = timeline.querySelectorAll('.rounded-sm');
+    // DOM order: lane 1 bars first (T1, T3), then lane 2 (T2)
+    expect(bars[0].classList.contains('bg-success')).toBe(true);  // T1
+    expect(bars[1].classList.contains('bg-error')).toBe(true);    // T3
+    expect(bars[2].classList.contains('bg-info')).toBe(true);     // T2
   });
 
   it('should exclude tasks without timestamps from timeline', () => {
@@ -377,7 +405,7 @@ describe('ScanDetailComponent', () => {
     });
     const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
     expect(timeline).toBeTruthy();
-    const bars = timeline.querySelectorAll('.rounded');
+    const bars = timeline.querySelectorAll('.rounded-sm');
     expect(bars.length).toBe(1);
   });
 });

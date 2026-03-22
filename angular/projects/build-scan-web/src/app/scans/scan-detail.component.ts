@@ -134,28 +134,35 @@ const GET_BUILD_SCAN = gql`
         @if (getTimeline(scan.tasks.edges); as timeline) {
           <div class="card bg-base-200 mb-6">
             <div class="card-body p-4">
-              <h4 class="font-semibold mb-2">Timeline</h4>
-              @for (item of timeline.items; track item.id) {
+              <h4 class="font-semibold mb-2">
+                Timeline
+                <span class="font-normal text-sm opacity-60 ml-2">{{ timeline.lanes.length }} worker{{ timeline.lanes.length !== 1 ? 's' : '' }}</span>
+              </h4>
+              @for (lane of timeline.lanes; track $index) {
                 <div class="flex items-center gap-2 py-0.5">
-                  <span class="font-mono text-xs w-48 truncate text-right shrink-0" [title]="item.taskPath">{{ item.taskPath }}</span>
-                  <div class="relative flex-1 h-5">
-                    <div
-                      class="absolute top-0 h-full rounded tooltip"
-                      [class.bg-success]="item.outcome === 'Success'"
-                      [class.opacity-60]="item.outcome === 'UpToDate'"
-                      [class.bg-info]="item.outcome === 'FromCache'"
-                      [class.bg-error]="item.outcome === 'Failed'"
-                      [class.bg-warning]="item.outcome === 'Skipped'"
-                      [class.bg-neutral]="item.outcome !== 'Success' && item.outcome !== 'UpToDate' && item.outcome !== 'FromCache' && item.outcome !== 'Failed' && item.outcome !== 'Skipped'"
-                      [attr.data-tip]="item.taskPath + ' — ' + formatDuration(item.durationMs)"
-                      [style.left.%]="item.leftPct"
-                      [style.width.%]="item.widthPct">
-                    </div>
+                  <span class="text-xs w-20 text-right shrink-0 opacity-50">Worker {{ $index + 1 }}</span>
+                  <div class="relative flex-1 h-6">
+                    @for (item of lane; track item.id) {
+                      <div
+                        class="absolute top-0 h-full rounded-sm tooltip cursor-default overflow-hidden text-xs text-base-content/80 leading-6 px-1 whitespace-nowrap"
+                        [class.bg-success]="item.outcome === 'Success' || item.outcome === 'UpToDate'"
+                        [class.bg-info]="item.outcome === 'FromCache'"
+                        [class.bg-error]="item.outcome === 'Failed'"
+                        [class.bg-warning]="item.outcome === 'Skipped'"
+                        [class.bg-neutral]="!isKnownOutcome(item.outcome)"
+                        [attr.data-tip]="item.taskPath + ' — ' + formatDuration(item.durationMs)"
+                        [style.left.%]="item.leftPct"
+                        [style.width.%]="item.widthPct">
+                        @if (item.widthPct > 5) {
+                          {{ item.taskPath }}
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
               }
               <div class="flex items-center gap-2 pt-1">
-                <span class="w-48 shrink-0"></span>
+                <span class="w-20 shrink-0"></span>
                 <div class="relative flex-1 flex justify-between text-xs opacity-50">
                   <span>0ms</span>
                   @if (timeline.duration > 0) {
@@ -272,51 +279,64 @@ export class ScanDetailComponent {
     map(result => result.data.buildScan)
   );
 
-  getTimeline(edges: any[]): { items: any[]; duration: number } | null {
-    const tasks = edges.filter(
-      (e: any) => e.node.startTimestamp != null && e.node.finishTimestamp != null
-    );
+  getTimeline(edges: any[]): { lanes: any[][]; duration: number } | null {
+    const tasks = edges
+      .filter((e: any) => e.node.startTimestamp != null && e.node.finishTimestamp != null)
+      .map((e: any) => ({
+        id: e.node.id,
+        taskPath: e.node.taskPath,
+        outcome: e.node.outcome,
+        start: e.node.startTimestamp as number,
+        finish: e.node.finishTimestamp as number,
+      }))
+      .sort((a, b) => a.start - b.start || a.finish - b.finish);
+
     if (tasks.length === 0) return null;
 
-    let minStart = Infinity;
-    let maxFinish = -Infinity;
-    for (const e of tasks) {
-      if (e.node.startTimestamp < minStart) minStart = e.node.startTimestamp;
-      if (e.node.finishTimestamp > maxFinish) maxFinish = e.node.finishTimestamp;
-    }
+    const minStart = tasks[0].start;
+    const maxFinish = tasks.reduce((max, t) => Math.max(max, t.finish), -Infinity);
     const duration = maxFinish - minStart;
 
-    if (duration === 0) {
-      return {
-        duration: 0,
-        items: tasks.map((e: any) => ({
-          id: e.node.id,
-          taskPath: e.node.taskPath,
-          outcome: e.node.outcome,
-          durationMs: 0,
-          leftPct: 0,
-          widthPct: 100,
-        })),
+    // Greedy lane assignment: place each task in the first lane where it fits
+    const lanes: any[][] = [];
+    const laneEnds: number[] = [];
+
+    for (const task of tasks) {
+      const taskDuration = Math.max(task.finish - task.start, 0);
+      const leftPct = duration > 0 ? ((task.start - minStart) / duration) * 100 : 0;
+      const widthPct = duration > 0
+        ? Math.min(Math.max((taskDuration / duration) * 100, 0.3), 100 - leftPct)
+        : 100;
+
+      const item = {
+        id: task.id,
+        taskPath: task.taskPath,
+        outcome: task.outcome,
+        durationMs: taskDuration,
+        leftPct,
+        widthPct,
       };
+
+      let placed = false;
+      for (let i = 0; i < laneEnds.length; i++) {
+        if (task.start >= laneEnds[i]) {
+          lanes[i].push(item);
+          laneEnds[i] = task.finish;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        lanes.push([item]);
+        laneEnds.push(task.finish);
+      }
     }
 
-    return {
-      duration,
-      items: tasks.map((e: any) => {
-        const start = e.node.startTimestamp - minStart;
-        const taskDuration = Math.max(e.node.finishTimestamp - e.node.startTimestamp, 0);
-        const leftPct = (start / duration) * 100;
-        const widthPct = Math.min(Math.max((taskDuration / duration) * 100, 0.5), 100 - leftPct);
-        return {
-          id: e.node.id,
-          taskPath: e.node.taskPath,
-          outcome: e.node.outcome,
-          durationMs: taskDuration,
-          leftPct,
-          widthPct,
-        };
-      }),
-    };
+    return { lanes, duration };
+  }
+
+  isKnownOutcome(outcome: string): boolean {
+    return ['Success', 'UpToDate', 'FromCache', 'Failed', 'Skipped'].includes(outcome);
   }
 
   formatDuration(ms: number): string {
