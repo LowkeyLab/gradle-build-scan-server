@@ -328,7 +328,7 @@ describe('ScanDetailComponent', () => {
     expect(rows.length).toBe(2);
   });
 
-  it('should render timeline section when tasks have timestamps', () => {
+  it('should render timeline section with SVG when tasks have timestamps', () => {
     flushQuery({
       taskCount: 2,
       tasks: {
@@ -343,9 +343,11 @@ describe('ScanDetailComponent', () => {
     expect(timeline).toBeTruthy();
     const heading = timeline.querySelector('h4');
     expect(heading.textContent.trim()).toBe('Timeline');
+    const svg = timeline.querySelector('svg');
+    expect(svg).toBeTruthy();
   });
 
-  it('should color-code timeline bars by outcome', () => {
+  it('should render bars in the Observable Plot SVG', () => {
     flushQuery({
       taskCount: 3,
       tasks: {
@@ -358,26 +360,21 @@ describe('ScanDetailComponent', () => {
       },
     });
     const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
-    const bars = timeline.querySelectorAll('.rounded');
-    expect(bars[0].classList.contains('bg-success')).toBe(true);
-    expect(bars[1].classList.contains('bg-info')).toBe(true);
-    expect(bars[2].classList.contains('bg-error')).toBe(true);
+    const rects = timeline.querySelectorAll('svg rect');
+    expect(rects.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('should exclude tasks without timestamps from timeline', () => {
+  it('should not render timeline when no tasks have timestamps', () => {
     flushQuery({
-      taskCount: 2,
+      taskCount: 1,
       tasks: {
         edges: [
-          buildTaskEdge({ id: 'T1', taskPath: ':compileJava', startTimestamp: 1000, finishTimestamp: 1120 }),
-          buildTaskEdge({ id: 'T2', taskPath: ':noTimestamps', startTimestamp: null, finishTimestamp: null }),
+          buildTaskEdge({ id: 'T1', taskPath: ':noTimestamps', startTimestamp: null, finishTimestamp: null }),
         ],
         pageInfo: { hasNextPage: false, endCursor: null },
       },
     });
     const timeline = fixture.nativeElement.querySelector('.card.bg-base-200');
-    expect(timeline).toBeTruthy();
-    const bars = timeline.querySelectorAll('.rounded');
-    expect(bars.length).toBe(1);
+    expect(timeline).toBeFalsy();
   });
 });
