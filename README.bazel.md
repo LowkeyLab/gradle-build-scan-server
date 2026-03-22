@@ -9,7 +9,9 @@ The `format` command is provided by the `.envrc` file, and the bazel-env.bzl set
 - Run `format` to re-format all files locally.
 - Run `format path/to/file` to re-format a single file.
 - Run `git config core.hooksPath githooks` to add the formatter pre-commit hook.
-- For CI verification, setup `format` task, see https://docs.aspect.build/workflows/features/lint#formatting## Linting code
+- For CI verification, setup `format` task, see https://docs.aspect.build/workflows/features/lint#formatting
+
+## Linting code
 
 Projects use [rules_lint](https://github.com/aspect-build/rules_lint) to run linting tools using Bazel's aspects feature.
 Linters produce report files, which they cache like any other Bazel actions.
