@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 aspect build //...                       # Build all targets
-aspect build //echo-server/src:main      # Build a specific target
-bazel run //echo-server/src:main         # Run the echo server
-ibazel run //echo-server/src:main        # Hot-reload during development
+aspect build //build-scan/server/src:main # Build a specific target
+bazel run //build-scan/server/src:main   # Run the build scan server
+ibazel run //build-scan/server/src:main  # Hot-reload during development
 ```
 
 ### Test
@@ -38,6 +38,15 @@ bazel run gazelle           # MUST run after editing .rs, BUILD, or other source
 
 This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 
+### Subsystems
+
+| Directory | Purpose |
+|-----------|---------|
+| `build-scan/` | Binary format parser (lib), CLI, and HTTP server (ingest, GraphQL, SPA) |
+| `proxy/` | HTTP intercepting proxy capturing Gradle client traffic to SQLite |
+| `angular/` | Angular 21 SPA frontend (Tailwind + DaisyUI + Apollo) |
+| `gradle/` | Dogfooding Gradle project that publishes scans to the server |
+
 ### Build system
 
 - **Bazel** with `rules_rust` and `rules_rs` for Cargo crate integration.
@@ -61,3 +70,11 @@ Located at `githooks/pre-commit`. Automatically formats staged files on commit. 
 3. `bazel run //tools/format`
 4. `aspect test //...`
 5. `aspect build //...`
+
+### Dogfooding
+
+Generate test build scans by running the Gradle project against your local server:
+
+```bash
+cd gradle && DEVELOCITY_SERVER_URL=http://localhost:3000 ./gradlew clean build
+```
