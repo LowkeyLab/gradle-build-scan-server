@@ -40,6 +40,8 @@ After adding npm packages, update the pnpm lock file:
 pnpm install                # Run from repo root after editing pnpm-workspace.yaml catalog or package.json
 ```
 
+**Important**: Bazel sandboxing requires every resolvable module (including transitive deps) to have an explicit `//angular:node_modules/<pkg>` entry in `BUILD.bazel`. When adding packages with deep dependency trees, check `npm view <pkg> dependencies --json` and add all transitive deps to `pnpm-workspace.yaml`, `angular/package.json`, and `BUILD.bazel`.
+
 ## Architecture
 
 This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.

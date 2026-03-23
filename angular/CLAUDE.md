@@ -90,6 +90,22 @@ agent-browser screenshot --full /tmp/scan-detail.png
 agent-browser close
 ```
 
+## Adding npm Dependencies
+
+Bazel sandboxing requires ALL transitive deps to be explicit. When adding a package with deep dependency trees (e.g., `@observablehq/plot` → `d3` → 30+ `d3-*` sub-packages):
+
+1. Add to `pnpm-workspace.yaml` catalog AND `angular/package.json`
+2. Add `//angular:node_modules/<pkg>` to `BUILD.bazel` deps
+3. **Every transitive dep** that the bundler resolves also needs steps 1-2
+4. Use `npm view <pkg> dependencies --json` to discover transitive deps upfront
+5. Group transitive deps in a `_DEPS` list variable in BUILD.bazel for maintainability
+
+## Angular 21 API Notes
+
+- `afterRender` and `AfterRenderPhase` no longer exist — use `afterNextRender`, `afterEveryRender`, or `afterRenderEffect`
+- `afterRenderEffect` is signal-reactive (re-runs when read signals change) — ideal for imperative DOM libraries like Observable Plot
+- For libraries returning detached DOM elements (e.g., `Plot.plot()`), use `viewChild` + `afterRenderEffect` + `el.replaceChildren()`
+
 ## Backend Integration
 
 The app is served by the Rust server at `/web/*` when `SPA_DIR` is configured. The GraphQL endpoint is resolved relative to `document.baseURI` as `/graphql`.

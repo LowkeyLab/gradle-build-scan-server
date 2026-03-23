@@ -13,6 +13,7 @@ import { BuildMetadataComponent } from "./build-metadata/build-metadata.componen
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
 import { TasksTableComponent } from "./tasks-table/tasks-table.component";
 import { TestsTableComponent } from "./tests-table/tests-table.component";
+import { CacheBreakdownComponent } from "./cache-breakdown/cache-breakdown.component";
 
 const GET_BUILD_SCAN = gql`
   query GetBuildScan(
@@ -89,6 +90,7 @@ const GET_BUILD_SCAN = gql`
     TaskTimelineComponent,
     TasksTableComponent,
     TestsTableComponent,
+    CacheBreakdownComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -99,6 +101,10 @@ const GET_BUILD_SCAN = gql`
         </div>
 
         <app-build-metadata [scan]="scan" />
+        <app-cache-breakdown
+          [taskEdges]="scan.tasks.edges"
+          [taskCount]="scan.taskCount"
+        />
         <app-task-timeline [taskEdges]="scan.tasks.edges" />
         <app-tasks-table
           [taskEdges]="scan.tasks.edges"

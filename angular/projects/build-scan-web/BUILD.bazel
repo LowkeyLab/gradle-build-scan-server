@@ -39,6 +39,50 @@ process_styles(
     ],
 )
 
+# Transitive deps of @observablehq/plot -> d3 -> d3-* sub-packages
+# and interval-tree-1d -> binary-search-bounds.
+# Bazel sandboxing requires these to be explicitly listed.
+_PLOT_TRANSITIVE_DEPS = [
+    "//angular:node_modules/@observablehq/plot",
+    "//angular:node_modules/binary-search-bounds",
+    "//angular:node_modules/delaunator",
+    "//angular:node_modules/internmap",
+    "//angular:node_modules/robust-predicates",
+    "//angular:node_modules/d3",
+    "//angular:node_modules/d3-array",
+    "//angular:node_modules/d3-axis",
+    "//angular:node_modules/d3-brush",
+    "//angular:node_modules/d3-chord",
+    "//angular:node_modules/d3-color",
+    "//angular:node_modules/d3-contour",
+    "//angular:node_modules/d3-delaunay",
+    "//angular:node_modules/d3-dispatch",
+    "//angular:node_modules/d3-drag",
+    "//angular:node_modules/d3-dsv",
+    "//angular:node_modules/d3-ease",
+    "//angular:node_modules/d3-fetch",
+    "//angular:node_modules/d3-force",
+    "//angular:node_modules/d3-format",
+    "//angular:node_modules/d3-geo",
+    "//angular:node_modules/d3-hierarchy",
+    "//angular:node_modules/d3-interpolate",
+    "//angular:node_modules/d3-path",
+    "//angular:node_modules/d3-polygon",
+    "//angular:node_modules/d3-quadtree",
+    "//angular:node_modules/d3-random",
+    "//angular:node_modules/d3-scale",
+    "//angular:node_modules/d3-scale-chromatic",
+    "//angular:node_modules/d3-selection",
+    "//angular:node_modules/d3-shape",
+    "//angular:node_modules/d3-time",
+    "//angular:node_modules/d3-time-format",
+    "//angular:node_modules/d3-timer",
+    "//angular:node_modules/d3-transition",
+    "//angular:node_modules/d3-zoom",
+    "//angular:node_modules/interval-tree-1d",
+    "//angular:node_modules/isoformat",
+]
+
 ng_application(
     name = "build-scan-web",
     srcs = [
@@ -59,7 +103,7 @@ ng_application(
         "//angular:node_modules/graphql",
         "//angular:node_modules/graphql-tag",
         "//angular:node_modules/optimism",
-    ],
+    ] + _PLOT_TRANSITIVE_DEPS,
 )
 
 ng_test(
@@ -82,5 +126,5 @@ ng_test(
         "//angular:node_modules/graphql",
         "//angular:node_modules/graphql-tag",
         "//angular:node_modules/optimism",
-    ],
+    ] + _PLOT_TRANSITIVE_DEPS,
 )
