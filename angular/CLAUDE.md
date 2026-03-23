@@ -38,7 +38,11 @@ angular/
     ├── graphql.provider.ts              # Apollo Client setup (URI from document.baseURI)
     └── scans/
         ├── scan-list.component.ts       # /scans — paginated scan list
-        └── scan-detail.component.ts     # /scans/:id — scan metadata, tasks, tests
+        ├── scan-detail.component.ts     # /scans/:id — orchestrator (GraphQL query + child layout)
+        ├── build-metadata/              # Build outcome, timestamps, tool/OS/JVM info
+        ├── task-timeline/               # Gantt-style task execution timeline
+        ├── tasks-table/                 # Task list with caching status badges
+        └── tests-table/                 # Test results with outcome badges
 ```
 
 ## Routes
@@ -52,6 +56,39 @@ angular/
 
 - `GetBuildScans(first, after)` — Relay cursor pagination for scan list
 - `GetBuildScan(id, firstTasks, afterTasks, firstTests, afterTests)` — Single scan with nested task/test connections
+
+## Visual Verification (E2E)
+
+After changing frontend components, verify the UI renders correctly using `agent-browser`:
+
+```bash
+# 1. Start the server (from repo root)
+bazel run //build-scan/server/src:main
+
+# 2. Publish a test build scan
+cd gradle && DEVELOCITY_SERVER_URL=http://localhost:3000 ./gradlew clean build
+
+# 3. Open the scan URL printed by Gradle and verify with agent-browser
+agent-browser open http://localhost:3000/web/scans/<scan-id>
+agent-browser wait --load networkidle
+agent-browser wait 2000
+agent-browser eval --stdin <<'EOF'
+JSON.stringify({
+  metadata: document.querySelector("app-build-metadata") !== null,
+  timeline: document.querySelector("app-task-timeline") !== null,
+  tasksTable: document.querySelector("app-tasks-table") !== null,
+  testsTable: document.querySelector("app-tests-table") !== null
+})
+EOF
+# Expected: all true (testsTable renders but is hidden when testCount=0)
+
+# 4. Take a screenshot (use dark theme for visibility in headless)
+agent-browser eval 'document.documentElement.setAttribute("data-theme", "dark")'
+agent-browser screenshot --full /tmp/scan-detail.png
+
+# 5. Clean up
+agent-browser close
+```
 
 ## Backend Integration
 
