@@ -90,6 +90,22 @@ describe("TaskTimelineComponent", () => {
     expect(bars[2].classList.contains("bg-error")).toBe(true);
   });
 
+  it("should style UpToDate bars with bg-success and reduced opacity", () => {
+    render([
+      buildTaskEdge({
+        id: "T1",
+        taskPath: ":upToDate",
+        outcome: "UpToDate",
+        startTimestamp: 0,
+        finishTimestamp: 100,
+      }),
+    ]);
+    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
+    const bar = timeline.querySelector(".rounded");
+    expect(bar.classList.contains("bg-success")).toBe(true);
+    expect(bar.classList.contains("opacity-60")).toBe(true);
+  });
+
   it("should sort timeline tasks by start time", () => {
     render([
       buildTaskEdge({

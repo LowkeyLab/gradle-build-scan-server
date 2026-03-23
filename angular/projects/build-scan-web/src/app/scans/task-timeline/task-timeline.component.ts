@@ -18,7 +18,9 @@ import { Component, ChangeDetectionStrategy, input } from "@angular/core";
               <div class="relative flex-1 h-5">
                 <div
                   class="absolute top-0 h-full rounded tooltip"
-                  [class.bg-success]="item.outcome === 'Success'"
+                  [class.bg-success]="
+                    item.outcome === 'Success' || item.outcome === 'UpToDate'
+                  "
                   [class.opacity-60]="item.outcome === 'UpToDate'"
                   [class.bg-info]="item.outcome === 'FromCache'"
                   [class.bg-error]="item.outcome === 'Failed'"
