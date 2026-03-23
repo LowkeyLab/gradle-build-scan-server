@@ -15,12 +15,26 @@ interface CacheCategory {
   color: string;
 }
 
+const AVOIDED_LABELS = ["Cache Hit", "Up-to-date", "No Source", "Avoided"];
+
 const COLOR_MAP: Record<string, string> = {
   "Cache Hit": "oklch(72% 0.15 230)",
   "Up-to-date": "oklch(72% 0.17 150)",
+  "No Source": "oklch(72% 0.12 200)",
+  Avoided: "oklch(68% 0.10 210)",
   Executed: "oklch(55% 0.04 260)",
   Failed: "oklch(62% 0.2 25)",
   Skipped: "oklch(75% 0.15 75)",
+};
+
+const OUTCOME_TO_CATEGORY: Record<string, string> = {
+  FromCache: "Cache Hit",
+  UpToDate: "Up-to-date",
+  NoSource: "No Source",
+  AvoidedForUnknownReason: "Avoided",
+  Success: "Executed",
+  Failed: "Failed",
+  Skipped: "Skipped",
 };
 
 @Component({
@@ -29,7 +43,14 @@ const COLOR_MAP: Record<string, string> = {
   template: `
     <div class="card bg-base-200 mb-6">
       <div class="card-body p-4">
-        <h4 class="font-semibold mb-3">Cache Breakdown</h4>
+        <h4 class="font-semibold mb-3">
+          Cache Breakdown
+          @if (isPartial()) {
+            <span class="text-xs font-normal opacity-50">
+              (first {{ taskEdges().length }} of {{ taskCount() }} tasks)
+            </span>
+          }
+        </h4>
         @if (categories().length > 0) {
           <div class="flex items-center gap-6">
             <div #chartContainer class="shrink-0"></div>
@@ -59,26 +80,20 @@ const COLOR_MAP: Record<string, string> = {
 })
 export class CacheBreakdownComponent {
   taskEdges = input.required<any[]>();
+  taskCount = input.required<number>();
 
   private chartEl = viewChild<ElementRef<HTMLElement>>("chartContainer");
 
+  isPartial = computed(() => this.taskEdges().length < this.taskCount());
+
   categories = computed<CacheCategory[]>(() => {
     const edges = this.taskEdges();
-    const counts: Record<string, number> = {
-      "Cache Hit": 0,
-      "Up-to-date": 0,
-      Executed: 0,
-      Failed: 0,
-      Skipped: 0,
-    };
+    const counts: Record<string, number> = {};
 
     for (const edge of edges) {
       const outcome = edge.node.outcome;
-      if (outcome === "FromCache") counts["Cache Hit"]++;
-      else if (outcome === "UpToDate") counts["Up-to-date"]++;
-      else if (outcome === "Failed") counts["Failed"]++;
-      else if (outcome === "Skipped") counts["Skipped"]++;
-      else counts["Executed"]++;
+      const category = OUTCOME_TO_CATEGORY[outcome] ?? "Executed";
+      counts[category] = (counts[category] ?? 0) + 1;
     }
 
     return Object.entries(counts)
@@ -86,7 +101,7 @@ export class CacheBreakdownComponent {
       .map(([label, count]) => ({
         label,
         count,
-        color: COLOR_MAP[label],
+        color: COLOR_MAP[label] ?? COLOR_MAP["Executed"],
       }));
   });
 
@@ -94,7 +109,7 @@ export class CacheBreakdownComponent {
     const cats = this.categories();
     const total = cats.reduce((sum, c) => sum + c.count, 0);
     const avoided = cats
-      .filter((c) => c.label === "Cache Hit" || c.label === "Up-to-date")
+      .filter((c) => AVOIDED_LABELS.includes(c.label))
       .reduce((sum, c) => sum + c.count, 0);
     return total > 0 ? Math.round((avoided / total) * 100) : 0;
   });

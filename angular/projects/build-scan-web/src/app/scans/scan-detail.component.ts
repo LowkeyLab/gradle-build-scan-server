@@ -101,7 +101,10 @@ const GET_BUILD_SCAN = gql`
         </div>
 
         <app-build-metadata [scan]="scan" />
-        <app-cache-breakdown [taskEdges]="scan.tasks.edges" />
+        <app-cache-breakdown
+          [taskEdges]="scan.tasks.edges"
+          [taskCount]="scan.taskCount"
+        />
         <app-task-timeline [taskEdges]="scan.tasks.edges" />
         <app-tasks-table
           [taskEdges]="scan.tasks.edges"

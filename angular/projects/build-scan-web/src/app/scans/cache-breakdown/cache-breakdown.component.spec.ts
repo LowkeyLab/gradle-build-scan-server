@@ -24,8 +24,9 @@ describe("CacheBreakdownComponent", () => {
     fixture = TestBed.createComponent(CacheBreakdownComponent);
   });
 
-  function render(edges: any[]) {
+  function render(edges: any[], taskCount?: number) {
     fixture.componentRef.setInput("taskEdges", edges);
+    fixture.componentRef.setInput("taskCount", taskCount ?? edges.length);
     fixture.detectChanges();
   }
 
@@ -88,13 +89,30 @@ describe("CacheBreakdownComponent", () => {
     expect(fixture.nativeElement.textContent).not.toContain("UpToDate");
   });
 
-  it("should show all five outcome types when present", () => {
+  it("should map NoSource to No Source category and count as avoided", () => {
+    render([buildTaskEdge("NoSource"), buildTaskEdge("Success")]);
+    expect(fixture.nativeElement.textContent).toContain("No Source");
+    expect(fixture.nativeElement.textContent).toContain("50%");
+  });
+
+  it("should map AvoidedForUnknownReason to Avoided category", () => {
+    render([
+      buildTaskEdge("AvoidedForUnknownReason"),
+      buildTaskEdge("Success"),
+    ]);
+    expect(fixture.nativeElement.textContent).toContain("Avoided");
+    expect(fixture.nativeElement.textContent).toContain("50%");
+  });
+
+  it("should show all seven outcome types when present", () => {
     render([
       buildTaskEdge("FromCache"),
       buildTaskEdge("UpToDate"),
       buildTaskEdge("Success"),
       buildTaskEdge("Failed"),
       buildTaskEdge("Skipped"),
+      buildTaskEdge("NoSource"),
+      buildTaskEdge("AvoidedForUnknownReason"),
     ]);
     const text = fixture.nativeElement.textContent;
     expect(text).toContain("Cache Hit");
@@ -102,5 +120,21 @@ describe("CacheBreakdownComponent", () => {
     expect(text).toContain("Executed");
     expect(text).toContain("Failed");
     expect(text).toContain("Skipped");
+    expect(text).toContain("No Source");
+    expect(text).toContain("Avoided");
+  });
+
+  it("should show partial data indicator when taskCount exceeds edges", () => {
+    render([buildTaskEdge("Success"), buildTaskEdge("FromCache")], 200);
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain("first 2 of 200 tasks");
+  });
+
+  it("should not show partial indicator when all tasks are loaded", () => {
+    const edges = [buildTaskEdge("Success"), buildTaskEdge("FromCache")];
+    render(edges, edges.length);
+    const text = fixture.nativeElement.textContent;
+    expect(text).not.toContain("first");
+    expect(text).not.toContain("of");
   });
 });
