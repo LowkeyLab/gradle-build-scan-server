@@ -19,12 +19,14 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
 
 describe("TaskTimelineComponent", () => {
   let fixture: ComponentFixture<TaskTimelineComponent>;
+  let component: TaskTimelineComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TaskTimelineComponent],
     });
     fixture = TestBed.createComponent(TaskTimelineComponent);
+    component = fixture.componentInstance;
   });
 
   function render(edges: any[]) {
@@ -32,126 +34,157 @@ describe("TaskTimelineComponent", () => {
     fixture.detectChanges();
   }
 
-  it("should render timeline section when tasks have timestamps", () => {
-    render([
-      buildTaskEdge({
-        id: "T1",
-        taskPath: ":compileJava",
-        startTimestamp: 1000,
-        finishTimestamp: 1120,
-      }),
-      buildTaskEdge({
-        id: "T2",
-        taskPath: ":processResources",
-        startTimestamp: 1050,
-        finishTimestamp: 1080,
-      }),
-    ]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    expect(timeline).toBeTruthy();
-    const heading = timeline.querySelector("h4");
-    expect(heading.textContent.trim()).toBe("Timeline");
+  describe("tasks computed signal", () => {
+    it("should filter tasks with timestamps and normalize to relative time", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+          startTimestamp: 1000,
+          finishTimestamp: 1120,
+        }),
+        buildTaskEdge({
+          id: "T2",
+          taskPath: ":processResources",
+          startTimestamp: 1050,
+          finishTimestamp: 1080,
+        }),
+      ]);
+
+      const tasks = component.tasks();
+      expect(tasks.length).toBe(2);
+      expect(tasks[0].start).toBe(0);
+      expect(tasks[0].end).toBe(120);
+      expect(tasks[0].durationMs).toBe(120);
+      expect(tasks[1].start).toBe(50);
+      expect(tasks[1].end).toBe(80);
+    });
+
+    it("should return empty array when no tasks have timestamps", () => {
+      render([buildTaskEdge({ startTimestamp: null, finishTimestamp: null })]);
+      expect(component.tasks()).toEqual([]);
+    });
+
+    it("should sort tasks by start time", () => {
+      render([
+        buildTaskEdge({
+          id: "T3",
+          taskPath: ":late",
+          startTimestamp: 200,
+          finishTimestamp: 300,
+        }),
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":early",
+          startTimestamp: 0,
+          finishTimestamp: 100,
+        }),
+        buildTaskEdge({
+          id: "T2",
+          taskPath: ":middle",
+          startTimestamp: 100,
+          finishTimestamp: 200,
+        }),
+      ]);
+
+      const tasks = component.tasks();
+      expect(tasks[0].taskPath).toBe(":early");
+      expect(tasks[1].taskPath).toBe(":middle");
+      expect(tasks[2].taskPath).toBe(":late");
+    });
+
+    it("should exclude tasks without timestamps", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+          startTimestamp: 1000,
+          finishTimestamp: 1120,
+        }),
+        buildTaskEdge({
+          id: "T2",
+          taskPath: ":noTimestamps",
+          startTimestamp: null,
+          finishTimestamp: null,
+        }),
+      ]);
+
+      expect(component.tasks().length).toBe(1);
+      expect(component.tasks()[0].taskPath).toBe(":compileJava");
+    });
+
+    it("should preserve outcome values for color mapping", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":a",
+          outcome: "Success",
+          startTimestamp: 0,
+          finishTimestamp: 100,
+        }),
+        buildTaskEdge({
+          id: "T2",
+          taskPath: ":b",
+          outcome: "FromCache",
+          startTimestamp: 50,
+          finishTimestamp: 150,
+        }),
+        buildTaskEdge({
+          id: "T3",
+          taskPath: ":c",
+          outcome: "Failed",
+          startTimestamp: 100,
+          finishTimestamp: 200,
+        }),
+      ]);
+
+      const tasks = component.tasks();
+      expect(tasks[0].outcome).toBe("Success");
+      expect(tasks[1].outcome).toBe("FromCache");
+      expect(tasks[2].outcome).toBe("Failed");
+    });
   });
 
-  it("should not render when no tasks have timestamps", () => {
-    render([buildTaskEdge({ startTimestamp: null, finishTimestamp: null })]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    expect(timeline).toBeFalsy();
-  });
+  describe("template rendering", () => {
+    it("should render card with chart container when tasks have timestamps", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+          startTimestamp: 1000,
+          finishTimestamp: 1120,
+        }),
+      ]);
+      const card = fixture.nativeElement.querySelector(".card.bg-base-200");
+      expect(card).toBeTruthy();
+      const heading = card.querySelector("h4");
+      expect(heading.textContent.trim()).toBe("Timeline");
+    });
 
-  it("should color-code timeline bars by outcome", () => {
-    render([
-      buildTaskEdge({
-        id: "T1",
-        taskPath: ":a",
-        outcome: "Success",
-        startTimestamp: 0,
-        finishTimestamp: 100,
-      }),
-      buildTaskEdge({
-        id: "T2",
-        taskPath: ":b",
-        outcome: "FromCache",
-        startTimestamp: 50,
-        finishTimestamp: 150,
-      }),
-      buildTaskEdge({
-        id: "T3",
-        taskPath: ":c",
-        outcome: "Failed",
-        startTimestamp: 100,
-        finishTimestamp: 200,
-      }),
-    ]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    const bars = timeline.querySelectorAll(".rounded");
-    expect(bars[0].classList.contains("bg-success")).toBe(true);
-    expect(bars[1].classList.contains("bg-info")).toBe(true);
-    expect(bars[2].classList.contains("bg-error")).toBe(true);
-  });
+    it("should not render when no tasks have timestamps", () => {
+      render([buildTaskEdge({ startTimestamp: null, finishTimestamp: null })]);
+      const card = fixture.nativeElement.querySelector(".card.bg-base-200");
+      expect(card).toBeFalsy();
+    });
 
-  it("should style UpToDate bars with bg-success and reduced opacity", () => {
-    render([
-      buildTaskEdge({
-        id: "T1",
-        taskPath: ":upToDate",
-        outcome: "UpToDate",
-        startTimestamp: 0,
-        finishTimestamp: 100,
-      }),
-    ]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    const bar = timeline.querySelector(".rounded");
-    expect(bar.classList.contains("bg-success")).toBe(true);
-    expect(bar.classList.contains("opacity-60")).toBe(true);
-  });
-
-  it("should sort timeline tasks by start time", () => {
-    render([
-      buildTaskEdge({
-        id: "T3",
-        taskPath: ":late",
-        startTimestamp: 200,
-        finishTimestamp: 300,
-      }),
-      buildTaskEdge({
-        id: "T1",
-        taskPath: ":early",
-        startTimestamp: 0,
-        finishTimestamp: 100,
-      }),
-      buildTaskEdge({
-        id: "T2",
-        taskPath: ":middle",
-        startTimestamp: 100,
-        finishTimestamp: 200,
-      }),
-    ]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    const labels = timeline.querySelectorAll("span.font-mono");
-    expect(labels[0].textContent.trim()).toBe(":early");
-    expect(labels[1].textContent.trim()).toBe(":middle");
-    expect(labels[2].textContent.trim()).toBe(":late");
-  });
-
-  it("should exclude tasks without timestamps from timeline", () => {
-    render([
-      buildTaskEdge({
-        id: "T1",
-        taskPath: ":compileJava",
-        startTimestamp: 1000,
-        finishTimestamp: 1120,
-      }),
-      buildTaskEdge({
-        id: "T2",
-        taskPath: ":noTimestamps",
-        startTimestamp: null,
-        finishTimestamp: null,
-      }),
-    ]);
-    const timeline = fixture.nativeElement.querySelector(".card.bg-base-200");
-    expect(timeline).toBeTruthy();
-    const bars = timeline.querySelectorAll(".rounded");
-    expect(bars.length).toBe(1);
+    it("should render legend entries", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+          startTimestamp: 1000,
+          finishTimestamp: 1120,
+        }),
+      ]);
+      const legendItems = fixture.nativeElement.querySelectorAll(
+        ".text-xs .opacity-70",
+      );
+      const labels = Array.from(legendItems).map((el: any) =>
+        el.textContent.trim(),
+      );
+      expect(labels).toContain("Success");
+      expect(labels).toContain("Cache Hit");
+      expect(labels).toContain("Failed");
+    });
   });
 });

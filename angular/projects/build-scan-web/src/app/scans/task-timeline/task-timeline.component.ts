@@ -1,57 +1,56 @@
-import { Component, ChangeDetectionStrategy, input } from "@angular/core";
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  computed,
+  viewChild,
+  ElementRef,
+  afterRenderEffect,
+} from "@angular/core";
+import * as Plot from "@observablehq/plot";
+
+interface TimelineTask {
+  taskPath: string;
+  outcome: string;
+  start: number;
+  end: number;
+  durationMs: number;
+}
+
+const OUTCOME_COLORS: Record<string, string> = {
+  Success: "oklch(72% 0.17 150)",
+  UpToDate: "oklch(72% 0.17 150 / 0.6)",
+  FromCache: "oklch(72% 0.15 230)",
+  Failed: "oklch(62% 0.2 25)",
+  Skipped: "oklch(75% 0.15 75)",
+};
+
+const FALLBACK_COLOR = "oklch(55% 0.04 260)";
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return ms + "ms";
+  return (ms / 1000).toFixed(1) + "s";
+}
 
 @Component({
   selector: "app-task-timeline",
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (getTimeline(); as timeline) {
+    @if (tasks().length > 0) {
       <div class="card bg-base-200 mb-6">
         <div class="card-body p-4">
           <h4 class="font-semibold mb-2">Timeline</h4>
-          @for (item of timeline.items; track item.id) {
-            <div class="flex items-center gap-2 py-0.5">
-              <span
-                class="font-mono text-xs w-48 truncate text-right shrink-0"
-                [title]="item.taskPath"
-                >{{ item.taskPath }}</span
-              >
-              <div class="relative flex-1 h-5">
-                <div
-                  class="absolute top-0 h-full rounded tooltip"
-                  [class.bg-success]="
-                    item.outcome === 'Success' || item.outcome === 'UpToDate'
-                  "
-                  [class.opacity-60]="item.outcome === 'UpToDate'"
-                  [class.bg-info]="item.outcome === 'FromCache'"
-                  [class.bg-error]="item.outcome === 'Failed'"
-                  [class.bg-warning]="item.outcome === 'Skipped'"
-                  [class.bg-neutral]="
-                    item.outcome !== 'Success' &&
-                    item.outcome !== 'UpToDate' &&
-                    item.outcome !== 'FromCache' &&
-                    item.outcome !== 'Failed' &&
-                    item.outcome !== 'Skipped'
-                  "
-                  [attr.data-tip]="
-                    item.taskPath + ' — ' + formatDuration(item.durationMs)
-                  "
-                  [style.left.%]="item.leftPct"
-                  [style.width.%]="item.widthPct"
-                ></div>
+          <div #chartContainer></div>
+          <div class="flex items-center gap-3 mt-2 flex-wrap">
+            @for (entry of legendEntries; track entry.label) {
+              <div class="flex items-center gap-1.5 text-xs">
+                <span
+                  class="inline-block w-3 h-3 rounded-sm"
+                  [style.background]="entry.color"
+                ></span>
+                <span class="opacity-70">{{ entry.label }}</span>
               </div>
-            </div>
-          }
-          <div class="flex items-center gap-2 pt-1">
-            <span class="w-48 shrink-0"></span>
-            <div
-              class="relative flex-1 flex justify-between text-xs opacity-50"
-            >
-              <span>0ms</span>
-              @if (timeline.duration > 0) {
-                <span>{{ formatDuration(timeline.duration / 2) }}</span>
-                <span>{{ formatDuration(timeline.duration) }}</span>
-              }
-            </div>
+            }
           </div>
         </div>
       </div>
@@ -61,67 +60,101 @@ import { Component, ChangeDetectionStrategy, input } from "@angular/core";
 export class TaskTimelineComponent {
   taskEdges = input.required<any[]>();
 
-  getTimeline(): { items: any[]; duration: number } | null {
+  private chartEl = viewChild<ElementRef<HTMLElement>>("chartContainer");
+
+  readonly legendEntries = [
+    { label: "Success", color: OUTCOME_COLORS["Success"] },
+    { label: "Up-to-date", color: OUTCOME_COLORS["UpToDate"] },
+    { label: "Cache Hit", color: OUTCOME_COLORS["FromCache"] },
+    { label: "Failed", color: OUTCOME_COLORS["Failed"] },
+    { label: "Skipped", color: OUTCOME_COLORS["Skipped"] },
+  ];
+
+  tasks = computed<TimelineTask[]>(() => {
     const edges = this.taskEdges();
-    const tasks = edges.filter(
+    const valid = edges.filter(
       (e: any) =>
         e.node.startTimestamp != null && e.node.finishTimestamp != null,
     );
-    if (tasks.length === 0) return null;
+    if (valid.length === 0) return [];
 
     let minStart = Infinity;
-    let maxFinish = -Infinity;
-    for (const e of tasks) {
+    for (const e of valid) {
       if (e.node.startTimestamp < minStart) minStart = e.node.startTimestamp;
-      if (e.node.finishTimestamp > maxFinish)
-        maxFinish = e.node.finishTimestamp;
-    }
-    const duration = maxFinish - minStart;
-    const sorted = [...tasks].sort(
-      (a: any, b: any) => a.node.startTimestamp - b.node.startTimestamp,
-    );
-
-    if (duration === 0) {
-      return {
-        duration: 0,
-        items: sorted.map((e: any) => ({
-          id: e.node.id,
-          taskPath: e.node.taskPath,
-          outcome: e.node.outcome,
-          durationMs: 0,
-          leftPct: 0,
-          widthPct: 100,
-        })),
-      };
     }
 
-    return {
-      duration,
-      items: sorted.map((e: any) => {
-        const start = e.node.startTimestamp - minStart;
-        const taskDuration = Math.max(
-          e.node.finishTimestamp - e.node.startTimestamp,
-          0,
-        );
-        const leftPct = (start / duration) * 100;
-        const widthPct = Math.min(
-          Math.max((taskDuration / duration) * 100, 0.5),
-          100 - leftPct,
-        );
-        return {
-          id: e.node.id,
-          taskPath: e.node.taskPath,
-          outcome: e.node.outcome,
-          durationMs: taskDuration,
-          leftPct,
-          widthPct,
-        };
-      }),
-    };
+    return [...valid]
+      .sort((a: any, b: any) => a.node.startTimestamp - b.node.startTimestamp)
+      .map((e: any) => ({
+        taskPath: e.node.taskPath,
+        outcome: e.node.outcome,
+        start: e.node.startTimestamp - minStart,
+        end: e.node.finishTimestamp - minStart,
+        durationMs: Math.max(e.node.finishTimestamp - e.node.startTimestamp, 0),
+      }));
+  });
+
+  constructor() {
+    afterRenderEffect(() => {
+      this.renderChart();
+    });
   }
 
-  formatDuration(ms: number): string {
-    if (ms < 1000) return ms + "ms";
-    return (ms / 1000).toFixed(1) + "s";
+  private renderChart(): void {
+    const ref = this.chartEl();
+    if (!ref) return;
+    const el = ref.nativeElement;
+    const data = this.tasks();
+    if (data.length === 0) return;
+
+    const plot = Plot.plot({
+      marginLeft: 180,
+      marginRight: 20,
+      marginTop: 4,
+      marginBottom: 30,
+      width: 900,
+      height: Math.max(data.length * 24 + 34, 80),
+      x: {
+        label: null,
+        tickFormat: (d: number) => formatDuration(d),
+      },
+      y: {
+        label: null,
+        domain: data.map((d) => d.taskPath),
+        padding: 0.2,
+      },
+      color: {
+        domain: Object.keys(OUTCOME_COLORS),
+        range: Object.values(OUTCOME_COLORS),
+        unknown: FALLBACK_COLOR,
+      },
+      marks: [
+        Plot.barX(data, {
+          x1: "start",
+          x2: "end",
+          y: "taskPath",
+          fill: "outcome",
+          rx: 3,
+          tip: {
+            format: {
+              x1: false,
+              x2: false,
+              y: false,
+              fill: false,
+            },
+            channels: {
+              Task: { value: "taskPath" },
+              Duration: {
+                value: (d: TimelineTask) => formatDuration(d.durationMs),
+              },
+              Outcome: { value: "outcome" },
+            },
+          },
+        }),
+        Plot.ruleX([0]),
+      ],
+    });
+
+    el.replaceChildren(plot);
   }
 }
