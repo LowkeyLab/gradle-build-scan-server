@@ -10,6 +10,7 @@ import {
 import * as Plot from "@observablehq/plot";
 
 interface TimelineTask {
+  id: string;
   taskPath: string;
   outcome: string;
   start: number;
@@ -40,7 +41,7 @@ function formatDuration(ms: number): string {
       <div class="card bg-base-200 mb-6">
         <div class="card-body p-4">
           <h4 class="font-semibold mb-2">Timeline</h4>
-          <div #chartContainer></div>
+          <div #chartContainer class="overflow-x-auto"></div>
           <div class="flex items-center gap-3 mt-2 flex-wrap">
             @for (entry of legendEntries; track entry.label) {
               <div class="flex items-center gap-1.5 text-xs">
@@ -86,6 +87,7 @@ export class TaskTimelineComponent {
     return [...valid]
       .sort((a: any, b: any) => a.node.startTimestamp - b.node.startTimestamp)
       .map((e: any) => ({
+        id: e.node.id,
         taskPath: e.node.taskPath,
         outcome: e.node.outcome,
         start: e.node.startTimestamp - minStart,
@@ -107,12 +109,14 @@ export class TaskTimelineComponent {
     const data = this.tasks();
     if (data.length === 0) return;
 
+    const idToPath = new Map(data.map((d) => [d.id, d.taskPath]));
+
     const plot = Plot.plot({
       marginLeft: 180,
       marginRight: 20,
       marginTop: 4,
       marginBottom: 30,
-      width: 900,
+      width: Math.max(el.clientWidth, 600),
       height: Math.max(data.length * 24 + 34, 80),
       x: {
         label: null,
@@ -120,7 +124,8 @@ export class TaskTimelineComponent {
       },
       y: {
         label: null,
-        domain: data.map((d) => d.taskPath),
+        domain: data.map((d) => d.id),
+        tickFormat: (id: string) => idToPath.get(id) ?? id,
         padding: 0.2,
       },
       color: {
@@ -132,7 +137,7 @@ export class TaskTimelineComponent {
         Plot.barX(data, {
           x1: "start",
           x2: "end",
-          y: "taskPath",
+          y: "id",
           fill: "outcome",
           rx: 3,
           tip: {
