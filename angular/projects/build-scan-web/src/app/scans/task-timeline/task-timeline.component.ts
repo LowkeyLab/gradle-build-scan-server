@@ -116,7 +116,7 @@ export class TaskTimelineComponent {
       marginRight: 20,
       marginTop: 4,
       marginBottom: 30,
-      width: Math.max(el.clientWidth, 600),
+      width: el.clientWidth || 900,
       height: Math.max(data.length * 24 + 34, 80),
       x: {
         label: null,
@@ -160,6 +160,7 @@ export class TaskTimelineComponent {
       ],
     });
 
+    plot.style.width = "100%";
     el.replaceChildren(plot);
   }
 }
