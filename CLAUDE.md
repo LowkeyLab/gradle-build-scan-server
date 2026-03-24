@@ -67,6 +67,8 @@ This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 
 Bazel remote cache can serve stale artifacts when building in a git worktree. Use `bazel build --noremote_accept_cached --disk_cache=""` after `bazel clean` to force local compilation. Note: these flags only work with `bazel`, not the `aspect` CLI.
 
+Mise requires separate trust per worktree: `mise trust <worktree-path>/mise.toml` before using mise-managed tools (e.g., `agent-browser`).
+
 ### Pre-commit hook
 
 Located at `githooks/pre-commit`. Automatically formats staged files on commit. If the formatter modifies staged files, the commit is rejected — stage the formatting changes and commit again.
