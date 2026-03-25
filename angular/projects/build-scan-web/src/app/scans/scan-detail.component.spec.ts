@@ -74,10 +74,10 @@ describe("ScanDetailComponent", () => {
     fixture.detectChanges();
   }
 
-  it("should render build metadata component", () => {
+  it("should render sidebar component", () => {
     flushQuery();
-    const metadata = fixture.nativeElement.querySelector("app-build-metadata");
-    expect(metadata).toBeTruthy();
+    const sidebar = fixture.nativeElement.querySelector("app-scan-sidebar");
+    expect(sidebar).toBeTruthy();
   });
 
   it("should render task timeline component", () => {
@@ -98,9 +98,15 @@ describe("ScanDetailComponent", () => {
     expect(table).toBeTruthy();
   });
 
-  it("should render back link", () => {
+  it("should render back link in sidebar", () => {
     flushQuery();
-    const link = fixture.nativeElement.querySelector("a.link");
+    const link = fixture.nativeElement.querySelector("a.back-link");
     expect(link.textContent).toContain("All Scans");
+  });
+
+  it("should render section navigation", () => {
+    flushQuery();
+    const navItems = fixture.nativeElement.querySelectorAll("nav a");
+    expect(navItems.length).toBeGreaterThanOrEqual(3);
   });
 });
