@@ -67,7 +67,7 @@ describe("CacheBreakdownComponent", () => {
   it("should show legend entries for present categories only", () => {
     render([buildTaskEdge("FromCache"), buildTaskEdge("UpToDate")]);
     const legendItems = fixture.nativeElement.querySelectorAll(
-      ".flex.flex-col .flex.items-center",
+      ".flex.flex-wrap .flex.items-center",
     );
     expect(legendItems.length).toBe(2);
     const labels = Array.from(legendItems).map((el: any) =>
@@ -122,19 +122,5 @@ describe("CacheBreakdownComponent", () => {
     expect(text).toContain("Skipped");
     expect(text).toContain("No Source");
     expect(text).toContain("Avoided");
-  });
-
-  it("should show partial data indicator when taskCount exceeds edges", () => {
-    render([buildTaskEdge("Success"), buildTaskEdge("FromCache")], 200);
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain("first 2 of 200 tasks");
-  });
-
-  it("should not show partial indicator when all tasks are loaded", () => {
-    const edges = [buildTaskEdge("Success"), buildTaskEdge("FromCache")];
-    render(edges, edges.length);
-    const text = fixture.nativeElement.textContent;
-    expect(text).not.toContain("first");
-    expect(text).not.toContain("of");
   });
 });

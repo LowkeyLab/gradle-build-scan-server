@@ -43,33 +43,26 @@ const OUTCOME_TO_CATEGORY: Record<string, string> = {
   template: `
     <div class="card bg-base-200 mb-6">
       <div class="card-body p-4">
-        <h4 class="font-semibold mb-3">
-          Cache Breakdown
-          @if (isPartial()) {
-            <span class="text-xs font-normal opacity-50">
-              (first {{ taskEdges().length }} of {{ taskCount() }} tasks)
-            </span>
-          }
-        </h4>
+        <div class="flex items-baseline justify-between mb-3">
+          <h4 class="font-semibold">Cache Breakdown</h4>
+          <div class="font-mono text-xl font-bold">
+            {{ avoidedPct() }}%
+            <span class="text-sm font-normal opacity-50">avoided</span>
+          </div>
+        </div>
         @if (categories().length > 0) {
-          <div class="flex items-center gap-6">
-            <div #chartContainer class="shrink-0"></div>
-            <div class="flex flex-col gap-2">
-              <div class="font-mono text-2xl font-bold">
-                {{ avoidedPct() }}%
-                <span class="text-sm font-normal opacity-50">avoided</span>
+          <div #chartContainer class="w-full mb-3"></div>
+          <div class="flex flex-wrap gap-x-5 gap-y-1">
+            @for (cat of categories(); track cat.label) {
+              <div class="flex items-center gap-1.5 text-sm">
+                <span
+                  class="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  [style.background]="cat.color"
+                ></span>
+                <span class="opacity-70">{{ cat.label }}</span>
+                <span class="font-mono font-semibold">{{ cat.count }}</span>
               </div>
-              @for (cat of categories(); track cat.label) {
-                <div class="flex items-center gap-2 text-sm">
-                  <span
-                    class="inline-block w-3 h-3 rounded-sm shrink-0"
-                    [style.background]="cat.color"
-                  ></span>
-                  <span class="opacity-70">{{ cat.label }}</span>
-                  <span class="font-mono font-bold">{{ cat.count }}</span>
-                </div>
-              }
-            </div>
+            }
           </div>
         } @else {
           <p class="text-sm opacity-50">No task data available</p>
@@ -83,8 +76,6 @@ export class CacheBreakdownComponent {
   taskCount = input.required<number>();
 
   private chartEl = viewChild<ElementRef<HTMLElement>>("chartContainer");
-
-  isPartial = computed(() => this.taskEdges().length < this.taskCount());
 
   categories = computed<CacheCategory[]>(() => {
     const edges = this.taskEdges();
@@ -133,22 +124,17 @@ export class CacheBreakdownComponent {
     const plot = Plot.plot({
       axis: null,
       label: null,
-      width: 160,
-      height: 160,
+      width: el.clientWidth || 600,
+      height: 32,
       margin: 0,
       color: { domain, range },
+      x: { axis: null },
       marks: [
-        Plot.waffleY(cats, {
-          y: "count",
-          fill: "label",
-          rx: 3,
-          gap: 2,
-          unit: 1,
-          round: true,
-        }),
+        Plot.barX(cats, Plot.stackX({ x: "count", fill: "label", rx: 6 })),
       ],
     });
 
+    plot.style.width = "100%";
     el.replaceChildren(plot);
   }
 }
