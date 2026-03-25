@@ -37,6 +37,16 @@ const OUTCOME_TO_CATEGORY: Record<string, string> = {
   Skipped: "Skipped",
 };
 
+const CATEGORY_ORDER = [
+  "Cache Hit",
+  "Up-to-date",
+  "No Source",
+  "Avoided",
+  "Executed",
+  "Failed",
+  "Skipped",
+];
+
 @Component({
   selector: "app-cache-breakdown",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,7 +103,11 @@ export class CacheBreakdownComponent {
         label,
         count,
         color: COLOR_MAP[label] ?? COLOR_MAP["Executed"],
-      }));
+      }))
+      .sort(
+        (a, b) =>
+          CATEGORY_ORDER.indexOf(a.label) - CATEGORY_ORDER.indexOf(b.label),
+      );
   });
 
   avoidedPct = computed(() => {
