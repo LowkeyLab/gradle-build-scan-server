@@ -102,8 +102,16 @@ async fn main() {
             std::process::exit(1);
         }
     };
-    info!("Build scan server listening on http://{}", addr);
-    info!("GraphiQL IDE available at http://{}/graphiql", addr);
+    let local_addr = listener.local_addr().expect("Failed to get local address");
+    info!("Build scan server listening on http://{local_addr}");
+    info!("  Local:    http://localhost:{}/", local_addr.port());
+    info!(
+        "  GraphiQL: http://localhost:{}/graphiql",
+        local_addr.port()
+    );
+    if config.spa_dir.is_some() {
+        info!("  Web UI:   http://localhost:{}/web/", local_addr.port());
+    }
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
