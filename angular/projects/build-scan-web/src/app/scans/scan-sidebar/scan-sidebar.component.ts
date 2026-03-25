@@ -6,6 +6,7 @@ import {
   output,
 } from "@angular/core";
 import { DatePipe } from "@angular/common";
+import { RouterLink } from "@angular/router";
 
 interface SectionNav {
   id: string;
@@ -15,7 +16,7 @@ interface SectionNav {
 
 @Component({
   selector: "app-scan-sidebar",
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (scan(); as scan) {
@@ -157,8 +158,9 @@ interface SectionNav {
             Sections
           </div>
           @for (section of sections(); track section.id) {
-            <a
-              class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm cursor-pointer transition-all duration-150 no-underline"
+            <button
+              type="button"
+              class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm cursor-pointer transition-all duration-150"
               [class]="
                 activeSection() === section.id
                   ? 'bg-primary/15 text-primary'
@@ -166,9 +168,11 @@ interface SectionNav {
               "
               (click)="navigateToSection(section.id)"
             >
-              <span class="w-5 text-center">{{ section.icon }}</span>
+              <span class="w-5 text-center" aria-hidden="true">{{
+                section.icon
+              }}</span>
               <span>{{ section.label }}</span>
-            </a>
+            </button>
           }
         </nav>
 
@@ -176,7 +180,7 @@ interface SectionNav {
         <div class="mt-auto pt-3 border-t border-base-300">
           <a
             class="back-link link link-hover text-xs opacity-50 hover:opacity-80"
-            href="/scans"
+            routerLink="/scans"
             >&larr; All Scans</a
           >
         </div>

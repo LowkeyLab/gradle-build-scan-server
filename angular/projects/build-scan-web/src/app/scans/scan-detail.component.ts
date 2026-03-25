@@ -6,7 +6,7 @@ import {
   signal,
 } from "@angular/core";
 import { Apollo, gql } from "apollo-angular";
-import { AsyncPipe } from "@angular/common";
+import { AsyncPipe, DOCUMENT } from "@angular/common";
 import { filter, map, switchMap, tap } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
@@ -118,12 +118,14 @@ const GET_BUILD_SCAN = gql`
               [taskCount]="scan.taskCount"
             />
           </section>
-          <section id="tests-table" class="scroll-mt-4">
-            <app-tests-table
-              [testEdges]="scan.tests.edges"
-              [testCount]="scan.testCount"
-            />
-          </section>
+          @if (scan.tests) {
+            <section id="tests-table" class="scroll-mt-4">
+              <app-tests-table
+                [testEdges]="scan.tests.edges"
+                [testCount]="scan.testCount"
+              />
+            </section>
+          }
         </main>
       </div>
     }
@@ -133,6 +135,7 @@ const GET_BUILD_SCAN = gql`
 export class ScanDetailComponent {
   id = input.required<string>();
   private apollo = inject(Apollo);
+  private doc = inject(DOCUMENT);
   activeSection = signal("cache-breakdown");
 
   scan$ = toObservable(this.id).pipe(
@@ -170,7 +173,7 @@ export class ScanDetailComponent {
 
   scrollToSection(sectionId: string) {
     this.activeSection.set(sectionId);
-    const el = document.getElementById(sectionId);
+    const el = this.doc.getElementById(sectionId);
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }

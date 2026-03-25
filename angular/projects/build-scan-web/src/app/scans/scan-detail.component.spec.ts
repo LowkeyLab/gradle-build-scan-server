@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { TestBed, ComponentFixture } from "@angular/core/testing";
 import {
   ApolloTestingModule,
@@ -106,7 +106,22 @@ describe("ScanDetailComponent", () => {
 
   it("should render section navigation", () => {
     flushQuery();
-    const navItems = fixture.nativeElement.querySelectorAll("nav a");
+    const navItems = fixture.nativeElement.querySelectorAll("nav button");
     expect(navItems.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("should update activeSection on scrollToSection", () => {
+    flushQuery();
+    // jsdom doesn't implement scrollIntoView; stub it on the target element
+    const section = fixture.nativeElement.querySelector("#task-timeline");
+    section.scrollIntoView = vi.fn();
+
+    fixture.componentInstance.scrollToSection("task-timeline");
+
+    expect(fixture.componentInstance.activeSection()).toBe("task-timeline");
+    expect(section.scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start",
+    });
   });
 });
