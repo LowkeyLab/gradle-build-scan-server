@@ -30,8 +30,8 @@ export function provideGraphql() {
             fields: {
               tasks: {
                 keyArgs: false,
-                merge(existing: any, incoming: any) {
-                  if (!existing) return incoming;
+                merge(existing: any, incoming: any, { args }: any) {
+                  if (!existing || !args?.after) return incoming;
                   return {
                     ...incoming,
                     edges: [...existing.edges, ...incoming.edges],

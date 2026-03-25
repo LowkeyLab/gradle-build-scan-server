@@ -55,10 +55,12 @@ const CATEGORY_ORDER = [
       <div class="card-body p-4">
         <div class="flex items-baseline justify-between mb-3">
           <h4 class="font-semibold">Cache Breakdown</h4>
-          <div class="font-mono text-xl font-bold">
-            {{ avoidedPct() }}%
-            <span class="text-sm font-normal opacity-50">avoided</span>
-          </div>
+          @if (categories().length > 0) {
+            <div class="font-mono text-xl font-bold">
+              {{ avoidedPct() }}%
+              <span class="text-sm font-normal opacity-50">avoided</span>
+            </div>
+          }
         </div>
         @if (categories().length > 0) {
           <div #chartContainer class="w-full mb-3"></div>

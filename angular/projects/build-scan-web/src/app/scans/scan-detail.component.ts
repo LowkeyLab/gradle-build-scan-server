@@ -20,6 +20,7 @@ const GET_BUILD_SCAN = gql`
     $id: ID!
     $firstTasks: Int!
     $afterTasks: String
+    $includeTests: Boolean!
     $firstTests: Int!
     $afterTests: String
   ) {
@@ -61,7 +62,7 @@ const GET_BUILD_SCAN = gql`
           endCursor
         }
       }
-      tests(first: $firstTests, after: $afterTests) {
+      tests(first: $firstTests, after: $afterTests) @include(if: $includeTests) {
         edges {
           node {
             id
@@ -126,7 +127,12 @@ export class ScanDetailComponent {
     switchMap((id) => {
       const queryRef = this.apollo.watchQuery<any>({
         query: GET_BUILD_SCAN,
-        variables: { id, firstTasks: 100, firstTests: 100 },
+        variables: {
+          id,
+          firstTasks: 100,
+          firstTests: 100,
+          includeTests: true,
+        },
         errorPolicy: "all",
       });
 
@@ -140,6 +146,7 @@ export class ScanDetailComponent {
                 id,
                 firstTasks: 100,
                 afterTasks: scan.tasks.pageInfo.endCursor,
+                includeTests: false,
                 firstTests: 0,
               },
             });
