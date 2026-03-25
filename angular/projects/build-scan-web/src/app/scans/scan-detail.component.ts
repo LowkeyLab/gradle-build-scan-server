@@ -7,7 +7,7 @@ import {
 import { Apollo, gql } from "apollo-angular";
 import { AsyncPipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
-import { filter, map, switchMap } from "rxjs";
+import { filter, map, switchMap, tap } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
 import { BuildMetadataComponent } from "./build-metadata/build-metadata.component";
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
@@ -20,6 +20,7 @@ const GET_BUILD_SCAN = gql`
     $id: ID!
     $firstTasks: Int!
     $afterTasks: String
+    $includeTests: Boolean!
     $firstTests: Int!
     $afterTests: String
   ) {
@@ -61,7 +62,7 @@ const GET_BUILD_SCAN = gql`
           endCursor
         }
       }
-      tests(first: $firstTests, after: $afterTests) {
+      tests(first: $firstTests, after: $afterTests) @include(if: $includeTests) {
         edges {
           node {
             id
@@ -123,15 +124,35 @@ export class ScanDetailComponent {
   private apollo = inject(Apollo);
 
   scan$ = toObservable(this.id).pipe(
-    switchMap(
-      (id) =>
-        this.apollo.watchQuery<any>({
-          query: GET_BUILD_SCAN,
-          variables: { id, firstTasks: 100, firstTests: 100 },
-          errorPolicy: "all",
-        }).valueChanges,
-    ),
-    filter((result) => !!result.data),
-    map((result) => result.data.buildScan),
+    switchMap((id) => {
+      const queryRef = this.apollo.watchQuery<any>({
+        query: GET_BUILD_SCAN,
+        variables: {
+          id,
+          firstTasks: 100,
+          firstTests: 100,
+          includeTests: true,
+        },
+        errorPolicy: "all",
+      });
+
+      return queryRef.valueChanges.pipe(
+        filter((result) => !!result.data),
+        map((result) => result.data.buildScan),
+        tap((scan) => {
+          if (scan.tasks.pageInfo.hasNextPage) {
+            queryRef.fetchMore({
+              variables: {
+                id,
+                firstTasks: 100,
+                afterTasks: scan.tasks.pageInfo.endCursor,
+                includeTests: false,
+                firstTests: 0,
+              },
+            });
+          }
+        }),
+      );
+    }),
   );
 }

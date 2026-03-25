@@ -48,12 +48,12 @@ This is a **Bazel-based Rust monorepo** targeting a Gradle Build Scan server.
 
 ### Subsystems
 
-| Directory | Purpose |
-|-----------|---------|
+| Directory     | Purpose                                                                 |
+| ------------- | ----------------------------------------------------------------------- |
 | `build-scan/` | Binary format parser (lib), CLI, and HTTP server (ingest, GraphQL, SPA) |
-| `proxy/` | HTTP intercepting proxy capturing Gradle client traffic to SQLite |
-| `angular/` | Angular 21 SPA frontend (Tailwind + DaisyUI + Apollo) |
-| `gradle/` | Dogfooding Gradle project that publishes scans to the server |
+| `proxy/`      | HTTP intercepting proxy capturing Gradle client traffic to SQLite       |
+| `angular/`    | Angular 21 SPA frontend (Tailwind + DaisyUI + Apollo)                   |
+| `gradle/`     | Dogfooding Gradle project that publishes scans to the server            |
 
 ### Build system
 
