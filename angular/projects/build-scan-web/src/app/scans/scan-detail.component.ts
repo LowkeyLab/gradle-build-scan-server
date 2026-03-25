@@ -3,17 +3,17 @@ import {
   ChangeDetectionStrategy,
   input,
   inject,
+  signal,
 } from "@angular/core";
 import { Apollo, gql } from "apollo-angular";
-import { AsyncPipe } from "@angular/common";
-import { RouterLink } from "@angular/router";
+import { AsyncPipe, DOCUMENT } from "@angular/common";
 import { filter, map, switchMap, tap } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
-import { BuildMetadataComponent } from "./build-metadata/build-metadata.component";
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
 import { TasksTableComponent } from "./tasks-table/tasks-table.component";
 import { TestsTableComponent } from "./tests-table/tests-table.component";
 import { CacheBreakdownComponent } from "./cache-breakdown/cache-breakdown.component";
+import { ScanSidebarComponent } from "./scan-sidebar/scan-sidebar.component";
 
 const GET_BUILD_SCAN = gql`
   query GetBuildScan(
@@ -62,7 +62,8 @@ const GET_BUILD_SCAN = gql`
           endCursor
         }
       }
-      tests(first: $firstTests, after: $afterTests) @include(if: $includeTests) {
+      tests(first: $firstTests, after: $afterTests)
+        @include(if: $includeTests) {
         edges {
           node {
             id
@@ -86,42 +87,56 @@ const GET_BUILD_SCAN = gql`
   selector: "app-scan-detail",
   imports: [
     AsyncPipe,
-    RouterLink,
-    BuildMetadataComponent,
     TaskTimelineComponent,
     TasksTableComponent,
     TestsTableComponent,
     CacheBreakdownComponent,
+    ScanSidebarComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="container mx-auto p-6">
-      @if (scan$ | async; as scan) {
-        <div class="mb-4">
-          <a routerLink="/scans" class="link link-primary">&larr; All Scans</a>
-        </div>
-
-        <app-build-metadata [scan]="scan" />
-        <app-cache-breakdown
-          [taskEdges]="scan.tasks.edges"
-          [taskCount]="scan.taskCount"
+    @if (scan$ | async; as scan) {
+      <div class="grid grid-cols-[260px_1fr] h-screen">
+        <app-scan-sidebar
+          [scan]="scan"
+          [activeSection]="activeSection()"
+          (sectionClicked)="scrollToSection($event)"
         />
-        <app-task-timeline [taskEdges]="scan.tasks.edges" />
-        <app-tasks-table
-          [taskEdges]="scan.tasks.edges"
-          [taskCount]="scan.taskCount"
-        />
-        <app-tests-table
-          [testEdges]="scan.tests.edges"
-          [testCount]="scan.testCount"
-        />
-      }
-    </div>
+        <main class="overflow-y-auto p-6 scroll-smooth">
+          <section id="cache-breakdown" class="scroll-mt-4">
+            <app-cache-breakdown
+              [taskEdges]="scan.tasks.edges"
+              [taskCount]="scan.taskCount"
+            />
+          </section>
+          <section id="task-timeline" class="scroll-mt-4">
+            <app-task-timeline [taskEdges]="scan.tasks.edges" />
+          </section>
+          <section id="tasks-table" class="scroll-mt-4">
+            <app-tasks-table
+              [taskEdges]="scan.tasks.edges"
+              [taskCount]="scan.taskCount"
+            />
+          </section>
+          @if (scan.tests) {
+            <section id="tests-table" class="scroll-mt-4">
+              <app-tests-table
+                [testEdges]="scan.tests.edges"
+                [testCount]="scan.testCount"
+              />
+            </section>
+          }
+        </main>
+      </div>
+    }
   `,
+  host: { class: "block h-screen overflow-hidden" },
 })
 export class ScanDetailComponent {
   id = input.required<string>();
   private apollo = inject(Apollo);
+  private doc = inject(DOCUMENT);
+  activeSection = signal("cache-breakdown");
 
   scan$ = toObservable(this.id).pipe(
     switchMap((id) => {
@@ -155,4 +170,10 @@ export class ScanDetailComponent {
       );
     }),
   );
+
+  scrollToSection(sectionId: string) {
+    this.activeSection.set(sectionId);
+    const el = this.doc.getElementById(sectionId);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
