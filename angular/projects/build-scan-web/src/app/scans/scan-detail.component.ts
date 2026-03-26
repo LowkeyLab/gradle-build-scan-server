@@ -54,6 +54,9 @@ const GET_BUILD_SCAN = gql`
             cacheKey
             cachingDisabledReason
             cachingDisabledExplanation
+            upToDateMessages
+            originBuildInvocationId
+            originExecutionTime
           }
           cursor
         }
