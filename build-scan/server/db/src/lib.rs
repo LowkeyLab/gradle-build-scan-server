@@ -50,6 +50,8 @@ struct TaskRow {
     origin_execution_time: Option<i64>,
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
+    up_to_date_messages: Option<String>,  // JSON text, not Vec
+    origin_build_invocation_id: Option<String>,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -148,6 +150,13 @@ impl TryFrom<TaskRow> for domain::Task {
             origin_execution_time: row.origin_execution_time.map(domain::Duration),
             caching_disabled_reason: row.caching_disabled_reason,
             caching_disabled_explanation: row.caching_disabled_explanation,
+            up_to_date_messages: row
+                .up_to_date_messages
+                .as_deref()
+                .map(|s| serde_json::from_str::<Vec<String>>(s))
+                .transpose()
+                .map_err(|e| anyhow::anyhow!("failed to parse up_to_date_messages: {e}"))?,
+            origin_build_invocation_id: row.origin_build_invocation_id,
         })
     }
 }
@@ -197,6 +206,11 @@ impl From<&domain::Task> for TaskRow {
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
             caching_disabled_reason: task.caching_disabled_reason.clone(),
             caching_disabled_explanation: task.caching_disabled_explanation.clone(),
+            up_to_date_messages: task
+                .up_to_date_messages
+                .as_ref()
+                .map(|msgs| serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")),
+            origin_build_invocation_id: task.origin_build_invocation_id.clone(),
         }
     }
 }
@@ -280,8 +294,8 @@ pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     let cacheable_int: Option<i64> = row.cacheable.map(|b| if b { 1 } else { 0 });
 
     sqlx::query(
-        "INSERT INTO tasks (id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tasks (id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation, up_to_date_messages, origin_build_invocation_id) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&row.id)
     .bind(&row.scan_id)
@@ -295,6 +309,8 @@ pub async fn insert_task<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     .bind(row.origin_execution_time)
     .bind(row.caching_disabled_reason.as_deref())
     .bind(row.caching_disabled_explanation.as_deref())
+    .bind(row.up_to_date_messages.as_deref())
+    .bind(row.origin_build_invocation_id.as_deref())
     .execute(executor)
     .await?;
 
@@ -355,7 +371,7 @@ pub async fn list_tasks(
 ) -> Result<Vec<domain::Task>> {
     let rows = if let Some(cursor) = after_id {
         sqlx::query_as::<_, TaskRow>(
-            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
+            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation, up_to_date_messages, origin_build_invocation_id \
              FROM tasks WHERE scan_id = ? AND id > ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -365,7 +381,7 @@ pub async fn list_tasks(
         .await?
     } else {
         sqlx::query_as::<_, TaskRow>(
-            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
+            "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation, up_to_date_messages, origin_build_invocation_id \
              FROM tasks WHERE scan_id = ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -398,7 +414,7 @@ pub async fn count_build_scans(pool: &SqlitePool) -> Result<i64> {
 
 pub async fn get_task(pool: &SqlitePool, id: &str) -> Result<Option<domain::Task>> {
     let row = sqlx::query_as::<_, TaskRow>(
-        "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation \
+        "SELECT id, scan_id, task_path, class_name, outcome, cacheable, start_timestamp, finish_timestamp, cache_key, origin_execution_time, caching_disabled_reason, caching_disabled_explanation, up_to_date_messages, origin_build_invocation_id \
          FROM tasks WHERE id = ?",
     )
     .bind(id)
