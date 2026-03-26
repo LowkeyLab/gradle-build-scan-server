@@ -169,6 +169,14 @@ impl BuildScanService {
                     if let Some(ref e) = task.caching_disabled_explanation {
                         task_builder.caching_disabled_explanation(e.clone());
                     }
+                    if let Some(ref msgs) = task.up_to_date_messages {
+                        if !msgs.is_empty() {
+                            task_builder.up_to_date_messages(msgs.clone());
+                        }
+                    }
+                    if let Some(ref id) = task.origin_build_invocation_id {
+                        task_builder.origin_build_invocation_id(id.clone());
+                    }
 
                     let domain_task = task_builder
                         .build()
