@@ -1,7 +1,14 @@
-import { Component, ChangeDetectionStrategy, input } from "@angular/core";
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  signal,
+} from "@angular/core";
+import { TaskCacheDetailComponent } from "../task-cache-detail/task-cache-detail.component";
 
 @Component({
   selector: "app-tasks-table",
+  imports: [TaskCacheDetailComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h3 class="text-xl font-bold mb-4">Tasks ({{ taskCount() }})</h3>
@@ -20,7 +27,14 @@ import { Component, ChangeDetectionStrategy, input } from "@angular/core";
         </thead>
         <tbody>
           @for (edge of taskEdges(); track edge.node.id) {
-            <tr>
+            <tr
+              (click)="toggleRow(edge.node.id)"
+              (keydown.enter)="toggleRow(edge.node.id)"
+              (keydown.space)="toggleRow(edge.node.id); $event.preventDefault()"
+              tabindex="0"
+              [attr.aria-expanded]="expandedRows().has(edge.node.id)"
+              class="cursor-pointer hover:bg-base-200"
+            >
               <td class="font-mono text-sm">{{ edge.node.taskPath }}</td>
               <td>
                 <span
@@ -66,6 +80,13 @@ import { Component, ChangeDetectionStrategy, input } from "@angular/core";
               </td>
               <td class="text-xs opacity-60">{{ edge.node.className }}</td>
             </tr>
+            @if (expandedRows().has(edge.node.id)) {
+              <tr>
+                <td colspan="6" class="p-0">
+                  <app-task-cache-detail [taskNode]="edge.node" />
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
@@ -75,4 +96,15 @@ import { Component, ChangeDetectionStrategy, input } from "@angular/core";
 export class TasksTableComponent {
   taskEdges = input.required<any[]>();
   taskCount = input.required<number>();
+
+  expandedRows = signal<Set<string>>(new Set());
+
+  toggleRow(id: string) {
+    this.expandedRows.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 }
