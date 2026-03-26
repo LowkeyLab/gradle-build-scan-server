@@ -623,6 +623,7 @@ mod tests {
                     origin_build_cache_key: None,
                     actionable: Some(false),
                     skip_reason_message: None,
+                    up_to_date_messages: None,
                 }),
             ),
         ];

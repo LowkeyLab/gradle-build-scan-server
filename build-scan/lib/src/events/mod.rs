@@ -118,6 +118,7 @@ pub struct TaskFinishedEvent {
     pub origin_build_cache_key: Option<Vec<u8>>,
     pub actionable: Option<bool>,
     pub skip_reason_message: Option<String>,
+    pub up_to_date_messages: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]
