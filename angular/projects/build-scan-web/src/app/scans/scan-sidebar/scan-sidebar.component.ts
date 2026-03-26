@@ -196,7 +196,7 @@ export class ScanSidebarComponent {
   sections = computed<SectionNav[]>(() => {
     const scan = this.scan();
     const items: SectionNav[] = [
-      { id: "cache-breakdown", label: "Cache Breakdown", icon: "\u25A4" },
+      { id: "cache-breakdown", label: "Cache Performance", icon: "\u25A4" },
       { id: "task-timeline", label: "Timeline", icon: "\u2590" },
       { id: "tasks-table", label: "Tasks", icon: "\u2630" },
     ];
