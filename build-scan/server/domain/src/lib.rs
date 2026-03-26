@@ -331,6 +331,10 @@ pub struct Task {
     pub caching_disabled_reason: Option<String>,
     #[builder(setter(strip_option), default)]
     pub caching_disabled_explanation: Option<String>,
+    #[builder(setter(strip_option), default)]
+    pub up_to_date_messages: Option<Vec<String>>,
+    #[builder(setter(strip_option), default)]
+    pub origin_build_invocation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Builder)]
