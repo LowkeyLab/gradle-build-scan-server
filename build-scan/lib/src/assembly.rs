@@ -61,6 +61,8 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         origin_build_cache_key: e.origin_build_cache_key.clone(),
                         actionable: e.actionable,
                         timestamp: frame.timestamp,
+                        up_to_date_messages: e.up_to_date_messages.clone(),
+                        origin_build_invocation_id: e.origin_build_invocation_id.clone(),
                     },
                 );
             }
@@ -301,6 +303,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 finished_at,
                 duration_ms,
                 inputs,
+                up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
+                origin_build_invocation_id: fin
+                    .and_then(|f| f.origin_build_invocation_id.clone()),
             }
         })
         .collect();
@@ -457,6 +462,8 @@ struct FinishedInfo {
     origin_build_cache_key: Option<Vec<u8>>,
     actionable: Option<bool>,
     timestamp: i64,
+    up_to_date_messages: Option<Vec<String>>,
+    origin_build_invocation_id: Option<String>,
 }
 
 #[cfg(test)]
@@ -636,5 +643,61 @@ mod tests {
         assert_eq!(task.duration_ms, Some(1000));
         assert!(matches!(task.outcome, Some(TaskOutcome::Success)));
         assert!(task.inputs.is_none());
+    }
+
+    #[test]
+    fn test_assemble_task_cache_invalidation_fields() {
+        let events = vec![
+            (
+                frame(117, 1000),
+                DecodedEvent::TaskIdentity(TaskIdentityEvent {
+                    id: TaskId::new(1),
+                    build_path: ":".into(),
+                    task_path: ":app:compileJava".into(),
+                }),
+            ),
+            (
+                frame(1563, 2000),
+                DecodedEvent::TaskStarted(TaskStartedEvent {
+                    id: TaskId::new(1),
+                    build_path: ":".into(),
+                    path: ":app:compileJava".into(),
+                    class_name: Some("org.gradle.DefaultTask".into()),
+                }),
+            ),
+            (
+                frame(2074, 3000),
+                DecodedEvent::TaskFinished(TaskFinishedEvent {
+                    id: TaskId::new(1),
+                    path: ":app:compileJava".into(),
+                    outcome: Some(3),
+                    cacheable: Some(true),
+                    caching_disabled_reason_category: None,
+                    caching_disabled_explanation: None,
+                    origin_build_invocation_id: Some("abc123invocation".into()),
+                    origin_build_cache_key: None,
+                    actionable: Some(true),
+                    skip_reason_message: None,
+                    up_to_date_messages: Some(vec![
+                        "Input property 'foo' has changed".into(),
+                        "Input property 'bar' has changed".into(),
+                    ]),
+                }),
+            ),
+        ];
+        let payload = assemble(events);
+        assert_eq!(payload.tasks.len(), 1);
+        let task = &payload.tasks[0];
+        assert_eq!(
+            task.up_to_date_messages,
+            Some(vec![
+                "Input property 'foo' has changed".to_string(),
+                "Input property 'bar' has changed".to_string(),
+            ])
+        );
+        assert_eq!(
+            task.origin_build_invocation_id,
+            Some("abc123invocation".to_string())
+        );
     }
 }
