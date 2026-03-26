@@ -110,6 +110,7 @@ const GET_BUILD_SCAN = gql`
             <app-cache-breakdown
               [taskEdges]="scan.tasks.edges"
               [taskCount]="scan.taskCount"
+              [loading]="tasksLoading()"
             />
           </section>
           <section id="task-timeline" class="scroll-mt-4">
@@ -140,6 +141,7 @@ export class ScanDetailComponent {
   private apollo = inject(Apollo);
   private doc = inject(DOCUMENT);
   activeSection = signal("cache-breakdown");
+  tasksLoading = signal(true);
 
   scan$ = toObservable(this.id).pipe(
     switchMap((id) => {
@@ -168,6 +170,8 @@ export class ScanDetailComponent {
                 firstTests: 0,
               },
             });
+          } else {
+            this.tasksLoading.set(false);
           }
         }),
       );

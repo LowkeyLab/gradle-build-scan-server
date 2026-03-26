@@ -15,6 +15,15 @@ interface CacheCategory {
   color: string;
 }
 
+interface TaskEdge {
+  node: {
+    outcome: string;
+    cacheable: boolean | null;
+    cachingDisabledReason: string | null;
+    originExecutionTime: number | null;
+  };
+}
+
 const AVOIDED_LABELS = ["Cache Hit", "Up-to-date", "No Source", "Avoided"];
 
 const COLOR_MAP: Record<string, string> = {
@@ -76,6 +85,33 @@ const CATEGORY_ORDER = [
               </div>
             }
           </div>
+          @if (loading()) {
+            <div class="text-sm opacity-60">Loading all tasks...</div>
+          } @else {
+            @if (timeSaved() > 0) {
+              <div class="stat p-2">
+                <div class="stat-title text-xs">Time Saved by Cache</div>
+                <div class="stat-value text-lg text-success">
+                  {{ (timeSaved() / 1000).toFixed(1) }}s saved
+                </div>
+              </div>
+            }
+            @if (missPatterns().length > 0) {
+              <div class="mt-3">
+                <div class="text-xs font-semibold opacity-70 mb-1">
+                  Not Cacheable
+                </div>
+                @for (pattern of missPatterns(); track pattern.reason) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="badge badge-sm badge-warning">{{
+                      pattern.count
+                    }}</span>
+                    <span class="opacity-80">{{ pattern.reason }}</span>
+                  </div>
+                }
+              </div>
+            }
+          }
         } @else {
           <p class="text-sm opacity-50">No task data available</p>
         }
@@ -86,6 +122,7 @@ const CATEGORY_ORDER = [
 export class CacheBreakdownComponent {
   taskEdges = input.required<any[]>();
   taskCount = input.required<number>();
+  loading = input<boolean>(false);
 
   private chartEl = viewChild<ElementRef<HTMLElement>>("chartContainer");
 
@@ -119,6 +156,29 @@ export class CacheBreakdownComponent {
       .filter((c) => AVOIDED_LABELS.includes(c.label))
       .reduce((sum, c) => sum + c.count, 0);
     return total > 0 ? Math.round((avoided / total) * 100) : 0;
+  });
+
+  timeSaved = computed(() => {
+    const edges = this.taskEdges() as TaskEdge[];
+    return edges
+      .filter(
+        (e) => e.node.outcome === "FromCache" && e.node.originExecutionTime,
+      )
+      .reduce((sum, e) => sum + (e.node.originExecutionTime ?? 0), 0);
+  });
+
+  missPatterns = computed(() => {
+    const edges = this.taskEdges() as TaskEdge[];
+    const patterns = new Map<string, number>();
+    for (const e of edges) {
+      const reason = e.node.cachingDisabledReason;
+      if (reason) {
+        patterns.set(reason, (patterns.get(reason) || 0) + 1);
+      }
+    }
+    return [...patterns.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([reason, count]) => ({ reason, count }));
   });
 
   constructor() {

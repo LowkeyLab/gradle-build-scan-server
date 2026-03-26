@@ -2,15 +2,19 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { TestBed, ComponentFixture } from "@angular/core/testing";
 import { CacheBreakdownComponent } from "./cache-breakdown.component";
 
-function buildTaskEdge(outcome: string) {
+function buildTaskEdge(
+  outcome: string,
+  overrides: Record<string, unknown> = {},
+) {
   return {
     node: {
-      id: `task-${Math.random()}`,
-      taskPath: `:task-${outcome}`,
+      id: crypto.randomUUID(),
       outcome,
-      cacheable: true,
+      cacheable: null,
+      cachingDisabledReason: null,
+      originExecutionTime: null,
+      ...overrides,
     },
-    cursor: "c1",
   };
 }
 
@@ -102,6 +106,56 @@ describe("CacheBreakdownComponent", () => {
     ]);
     expect(fixture.nativeElement.textContent).toContain("Avoided");
     expect(fixture.nativeElement.textContent).toContain("50%");
+  });
+
+  it("computes time saved from FromCache tasks", () => {
+    render([
+      buildTaskEdge("FromCache", { originExecutionTime: 2000 }),
+      buildTaskEdge("FromCache", { originExecutionTime: 3000 }),
+      buildTaskEdge("Success"),
+    ]);
+    expect(fixture.nativeElement.textContent).toContain("5.0s saved");
+  });
+
+  it("does not show time saved when no FromCache tasks", () => {
+    render([buildTaskEdge("Success"), buildTaskEdge("Success")]);
+    expect(fixture.nativeElement.textContent).not.toContain("saved");
+  });
+
+  it("groups miss patterns by cachingDisabledReason", () => {
+    render([
+      buildTaskEdge("Success", {
+        cacheable: false,
+        cachingDisabledReason: "OVERLAPPING_OUTPUTS",
+      }),
+      buildTaskEdge("Success", {
+        cacheable: false,
+        cachingDisabledReason: "OVERLAPPING_OUTPUTS",
+      }),
+      buildTaskEdge("Success", {
+        cacheable: false,
+        cachingDisabledReason: "BUILD_CACHE_DISABLED",
+      }),
+    ]);
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain("OVERLAPPING_OUTPUTS");
+    expect(text).toContain("2");
+  });
+
+  it("shows loading indicator when loading is true", () => {
+    fixture.componentRef.setInput("taskEdges", [buildTaskEdge("Success")]);
+    fixture.componentRef.setInput("taskCount", 1);
+    fixture.componentRef.setInput("loading", true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain("Loading");
+  });
+
+  it("hides loading indicator when loading is false", () => {
+    fixture.componentRef.setInput("taskEdges", [buildTaskEdge("Success")]);
+    fixture.componentRef.setInput("taskCount", 1);
+    fixture.componentRef.setInput("loading", false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain("Loading");
   });
 
   it("should show all seven outcome types when present", () => {
