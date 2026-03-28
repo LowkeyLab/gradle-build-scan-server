@@ -296,6 +296,50 @@ impl Task {
     fn origin_build_invocation_id(&self) -> Option<&str> {
         self.task.origin_build_invocation_id.as_deref()
     }
+
+    async fn cache_operations(
+        &self,
+        context: &Context,
+    ) -> FieldResult<Vec<CacheOperation>> {
+        let task_id = self.task.id.0.to_string();
+        let ops = context
+            .service
+            .list_cache_operations(&task_id)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+        Ok(ops.into_iter().map(|op| CacheOperation { op }).collect())
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CacheOperation type
+// ---------------------------------------------------------------------------
+
+pub struct CacheOperation {
+    pub op: domain::CacheOperation,
+}
+
+#[graphql_object(context = Context)]
+impl CacheOperation {
+    fn id(&self) -> String {
+        self.op.id.0.to_string()
+    }
+
+    fn operation_type(&self) -> String {
+        self.op.operation_type.to_string()
+    }
+
+    fn succeeded(&self) -> bool {
+        self.op.succeeded
+    }
+
+    fn archive_size(&self) -> Option<f64> {
+        self.op.archive_size.map(|s| s as f64)
+    }
+
+    fn cache_key(&self) -> Option<&str> {
+        self.op.cache_key.as_deref()
+    }
 }
 
 // ---------------------------------------------------------------------------

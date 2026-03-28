@@ -13,7 +13,16 @@ pub struct TaskId(pub Uuid);
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TestId(pub Uuid);
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CacheOperationId(pub Uuid);
+
 impl From<Uuid> for TestId {
+    fn from(v: Uuid) -> Self {
+        Self(v)
+    }
+}
+
+impl From<Uuid> for CacheOperationId {
     fn from(v: Uuid) -> Self {
         Self(v)
     }
@@ -248,6 +257,44 @@ impl std::str::FromStr for TaskOutcome {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum CacheOperationType {
+    LocalLoad,
+    RemoteLoad,
+    Pack,
+    Unpack,
+    LocalStore,
+    RemoteStore,
+}
+
+impl std::fmt::Display for CacheOperationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::LocalLoad => write!(f, "LocalLoad"),
+            Self::RemoteLoad => write!(f, "RemoteLoad"),
+            Self::Pack => write!(f, "Pack"),
+            Self::Unpack => write!(f, "Unpack"),
+            Self::LocalStore => write!(f, "LocalStore"),
+            Self::RemoteStore => write!(f, "RemoteStore"),
+        }
+    }
+}
+
+impl std::str::FromStr for CacheOperationType {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "LocalLoad" => Ok(Self::LocalLoad),
+            "RemoteLoad" => Ok(Self::RemoteLoad),
+            "Pack" => Ok(Self::Pack),
+            "Unpack" => Ok(Self::Unpack),
+            "LocalStore" => Ok(Self::LocalStore),
+            "RemoteStore" => Ok(Self::RemoteStore),
+            _ => Err(format!("unknown cache operation type: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestOutcome {
     Passed,
@@ -349,4 +396,14 @@ pub struct Test {
     pub executor_name: Option<ExecutorName>,
     #[builder(setter(strip_option), default)]
     pub outcome: Option<TestOutcome>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CacheOperation {
+    pub id: CacheOperationId,
+    pub task_id: TaskId,
+    pub operation_type: CacheOperationType,
+    pub succeeded: bool,
+    pub archive_size: Option<i64>,
+    pub cache_key: Option<String>,
 }

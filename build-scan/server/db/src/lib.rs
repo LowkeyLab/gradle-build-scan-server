@@ -55,6 +55,16 @@ struct TaskRow {
 }
 
 #[derive(Debug, sqlx::FromRow)]
+struct CacheOperationRow {
+    id: String,
+    task_id: String,
+    operation_type: String,
+    succeeded: i64,
+    archive_size: Option<i64>,
+    cache_key: Option<String>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
 struct TestRow {
     id: String,
     scan_id: String,
@@ -250,6 +260,45 @@ impl From<&domain::Test> for TestRow {
             method_name: test.method_name.as_ref().map(|m| m.0.clone()),
             executor_name: test.executor_name.as_ref().map(|e| e.0.clone()),
             outcome: test.outcome.map(|o| o.to_string()),
+        }
+    }
+}
+
+impl TryFrom<CacheOperationRow> for domain::CacheOperation {
+    type Error = anyhow::Error;
+    fn try_from(row: CacheOperationRow) -> Result<Self, Self::Error> {
+        let id = domain::CacheOperationId(
+            uuid::Uuid::parse_str(&row.id)
+                .with_context(|| format!("invalid cache operation id '{}'", row.id))?,
+        );
+        let task_id = domain::TaskId(
+            uuid::Uuid::parse_str(&row.task_id)
+                .with_context(|| format!("invalid task_id '{}'", row.task_id))?,
+        );
+        let operation_type = row
+            .operation_type
+            .parse::<domain::CacheOperationType>()
+            .map_err(anyhow::Error::msg)?;
+        Ok(domain::CacheOperation {
+            id,
+            task_id,
+            operation_type,
+            succeeded: row.succeeded != 0,
+            archive_size: row.archive_size,
+            cache_key: row.cache_key,
+        })
+    }
+}
+
+impl From<&domain::CacheOperation> for CacheOperationRow {
+    fn from(op: &domain::CacheOperation) -> Self {
+        Self {
+            id: op.id.0.to_string(),
+            task_id: op.task_id.0.to_string(),
+            operation_type: op.operation_type.to_string(),
+            succeeded: if op.succeeded { 1 } else { 0 },
+            archive_size: op.archive_size,
+            cache_key: op.cache_key.clone(),
         }
     }
 }
@@ -492,4 +541,40 @@ pub async fn get_test(pool: &SqlitePool, id: &str) -> Result<Option<domain::Test
     .fetch_optional(pool)
     .await?;
     row.map(domain::Test::try_from).transpose()
+}
+
+pub async fn insert_cache_operation<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
+    op: &domain::CacheOperation,
+) -> Result<()> {
+    let row = CacheOperationRow::from(op);
+    sqlx::query(
+        "INSERT INTO task_cache_operations (id, task_id, operation_type, succeeded, archive_size, cache_key) \
+         VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&row.id)
+    .bind(&row.task_id)
+    .bind(&row.operation_type)
+    .bind(row.succeeded)
+    .bind(row.archive_size)
+    .bind(row.cache_key.as_deref())
+    .execute(executor)
+    .await?;
+    Ok(())
+}
+
+pub async fn list_cache_operations(
+    pool: &SqlitePool,
+    task_id: &str,
+) -> Result<Vec<domain::CacheOperation>> {
+    let rows = sqlx::query_as::<_, CacheOperationRow>(
+        "SELECT id, task_id, operation_type, succeeded, archive_size, cache_key \
+         FROM task_cache_operations WHERE task_id = ? ORDER BY id",
+    )
+    .bind(task_id)
+    .fetch_all(pool)
+    .await?;
+    rows.into_iter()
+        .map(domain::CacheOperation::try_from)
+        .collect::<Result<Vec<_>>>()
 }
