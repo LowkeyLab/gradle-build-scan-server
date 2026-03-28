@@ -80,6 +80,37 @@ pub struct BuildScanPayload {
     pub tests: Vec<TestCase>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CacheOperationType {
+    LocalLoad,
+    RemoteLoad,
+    Pack,
+    Unpack,
+    LocalStore,
+    RemoteStore,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheOperation {
+    pub operation_type: CacheOperationType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hit: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stored: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archive_size: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archive_entry_count: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_id: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remote_cache_location: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rejected_reason: Option<u64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     pub id: TaskId,
@@ -113,6 +144,8 @@ pub struct Task {
     pub origin_build_invocation_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub origin_execution_time: Option<i64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub cache_operations: Vec<CacheOperation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
