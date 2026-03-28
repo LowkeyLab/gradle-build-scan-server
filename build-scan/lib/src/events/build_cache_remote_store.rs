@@ -136,21 +136,19 @@ impl BodyDecoder for BuildCacheRemoteStoreFinishedDecoder {
             None
         };
 
-        let maximum_artifact_size = if self.has_maximum_artifact_size
-            && kryo::is_field_present(flags as u16, 4)
-        {
-            Some(kryo::read_positive_varint_i64(body, &mut pos)?)
-        } else {
-            None
-        };
+        let maximum_artifact_size =
+            if self.has_maximum_artifact_size && kryo::is_field_present(flags as u16, 4) {
+                Some(kryo::read_positive_varint_i64(body, &mut pos)?)
+            } else {
+                None
+            };
 
-        let remote_cache_location = if self.has_remote_cache_location
-            && kryo::is_field_present(flags as u16, 5)
-        {
-            Some(table.read_string(body, &mut pos)?)
-        } else {
-            None
-        };
+        let remote_cache_location =
+            if self.has_remote_cache_location && kryo::is_field_present(flags as u16, 5) {
+                Some(table.read_string(body, &mut pos)?)
+            } else {
+                None
+            };
 
         Ok(DecodedEvent::BuildCacheRemoteStoreFinished(
             BuildCacheRemoteStoreFinishedEvent {
@@ -331,7 +329,10 @@ mod tests {
         if let DecodedEvent::BuildCacheRemoteStoreFinished(e) = result {
             assert_eq!(e.id, 33);
             assert_eq!(e.stored, Some(true));
-            assert_eq!(e.remote_cache_location, Some("https://remote.example.com".into()));
+            assert_eq!(
+                e.remote_cache_location,
+                Some("https://remote.example.com".into())
+            );
         } else {
             panic!("expected BuildCacheRemoteStoreFinished");
         }

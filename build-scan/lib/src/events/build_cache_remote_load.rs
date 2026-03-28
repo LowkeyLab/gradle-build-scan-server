@@ -128,13 +128,12 @@ impl BodyDecoder for BuildCacheRemoteLoadFinishedDecoder {
             None
         };
 
-        let remote_cache_location = if self.has_remote_cache_location
-            && kryo::is_field_present(flags as u16, 4)
-        {
-            Some(table.read_string(body, &mut pos)?)
-        } else {
-            None
-        };
+        let remote_cache_location =
+            if self.has_remote_cache_location && kryo::is_field_present(flags as u16, 4) {
+                Some(table.read_string(body, &mut pos)?)
+            } else {
+                None
+            };
 
         Ok(DecodedEvent::BuildCacheRemoteLoadFinished(
             BuildCacheRemoteLoadFinishedEvent {
@@ -265,7 +264,10 @@ mod tests {
         if let DecodedEvent::BuildCacheRemoteLoadFinished(e) = result {
             assert_eq!(e.id, 7);
             assert_eq!(e.hit, Some(true));
-            assert_eq!(e.remote_cache_location, Some("https://cache.example.com".into()));
+            assert_eq!(
+                e.remote_cache_location,
+                Some("https://cache.example.com".into())
+            );
         } else {
             panic!("expected BuildCacheRemoteLoadFinished");
         }

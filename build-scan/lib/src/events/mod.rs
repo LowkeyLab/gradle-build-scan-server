@@ -714,22 +714,23 @@ impl DecoderRegistry {
         );
         registry.register(
             300,
-            Box::new(build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
-                has_remote_cache_location: false,
-            }),
+            Box::new(
+                build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
+                    has_remote_cache_location: false,
+                },
+            ),
         );
         registry.register(
             556,
-            Box::new(build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
-                has_remote_cache_location: true,
-            }),
+            Box::new(
+                build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
+                    has_remote_cache_location: true,
+                },
+            ),
         );
 
         // Pack
-        registry.register(
-            41,
-            Box::new(build_cache_pack::BuildCachePackStartedDecoder),
-        );
+        registry.register(41, Box::new(build_cache_pack::BuildCachePackStartedDecoder));
         registry.register(
             297,
             Box::new(build_cache_pack::BuildCachePackStartedDecoder),
@@ -786,35 +787,43 @@ impl DecoderRegistry {
         );
         registry.register(
             301,
-            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
-                has_rejected_reason: false,
-                has_maximum_artifact_size: false,
-                has_remote_cache_location: false,
-            }),
+            Box::new(
+                build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                    has_rejected_reason: false,
+                    has_maximum_artifact_size: false,
+                    has_remote_cache_location: false,
+                },
+            ),
         );
         registry.register(
             557,
-            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
-                has_rejected_reason: true,
-                has_maximum_artifact_size: false,
-                has_remote_cache_location: false,
-            }),
+            Box::new(
+                build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                    has_rejected_reason: true,
+                    has_maximum_artifact_size: false,
+                    has_remote_cache_location: false,
+                },
+            ),
         );
         registry.register(
             813,
-            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
-                has_rejected_reason: true,
-                has_maximum_artifact_size: true,
-                has_remote_cache_location: false,
-            }),
+            Box::new(
+                build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                    has_rejected_reason: true,
+                    has_maximum_artifact_size: true,
+                    has_remote_cache_location: false,
+                },
+            ),
         );
         registry.register(
             1069,
-            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
-                has_rejected_reason: true,
-                has_maximum_artifact_size: true,
-                has_remote_cache_location: true,
-            }),
+            Box::new(
+                build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                    has_rejected_reason: true,
+                    has_maximum_artifact_size: true,
+                    has_remote_cache_location: true,
+                },
+            ),
         );
 
         registry

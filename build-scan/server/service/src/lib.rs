@@ -7,9 +7,7 @@ use uuid::Uuid;
 
 use domain;
 
-fn map_cache_operation_type(
-    op_type: &models::CacheOperationType,
-) -> domain::CacheOperationType {
+fn map_cache_operation_type(op_type: &models::CacheOperationType) -> domain::CacheOperationType {
     match op_type {
         models::CacheOperationType::LocalLoad => domain::CacheOperationType::LocalLoad,
         models::CacheOperationType::RemoteLoad => domain::CacheOperationType::RemoteLoad,

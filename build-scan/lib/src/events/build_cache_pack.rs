@@ -1,8 +1,6 @@
 use error::ParseError;
 
-use super::{
-    BodyDecoder, BuildCachePackFinishedEvent, BuildCachePackStartedEvent, DecodedEvent,
-};
+use super::{BodyDecoder, BuildCachePackFinishedEvent, BuildCachePackStartedEvent, DecodedEvent};
 
 /// Wire 41, 297: BuildCachePackStarted — 3 fields: work_id, id, cache_key
 pub struct BuildCachePackStartedDecoder;

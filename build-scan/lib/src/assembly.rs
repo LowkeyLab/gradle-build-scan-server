@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use events::DecodedEvent;
 use framing::FramedEvent;
-use models::{BuildScanPayload, CacheOperation, CacheOperationType, RawEventSummary, Task, TaskId, TaskOutcome};
+use models::{
+    BuildScanPayload, CacheOperation, CacheOperationType, RawEventSummary, Task, TaskId,
+    TaskOutcome,
+};
 
 pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut identities: HashMap<TaskId, (String, String)> = HashMap::new();
@@ -201,7 +204,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCacheLocalLoadStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::LocalLoad, e.cache_key.clone(), None),
+                    (
+                        e.work_id,
+                        CacheOperationType::LocalLoad,
+                        e.cache_key.clone(),
+                        None,
+                    ),
                 );
             }
             DecodedEvent::BuildCacheLocalLoadFinished(e) => {
@@ -221,7 +229,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCacheRemoteLoadStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::RemoteLoad, e.cache_key.clone(), None),
+                    (
+                        e.work_id,
+                        CacheOperationType::RemoteLoad,
+                        e.cache_key.clone(),
+                        None,
+                    ),
                 );
             }
             DecodedEvent::BuildCacheRemoteLoadFinished(e) => {
@@ -241,7 +254,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCachePackStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::Pack, e.cache_key.clone(), None),
+                    (
+                        e.work_id,
+                        CacheOperationType::Pack,
+                        e.cache_key.clone(),
+                        None,
+                    ),
                 );
             }
             DecodedEvent::BuildCachePackFinished(e) => {
@@ -261,7 +279,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCacheUnpackStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::Unpack, e.cache_key.clone(), e.archive_size),
+                    (
+                        e.work_id,
+                        CacheOperationType::Unpack,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
                 );
             }
             DecodedEvent::BuildCacheUnpackFinished(e) => {
@@ -281,7 +304,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCacheLocalStoreStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::LocalStore, e.cache_key.clone(), e.archive_size),
+                    (
+                        e.work_id,
+                        CacheOperationType::LocalStore,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
                 );
             }
             DecodedEvent::BuildCacheLocalStoreFinished(e) => {
@@ -301,7 +329,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             DecodedEvent::BuildCacheRemoteStoreStarted(e) => {
                 cache_op_started.insert(
                     e.id,
-                    (e.work_id, CacheOperationType::RemoteStore, e.cache_key.clone(), e.archive_size),
+                    (
+                        e.work_id,
+                        CacheOperationType::RemoteStore,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
                 );
             }
             DecodedEvent::BuildCacheRemoteStoreFinished(e) => {
@@ -447,7 +480,9 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             cache_key: cache_key.clone(),
             hit: finished.and_then(|f| f.hit),
             stored: finished.and_then(|f| f.stored),
-            archive_size: finished.and_then(|f| f.archive_size).or(*started_archive_size),
+            archive_size: finished
+                .and_then(|f| f.archive_size)
+                .or(*started_archive_size),
             archive_entry_count: finished.and_then(|f| f.archive_entry_count),
             failure_id: finished.and_then(|f| f.failure_id),
             remote_cache_location: finished.and_then(|f| f.remote_cache_location.clone()),

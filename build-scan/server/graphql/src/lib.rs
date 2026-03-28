@@ -297,10 +297,7 @@ impl Task {
         self.task.origin_build_invocation_id.as_deref()
     }
 
-    async fn cache_operations(
-        &self,
-        context: &Context,
-    ) -> FieldResult<Vec<CacheOperation>> {
+    async fn cache_operations(&self, context: &Context) -> FieldResult<Vec<CacheOperation>> {
         let task_id = self.task.id.0.to_string();
         let ops = context
             .service
