@@ -5,6 +5,12 @@ rust_library(
     srcs = [
         "basic_memory_stats.rs",
         "build_agent.rs",
+        "build_cache_local_load.rs",
+        "build_cache_local_store.rs",
+        "build_cache_pack.rs",
+        "build_cache_remote_load.rs",
+        "build_cache_remote_store.rs",
+        "build_cache_unpack.rs",
         "build_finished.rs",
         "build_modes.rs",
         "build_requested_tasks.rs",

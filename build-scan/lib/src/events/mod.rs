@@ -5,6 +5,12 @@ use models::{ExecutorId, FailureId, FileRefId, TaskId, TransformId};
 
 pub mod basic_memory_stats;
 pub mod build_agent;
+pub mod build_cache_local_load;
+pub mod build_cache_local_store;
+pub mod build_cache_pack;
+pub mod build_cache_remote_load;
+pub mod build_cache_remote_store;
+pub mod build_cache_unpack;
 pub mod build_finished;
 pub mod build_modes;
 pub mod build_requested_tasks;
@@ -88,6 +94,18 @@ pub enum DecodedEvent {
     TestExecutorStarted(TestExecutorStartedEvent),
     TestExecutorFinished(TestExecutorFinishedEvent),
     TestResult(TestResultEvent),
+    BuildCacheLocalLoadStarted(BuildCacheLocalLoadStartedEvent),
+    BuildCacheLocalLoadFinished(BuildCacheLocalLoadFinishedEvent),
+    BuildCacheRemoteLoadStarted(BuildCacheRemoteLoadStartedEvent),
+    BuildCacheRemoteLoadFinished(BuildCacheRemoteLoadFinishedEvent),
+    BuildCachePackStarted(BuildCachePackStartedEvent),
+    BuildCachePackFinished(BuildCachePackFinishedEvent),
+    BuildCacheUnpackStarted(BuildCacheUnpackStartedEvent),
+    BuildCacheUnpackFinished(BuildCacheUnpackFinishedEvent),
+    BuildCacheLocalStoreStarted(BuildCacheLocalStoreStartedEvent),
+    BuildCacheLocalStoreFinished(BuildCacheLocalStoreFinishedEvent),
+    BuildCacheRemoteStoreStarted(BuildCacheRemoteStoreStartedEvent),
+    BuildCacheRemoteStoreFinished(BuildCacheRemoteStoreFinishedEvent),
     Raw(RawEvent),
 }
 
@@ -463,6 +481,100 @@ pub struct TestResultEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct BuildCacheLocalLoadStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheLocalLoadFinishedEvent {
+    pub id: i64,
+    pub hit: Option<bool>,
+    pub archive_size: Option<i64>,
+    pub failure_id: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheRemoteLoadStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheRemoteLoadFinishedEvent {
+    pub id: i64,
+    pub hit: Option<bool>,
+    pub archive_size: Option<i64>,
+    pub failure_id: Option<i64>,
+    pub remote_cache_location: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCachePackStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCachePackFinishedEvent {
+    pub id: i64,
+    pub archive_size: Option<i64>,
+    pub archive_entry_count: Option<i64>,
+    pub failure_id: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheUnpackStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+    pub archive_size: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheUnpackFinishedEvent {
+    pub id: i64,
+    pub archive_entry_count: Option<i64>,
+    pub failure_id: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheLocalStoreStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+    pub archive_size: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheLocalStoreFinishedEvent {
+    pub id: i64,
+    pub stored: Option<bool>,
+    pub failure_id: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheRemoteStoreStartedEvent {
+    pub work_id: i64,
+    pub id: i64,
+    pub cache_key: Option<String>,
+    pub archive_size: Option<i64>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildCacheRemoteStoreFinishedEvent {
+    pub id: i64,
+    pub stored: Option<bool>,
+    pub failure_id: Option<i64>,
+    pub rejected_reason: Option<u64>,
+    pub maximum_artifact_size: Option<i64>,
+    pub remote_cache_location: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -576,6 +688,135 @@ impl DecoderRegistry {
             803,
             Box::new(test_executor_finished::TestExecutorFinishedDecoder),
         );
+
+        // Local load
+        registry.register(
+            144,
+            Box::new(build_cache_local_load::BuildCacheLocalLoadStartedDecoder),
+        );
+        registry.register(
+            145,
+            Box::new(build_cache_local_load::BuildCacheLocalLoadFinishedDecoder),
+        );
+
+        // Remote load
+        registry.register(
+            43,
+            Box::new(build_cache_remote_load::BuildCacheRemoteLoadStartedDecoder),
+        );
+        registry.register(
+            299,
+            Box::new(build_cache_remote_load::BuildCacheRemoteLoadStartedDecoder),
+        );
+        registry.register(
+            44,
+            Box::new(build_cache_remote_load::BuildCacheRemoteLoadFinishedV1Decoder),
+        );
+        registry.register(
+            300,
+            Box::new(build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
+                has_remote_cache_location: false,
+            }),
+        );
+        registry.register(
+            556,
+            Box::new(build_cache_remote_load::BuildCacheRemoteLoadFinishedDecoder {
+                has_remote_cache_location: true,
+            }),
+        );
+
+        // Pack
+        registry.register(
+            41,
+            Box::new(build_cache_pack::BuildCachePackStartedDecoder),
+        );
+        registry.register(
+            297,
+            Box::new(build_cache_pack::BuildCachePackStartedDecoder),
+        );
+        registry.register(
+            42,
+            Box::new(build_cache_pack::BuildCachePackFinishedV1Decoder),
+        );
+        registry.register(
+            298,
+            Box::new(build_cache_pack::BuildCachePackFinishedDecoder),
+        );
+
+        // Unpack
+        registry.register(
+            47,
+            Box::new(build_cache_unpack::BuildCacheUnpackStartedDecoder),
+        );
+        registry.register(
+            303,
+            Box::new(build_cache_unpack::BuildCacheUnpackStartedDecoder),
+        );
+        registry.register(
+            48,
+            Box::new(build_cache_unpack::BuildCacheUnpackFinishedV1Decoder),
+        );
+        registry.register(
+            304,
+            Box::new(build_cache_unpack::BuildCacheUnpackFinishedDecoder),
+        );
+
+        // Local store
+        registry.register(
+            146,
+            Box::new(build_cache_local_store::BuildCacheLocalStoreStartedDecoder),
+        );
+        registry.register(
+            147,
+            Box::new(build_cache_local_store::BuildCacheLocalStoreFinishedDecoder),
+        );
+
+        // Remote store
+        registry.register(
+            46,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreStartedDecoder),
+        );
+        registry.register(
+            302,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreStartedDecoder),
+        );
+        registry.register(
+            45,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedV1Decoder),
+        );
+        registry.register(
+            301,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                has_rejected_reason: false,
+                has_maximum_artifact_size: false,
+                has_remote_cache_location: false,
+            }),
+        );
+        registry.register(
+            557,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                has_rejected_reason: true,
+                has_maximum_artifact_size: false,
+                has_remote_cache_location: false,
+            }),
+        );
+        registry.register(
+            813,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                has_rejected_reason: true,
+                has_maximum_artifact_size: true,
+                has_remote_cache_location: false,
+            }),
+        );
+        registry.register(
+            1069,
+            Box::new(build_cache_remote_store::BuildCacheRemoteStoreFinishedDecoder {
+                has_rejected_reason: true,
+                has_maximum_artifact_size: true,
+                has_remote_cache_location: true,
+            }),
+        );
+
         registry
     }
 

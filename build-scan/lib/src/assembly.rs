@@ -193,6 +193,18 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 };
                 test_results.push(outcome);
             }
+            DecodedEvent::BuildCacheLocalLoadStarted(_) => {}
+            DecodedEvent::BuildCacheLocalLoadFinished(_) => {}
+            DecodedEvent::BuildCacheRemoteLoadStarted(_) => {}
+            DecodedEvent::BuildCacheRemoteLoadFinished(_) => {}
+            DecodedEvent::BuildCachePackStarted(_) => {}
+            DecodedEvent::BuildCachePackFinished(_) => {}
+            DecodedEvent::BuildCacheUnpackStarted(_) => {}
+            DecodedEvent::BuildCacheUnpackFinished(_) => {}
+            DecodedEvent::BuildCacheLocalStoreStarted(_) => {}
+            DecodedEvent::BuildCacheLocalStoreFinished(_) => {}
+            DecodedEvent::BuildCacheRemoteStoreStarted(_) => {}
+            DecodedEvent::BuildCacheRemoteStoreFinished(_) => {}
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
