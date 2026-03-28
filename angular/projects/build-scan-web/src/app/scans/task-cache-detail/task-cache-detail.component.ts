@@ -15,6 +15,15 @@ interface TaskNode {
   originExecutionTime: number | null;
   cacheKey: string | null;
   durationMs: number | null;
+  cacheOperations: CacheOperation[] | null;
+}
+
+interface CacheOperation {
+  id: string;
+  operationType: string;
+  succeeded: boolean;
+  archiveSize: number | null;
+  cacheKey: string | null;
 }
 
 @Component({
@@ -80,6 +89,32 @@ interface TaskNode {
           <span class="text-base-content/40">No cache detail available</span>
         }
       }
+      @if ((taskNode().cacheOperations ?? []).length > 0) {
+        <div class="mt-3 pt-3 border-t border-base-300">
+          <h4
+            class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2"
+          >
+            Cache Operations
+          </h4>
+          <div class="flex items-center gap-2 text-sm flex-wrap">
+            @for (
+              op of taskNode().cacheOperations ?? [];
+              track op.id;
+              let last = $last
+            ) {
+              <span
+                class="badge badge-sm"
+                [class]="op.succeeded ? 'badge-success' : 'badge-error'"
+              >
+                {{ formatOp(op) }}
+              </span>
+              @if (!last) {
+                <span class="opacity-30">→</span>
+              }
+            }
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -106,4 +141,27 @@ export class TaskCacheDetailComponent {
     if (ms >= 1000) return (ms / 1000).toFixed(1) + "s";
     return ms + "ms";
   }
+
+  formatOp(op: CacheOperation): string {
+    const prefix = op.succeeded ? "✓" : "✗";
+    const labels: Record<string, string> = {
+      LocalLoad: "Local lookup",
+      RemoteLoad: "Remote lookup",
+      Pack: "Pack",
+      Unpack: "Unpack",
+      LocalStore: "Local store",
+      RemoteStore: "Remote store",
+    };
+    const label = labels[op.operationType] ?? op.operationType;
+    if (op.archiveSize && op.archiveSize > 0) {
+      return prefix + " " + label + " (" + formatBytes(op.archiveSize) + ")";
+    }
+    return prefix + " " + label;
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
