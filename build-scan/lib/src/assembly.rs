@@ -888,8 +888,10 @@ mod tests {
                     caching_disabled_explanation: None,
                     origin_build_invocation_id: None,
                     origin_build_cache_key: None,
+                    origin_execution_time: None,
                     actionable: Some(true),
                     skip_reason_message: None,
+                    up_to_date_messages: None,
                 }),
             ),
             (
