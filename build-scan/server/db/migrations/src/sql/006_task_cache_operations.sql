@@ -1,4 +1,4 @@
-CREATE TABLE task_cache_operations (
+CREATE TABLE IF NOT EXISTS task_cache_operations (
     id TEXT PRIMARY KEY,
     task_id TEXT NOT NULL REFERENCES tasks(id),
     operation_type TEXT NOT NULL,
@@ -7,4 +7,4 @@ CREATE TABLE task_cache_operations (
     cache_key TEXT
 );
 
-CREATE INDEX idx_task_cache_operations_task_id ON task_cache_operations(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_cache_operations_task_id ON task_cache_operations(task_id);

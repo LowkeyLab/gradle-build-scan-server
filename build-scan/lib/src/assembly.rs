@@ -343,7 +343,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                     CacheOpFinished {
                         hit: None,
                         stored: e.stored,
-                        archive_size: e.maximum_artifact_size,
+                        archive_size: None, // archive_size comes from Started event; maximum_artifact_size is a config limit, not actual size
                         archive_entry_count: None,
                         failure_id: e.failure_id,
                         remote_cache_location: e.remote_cache_location.clone(),
@@ -472,8 +472,13 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         .collect();
 
     // Pair started/finished cache ops and attach to tasks
+    // Sort by op_id for deterministic ordering (IDs are assigned sequentially by the plugin)
     let mut task_cache_ops: HashMap<TaskId, Vec<CacheOperation>> = HashMap::new();
-    for (op_id, (work_id, op_type, cache_key, started_archive_size)) in &cache_op_started {
+    let mut sorted_op_ids: Vec<_> = cache_op_started.keys().copied().collect();
+    sorted_op_ids.sort();
+    for op_id in &sorted_op_ids {
+        let (work_id, op_type, cache_key, started_archive_size) =
+            cache_op_started.get(op_id).unwrap();
         let finished = cache_op_finished.get(op_id);
         let op = CacheOperation {
             operation_type: op_type.clone(),

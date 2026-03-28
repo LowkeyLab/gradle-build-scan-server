@@ -104,7 +104,8 @@ interface CacheOperation {
             ) {
               <span
                 class="badge badge-sm"
-                [class]="op.succeeded ? 'badge-success' : 'badge-error'"
+                [class.badge-success]="op.succeeded"
+                [class.badge-error]="!op.succeeded"
               >
                 {{ formatOp(op) }}
               </span>

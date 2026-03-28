@@ -199,8 +199,20 @@ impl BuildScanService {
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
 
                     for cache_op in &task.cache_operations {
-                        let succeeded =
-                            cache_op.hit.unwrap_or(false) || cache_op.stored.unwrap_or(false);
+                        let succeeded = match cache_op.operation_type {
+                            models::CacheOperationType::LocalLoad
+                            | models::CacheOperationType::RemoteLoad => {
+                                cache_op.hit.unwrap_or(false)
+                            }
+                            models::CacheOperationType::LocalStore
+                            | models::CacheOperationType::RemoteStore => {
+                                cache_op.stored.unwrap_or(false)
+                            }
+                            models::CacheOperationType::Pack
+                            | models::CacheOperationType::Unpack => {
+                                cache_op.failure_id.is_none()
+                            }
+                        };
                         let domain_op = domain::CacheOperation {
                             id: domain::CacheOperationId(Uuid::new_v4()),
                             task_id: domain_task.id.clone(),

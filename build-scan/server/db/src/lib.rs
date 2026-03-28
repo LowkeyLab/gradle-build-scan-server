@@ -569,7 +569,7 @@ pub async fn list_cache_operations(
 ) -> Result<Vec<domain::CacheOperation>> {
     let rows = sqlx::query_as::<_, CacheOperationRow>(
         "SELECT id, task_id, operation_type, succeeded, archive_size, cache_key \
-         FROM task_cache_operations WHERE task_id = ? ORDER BY id",
+         FROM task_cache_operations WHERE task_id = ? ORDER BY rowid",
     )
     .bind(task_id)
     .fetch_all(pool)
