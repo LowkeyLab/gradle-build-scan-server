@@ -7,6 +7,17 @@ use uuid::Uuid;
 
 use domain;
 
+fn map_cache_operation_type(op_type: &models::CacheOperationType) -> domain::CacheOperationType {
+    match op_type {
+        models::CacheOperationType::LocalLoad => domain::CacheOperationType::LocalLoad,
+        models::CacheOperationType::RemoteLoad => domain::CacheOperationType::RemoteLoad,
+        models::CacheOperationType::Pack => domain::CacheOperationType::Pack,
+        models::CacheOperationType::Unpack => domain::CacheOperationType::Unpack,
+        models::CacheOperationType::LocalStore => domain::CacheOperationType::LocalStore,
+        models::CacheOperationType::RemoteStore => domain::CacheOperationType::RemoteStore,
+    }
+}
+
 fn map_test_outcome(outcome: &models::TestOutcome) -> domain::TestOutcome {
     match outcome {
         models::TestOutcome::Passed => domain::TestOutcome::Passed,
@@ -186,6 +197,39 @@ impl BuildScanService {
                     db::insert_task(&mut *tx, &domain_task)
                         .await
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
+
+                    for cache_op in &task.cache_operations {
+                        let succeeded = match cache_op.operation_type {
+                            models::CacheOperationType::LocalLoad
+                            | models::CacheOperationType::RemoteLoad => {
+                                cache_op.hit.unwrap_or(false)
+                            }
+                            models::CacheOperationType::LocalStore
+                            | models::CacheOperationType::RemoteStore => {
+                                cache_op.stored.unwrap_or(false)
+                            }
+                            models::CacheOperationType::Pack
+                            | models::CacheOperationType::Unpack => {
+                                cache_op.failure_id.is_none()
+                            }
+                        };
+                        let domain_op = domain::CacheOperation {
+                            id: domain::CacheOperationId(Uuid::new_v4()),
+                            task_id: domain_task.id.clone(),
+                            operation_type: map_cache_operation_type(&cache_op.operation_type),
+                            succeeded,
+                            archive_size: cache_op.archive_size,
+                            cache_key: cache_op.cache_key.clone(),
+                        };
+                        db::insert_cache_operation(&mut *tx, &domain_op)
+                            .await
+                            .with_context(|| {
+                                format!(
+                                    "failed to store cache operation for task {}",
+                                    task.task_path
+                                )
+                            })?;
+                    }
                 }
 
                 let test_count = payload.tests.len();
@@ -274,5 +318,12 @@ impl BuildScanService {
 
     pub async fn get_test(&self, id: &str) -> Result<Option<domain::Test>> {
         db::get_test(&self.pool, id).await
+    }
+
+    pub async fn list_cache_operations(
+        &self,
+        task_id: &str,
+    ) -> Result<Vec<domain::CacheOperation>> {
+        db::list_cache_operations(&self.pool, task_id).await
     }
 }

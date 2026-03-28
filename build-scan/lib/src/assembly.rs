@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use events::DecodedEvent;
 use framing::FramedEvent;
-use models::{BuildScanPayload, RawEventSummary, Task, TaskId, TaskOutcome};
+use models::{
+    BuildScanPayload, CacheOperation, CacheOperationType, RawEventSummary, Task, TaskId,
+    TaskOutcome,
+};
 
 pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut identities: HashMap<TaskId, (String, String)> = HashMap::new();
@@ -38,6 +41,11 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut os_event: Option<events::OsEvent> = None;
     let mut jvm_event: Option<events::JvmEvent> = None;
     let mut requested_tasks: Vec<String> = Vec::new();
+
+    // Cache operation tracking: operation_id → (work_id, op_type, cache_key, started_archive_size)
+    let mut cache_op_started: HashMap<i64, (i64, CacheOperationType, Option<String>, Option<i64>)> =
+        HashMap::new();
+    let mut cache_op_finished: HashMap<i64, CacheOpFinished> = HashMap::new();
 
     for (frame, decoded) in &events {
         match decoded {
@@ -193,6 +201,156 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 };
                 test_results.push(outcome);
             }
+            DecodedEvent::BuildCacheLocalLoadStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::LocalLoad,
+                        e.cache_key.clone(),
+                        None,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCacheLocalLoadFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: e.hit,
+                        stored: None,
+                        archive_size: e.archive_size,
+                        archive_entry_count: None,
+                        failure_id: e.failure_id,
+                        remote_cache_location: None,
+                        rejected_reason: None,
+                    },
+                );
+            }
+            DecodedEvent::BuildCacheRemoteLoadStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::RemoteLoad,
+                        e.cache_key.clone(),
+                        None,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCacheRemoteLoadFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: e.hit,
+                        stored: None,
+                        archive_size: e.archive_size,
+                        archive_entry_count: None,
+                        failure_id: e.failure_id,
+                        remote_cache_location: e.remote_cache_location.clone(),
+                        rejected_reason: None,
+                    },
+                );
+            }
+            DecodedEvent::BuildCachePackStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::Pack,
+                        e.cache_key.clone(),
+                        None,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCachePackFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: None,
+                        stored: None,
+                        archive_size: e.archive_size,
+                        archive_entry_count: e.archive_entry_count,
+                        failure_id: e.failure_id,
+                        remote_cache_location: None,
+                        rejected_reason: None,
+                    },
+                );
+            }
+            DecodedEvent::BuildCacheUnpackStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::Unpack,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCacheUnpackFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: None,
+                        stored: None,
+                        archive_size: None,
+                        archive_entry_count: e.archive_entry_count,
+                        failure_id: e.failure_id,
+                        remote_cache_location: None,
+                        rejected_reason: None,
+                    },
+                );
+            }
+            DecodedEvent::BuildCacheLocalStoreStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::LocalStore,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCacheLocalStoreFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: None,
+                        stored: e.stored,
+                        archive_size: None,
+                        archive_entry_count: None,
+                        failure_id: e.failure_id,
+                        remote_cache_location: None,
+                        rejected_reason: None,
+                    },
+                );
+            }
+            DecodedEvent::BuildCacheRemoteStoreStarted(e) => {
+                cache_op_started.insert(
+                    e.id,
+                    (
+                        e.work_id,
+                        CacheOperationType::RemoteStore,
+                        e.cache_key.clone(),
+                        e.archive_size,
+                    ),
+                );
+            }
+            DecodedEvent::BuildCacheRemoteStoreFinished(e) => {
+                cache_op_finished.insert(
+                    e.id,
+                    CacheOpFinished {
+                        hit: None,
+                        stored: e.stored,
+                        archive_size: None, // archive_size comes from Started event; maximum_artifact_size is a config limit, not actual size
+                        archive_entry_count: None,
+                        failure_id: e.failure_id,
+                        remote_cache_location: e.remote_cache_location.clone(),
+                        rejected_reason: e.rejected_reason,
+                    },
+                );
+            }
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
@@ -305,11 +463,46 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 duration_ms,
                 inputs,
                 up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
-                origin_build_invocation_id: fin.and_then(|f| f.origin_build_invocation_id.clone()),
+                origin_build_invocation_id: fin
+                    .and_then(|f| f.origin_build_invocation_id.clone()),
                 origin_execution_time: fin.and_then(|f| f.origin_execution_time),
+                cache_operations: Vec::new(),
             }
         })
         .collect();
+
+    // Pair started/finished cache ops and attach to tasks
+    // Sort by op_id for deterministic ordering (IDs are assigned sequentially by the plugin)
+    let mut task_cache_ops: HashMap<TaskId, Vec<CacheOperation>> = HashMap::new();
+    let mut sorted_op_ids: Vec<_> = cache_op_started.keys().copied().collect();
+    sorted_op_ids.sort();
+    for op_id in &sorted_op_ids {
+        let (work_id, op_type, cache_key, started_archive_size) =
+            cache_op_started.get(op_id).unwrap();
+        let finished = cache_op_finished.get(op_id);
+        let op = CacheOperation {
+            operation_type: op_type.clone(),
+            cache_key: cache_key.clone(),
+            hit: finished.and_then(|f| f.hit),
+            stored: finished.and_then(|f| f.stored),
+            archive_size: finished
+                .and_then(|f| f.archive_size)
+                .or(*started_archive_size),
+            archive_entry_count: finished.and_then(|f| f.archive_entry_count),
+            failure_id: finished.and_then(|f| f.failure_id),
+            remote_cache_location: finished.and_then(|f| f.remote_cache_location.clone()),
+            rejected_reason: finished.and_then(|f| f.rejected_reason),
+        };
+        task_cache_ops
+            .entry(TaskId::new(*work_id))
+            .or_default()
+            .push(op);
+    }
+    for task in &mut tasks {
+        if let Some(ops) = task_cache_ops.remove(&task.id) {
+            task.cache_operations = ops;
+        }
+    }
 
     tasks.sort_by_key(|t| t.id);
 
@@ -453,6 +646,16 @@ fn assemble_indexed_normalized_samples(
         samples: e.samples,
         max: e.max,
     }
+}
+
+struct CacheOpFinished {
+    hit: Option<bool>,
+    stored: Option<bool>,
+    archive_size: Option<i64>,
+    archive_entry_count: Option<i64>,
+    failure_id: Option<i64>,
+    remote_cache_location: Option<String>,
+    rejected_reason: Option<u64>,
 }
 
 struct FinishedInfo {
@@ -646,6 +849,90 @@ mod tests {
         assert_eq!(task.duration_ms, Some(1000));
         assert!(matches!(task.outcome, Some(TaskOutcome::Success)));
         assert!(task.inputs.is_none());
+        assert!(task.cache_operations.is_empty());
+    }
+
+    #[test]
+    fn test_assemble_cache_operations_attached_to_task() {
+        use events::{
+            BuildCacheLocalLoadFinishedEvent, BuildCacheLocalLoadStartedEvent, TaskFinishedEvent,
+            TaskIdentityEvent, TaskStartedEvent,
+        };
+        use models::CacheOperationType;
+
+        let task_id = TaskId::new(42);
+        let work_id: i64 = 42; // work_id matches task id value
+        let op_id: i64 = 100;
+
+        let events = vec![
+            (
+                frame(117, 1000),
+                DecodedEvent::TaskIdentity(TaskIdentityEvent {
+                    id: task_id,
+                    build_path: ":".into(),
+                    task_path: ":app:compileJava".into(),
+                }),
+            ),
+            (
+                frame(1563, 2000),
+                DecodedEvent::TaskStarted(TaskStartedEvent {
+                    id: task_id,
+                    build_path: ":".into(),
+                    path: ":app:compileJava".into(),
+                    class_name: None,
+                }),
+            ),
+            (
+                frame(2074, 5000),
+                DecodedEvent::TaskFinished(TaskFinishedEvent {
+                    id: task_id,
+                    path: ":app:compileJava".into(),
+                    outcome: Some(4), // FromCache
+                    cacheable: Some(true),
+                    caching_disabled_reason_category: None,
+                    caching_disabled_explanation: None,
+                    origin_build_invocation_id: None,
+                    origin_build_cache_key: None,
+                    origin_execution_time: None,
+                    actionable: Some(true),
+                    skip_reason_message: None,
+                    up_to_date_messages: None,
+                }),
+            ),
+            (
+                frame(144, 2500),
+                DecodedEvent::BuildCacheLocalLoadStarted(BuildCacheLocalLoadStartedEvent {
+                    work_id,
+                    id: op_id,
+                    cache_key: Some("abc123".into()),
+                }),
+            ),
+            (
+                frame(145, 3000),
+                DecodedEvent::BuildCacheLocalLoadFinished(BuildCacheLocalLoadFinishedEvent {
+                    id: op_id,
+                    hit: Some(true),
+                    archive_size: Some(8192),
+                    failure_id: None,
+                }),
+            ),
+        ];
+
+        let payload = assemble(events);
+        assert_eq!(payload.tasks.len(), 1);
+        let task = &payload.tasks[0];
+        assert_eq!(task.task_path, ":app:compileJava");
+        assert_eq!(task.cache_operations.len(), 1);
+
+        let op = &task.cache_operations[0];
+        assert_eq!(op.operation_type, CacheOperationType::LocalLoad);
+        assert_eq!(op.cache_key.as_deref(), Some("abc123"));
+        assert_eq!(op.hit, Some(true));
+        assert_eq!(op.archive_size, Some(8192));
+        assert_eq!(op.failure_id, None);
+        assert_eq!(op.stored, None);
+        assert_eq!(op.remote_cache_location, None);
+        assert_eq!(op.rejected_reason, None);
     }
 
     #[test]

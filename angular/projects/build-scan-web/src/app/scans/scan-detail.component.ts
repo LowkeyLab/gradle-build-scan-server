@@ -57,6 +57,13 @@ const GET_BUILD_SCAN = gql`
             upToDateMessages
             originBuildInvocationId
             originExecutionTime
+            cacheOperations {
+              id
+              operationType
+              succeeded
+              archiveSize
+              cacheKey
+            }
           }
           cursor
         }
