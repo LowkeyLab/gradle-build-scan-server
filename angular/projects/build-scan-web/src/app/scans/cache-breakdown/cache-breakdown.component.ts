@@ -162,7 +162,8 @@ export class CacheBreakdownComponent {
     const edges = this.taskEdges() as TaskEdge[];
     return edges
       .filter(
-        (e) => e.node.outcome === "FromCache" && e.node.originExecutionTime,
+        (e) =>
+          e.node.outcome === "FromCache" && e.node.originExecutionTime != null,
       )
       .reduce((sum, e) => sum + (e.node.originExecutionTime ?? 0), 0);
   });

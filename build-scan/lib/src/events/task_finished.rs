@@ -66,10 +66,11 @@ impl BodyDecoder for TaskFinishedDecoder {
             None
         };
 
-        if kryo::is_field_present(flags, 9) {
-            // originExecutionTime — read and discard (zigzag long)
-            let _ = varint::read_zigzag_i64(body, &mut pos)?;
-        }
+        let origin_execution_time = if kryo::is_field_present(flags, 9) {
+            Some(varint::read_zigzag_i64(body, &mut pos)?)
+        } else {
+            None
+        };
 
         // bit 10: actionable (boolean — value IS the bit, no payload)
         let actionable = if kryo::is_field_present(flags, 10) {
@@ -105,6 +106,7 @@ impl BodyDecoder for TaskFinishedDecoder {
             caching_disabled_explanation,
             origin_build_invocation_id,
             origin_build_cache_key,
+            origin_execution_time,
             actionable,
             skip_reason_message,
             up_to_date_messages,
@@ -183,7 +185,9 @@ mod tests {
             assert_eq!(e.id, TaskId::new(1));
             assert_eq!(e.path, ":lib:compile");
             assert_eq!(e.outcome, Some(5));
-            let msgs = e.up_to_date_messages.expect("up_to_date_messages should be Some");
+            let msgs = e
+                .up_to_date_messages
+                .expect("up_to_date_messages should be Some");
             assert_eq!(msgs.len(), 2);
             assert_eq!(msgs[0], "Input property 'x' has not changed");
             assert_eq!(msgs[1], "Output file has not changed");

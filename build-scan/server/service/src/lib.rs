@@ -157,8 +157,8 @@ impl BuildScanService {
                     if let Some(ts) = task.finished_at {
                         task_builder.finish_timestamp(ts);
                     }
-                    if let Some(d) = task.duration_ms {
-                        task_builder.origin_execution_time(d);
+                    if let Some(t) = task.origin_execution_time {
+                        task_builder.origin_execution_time(t);
                     }
                     if let Some(ck) = cache_key_str {
                         task_builder.cache_key(ck);

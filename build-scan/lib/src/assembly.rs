@@ -59,6 +59,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         caching_disabled_reason: e.caching_disabled_reason_category.clone(),
                         caching_disabled_explanation: e.caching_disabled_explanation.clone(),
                         origin_build_cache_key: e.origin_build_cache_key.clone(),
+                        origin_execution_time: e.origin_execution_time,
                         actionable: e.actionable,
                         timestamp: frame.timestamp,
                         up_to_date_messages: e.up_to_date_messages.clone(),
@@ -304,8 +305,8 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 duration_ms,
                 inputs,
                 up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
-                origin_build_invocation_id: fin
-                    .and_then(|f| f.origin_build_invocation_id.clone()),
+                origin_build_invocation_id: fin.and_then(|f| f.origin_build_invocation_id.clone()),
+                origin_execution_time: fin.and_then(|f| f.origin_execution_time),
             }
         })
         .collect();
@@ -460,6 +461,7 @@ struct FinishedInfo {
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
     origin_build_cache_key: Option<Vec<u8>>,
+    origin_execution_time: Option<i64>,
     actionable: Option<bool>,
     timestamp: i64,
     up_to_date_messages: Option<Vec<String>>,
@@ -628,6 +630,7 @@ mod tests {
                     caching_disabled_explanation: None,
                     origin_build_invocation_id: None,
                     origin_build_cache_key: None,
+                    origin_execution_time: None,
                     actionable: Some(false),
                     skip_reason_message: None,
                     up_to_date_messages: None,
@@ -676,6 +679,7 @@ mod tests {
                     caching_disabled_explanation: None,
                     origin_build_invocation_id: Some("abc123invocation".into()),
                     origin_build_cache_key: None,
+                    origin_execution_time: None,
                     actionable: Some(true),
                     skip_reason_message: None,
                     up_to_date_messages: Some(vec![
