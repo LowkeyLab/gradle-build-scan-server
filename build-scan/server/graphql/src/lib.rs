@@ -288,6 +288,14 @@ impl Task {
     fn caching_disabled_explanation(&self) -> Option<&str> {
         self.task.caching_disabled_explanation.as_deref()
     }
+
+    fn up_to_date_messages(&self) -> Option<&Vec<String>> {
+        self.task.up_to_date_messages.as_ref()
+    }
+
+    fn origin_build_invocation_id(&self) -> Option<&str> {
+        self.task.origin_build_invocation_id.as_deref()
+    }
 }
 
 // ---------------------------------------------------------------------------

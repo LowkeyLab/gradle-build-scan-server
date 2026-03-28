@@ -116,8 +116,10 @@ pub struct TaskFinishedEvent {
     pub caching_disabled_explanation: Option<String>,
     pub origin_build_invocation_id: Option<String>,
     pub origin_build_cache_key: Option<Vec<u8>>,
+    pub origin_execution_time: Option<i64>,
     pub actionable: Option<bool>,
     pub skip_reason_message: Option<String>,
+    pub up_to_date_messages: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone)]

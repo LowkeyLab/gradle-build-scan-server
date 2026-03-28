@@ -157,8 +157,8 @@ impl BuildScanService {
                     if let Some(ts) = task.finished_at {
                         task_builder.finish_timestamp(ts);
                     }
-                    if let Some(d) = task.duration_ms {
-                        task_builder.origin_execution_time(d);
+                    if let Some(t) = task.origin_execution_time {
+                        task_builder.origin_execution_time(t);
                     }
                     if let Some(ck) = cache_key_str {
                         task_builder.cache_key(ck);
@@ -168,6 +168,14 @@ impl BuildScanService {
                     }
                     if let Some(ref e) = task.caching_disabled_explanation {
                         task_builder.caching_disabled_explanation(e.clone());
+                    }
+                    if let Some(ref msgs) = task.up_to_date_messages {
+                        if !msgs.is_empty() {
+                            task_builder.up_to_date_messages(msgs.clone());
+                        }
+                    }
+                    if let Some(ref id) = task.origin_build_invocation_id {
+                        task_builder.origin_build_invocation_id(id.clone());
                     }
 
                     let domain_task = task_builder

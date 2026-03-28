@@ -8,6 +8,7 @@ rust_library(
         "sql/002_composite_pagination_index.sql",
         "sql/003_tests_table.sql",
         "sql/004_task_caching_reason.sql",
+        "sql/005_task_cache_detail.sql",
     ],
     visibility = ["//visibility:public"],
     deps = ["@crates//:sqlx"],

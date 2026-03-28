@@ -107,6 +107,12 @@ pub struct Task {
     pub duration_ms: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inputs: Option<TaskInputs>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub up_to_date_messages: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_build_invocation_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin_execution_time: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
