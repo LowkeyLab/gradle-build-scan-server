@@ -26,7 +26,7 @@ jobs:
             common --compilation_mode=opt
             build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}
       - name: Log in to GHCR
-        uses: docker/login-action@bb9683dca29f758cbd6ee832740e9f2dbeb21a3e
+        uses: docker/login-action@de05a6d3a24346d4659bce540fac29c04a309bad
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
