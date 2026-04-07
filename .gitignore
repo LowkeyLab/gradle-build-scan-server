@@ -33,3 +33,7 @@ build-scans.db
 # Ad-hoc scripts and captured payloads
 script/
 captured-output/
+
+# Nix / direnv generated files
+.direnv/
+.local/

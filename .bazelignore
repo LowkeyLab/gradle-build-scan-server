@@ -3,3 +3,5 @@ target/
 .opencode/
 .claude/worktrees/
 .worktrees/
+.local/
+.direnv/

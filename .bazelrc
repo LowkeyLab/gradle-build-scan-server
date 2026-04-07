@@ -41,4 +41,5 @@ common:lint --aspects=//tools/lint:linters.bzl%eslint
 # This file should appear in `.gitignore` so that settings are not shared with team members. This
 # should be last statement in this config so the user configuration is able to overwrite flags from
 # this file. See https://bazel.build/configure/best-practices#bazelrc-file.
+try-import %workspace%/.local/nixos.bazelrc
 try-import %workspace%/user.bazelrc
