@@ -42,8 +42,8 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut jvm_event: Option<events::JvmEvent> = None;
     let mut requested_tasks: Vec<String> = Vec::new();
 
-    // Cache operation tracking: operation_id → (work_id, op_type, cache_key, started_archive_size)
-    let mut cache_op_started: HashMap<i64, (i64, CacheOperationType, Option<String>, Option<i64>)> =
+    // Cache operation tracking: operation_id → (work_id, op_type, cache_key, started_archive_size, started_timestamp)
+    let mut cache_op_started: HashMap<i64, (i64, CacheOperationType, Option<String>, Option<i64>, i64)> =
         HashMap::new();
     let mut cache_op_finished: HashMap<i64, CacheOpFinished> = HashMap::new();
 
@@ -209,6 +209,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::LocalLoad,
                         e.cache_key.clone(),
                         None,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -223,6 +224,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: None,
                         rejected_reason: None,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -234,6 +236,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::RemoteLoad,
                         e.cache_key.clone(),
                         None,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -248,6 +251,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: e.remote_cache_location.clone(),
                         rejected_reason: None,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -259,6 +263,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::Pack,
                         e.cache_key.clone(),
                         None,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -273,6 +278,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: None,
                         rejected_reason: None,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -284,6 +290,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::Unpack,
                         e.cache_key.clone(),
                         e.archive_size,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -298,6 +305,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: None,
                         rejected_reason: None,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -309,6 +317,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::LocalStore,
                         e.cache_key.clone(),
                         e.archive_size,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -323,6 +332,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: None,
                         rejected_reason: None,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -334,6 +344,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         CacheOperationType::RemoteStore,
                         e.cache_key.clone(),
                         e.archive_size,
+                        frame.timestamp,
                     ),
                 );
             }
@@ -348,6 +359,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         failure_id: e.failure_id,
                         remote_cache_location: e.remote_cache_location.clone(),
                         rejected_reason: e.rejected_reason,
+                        finished_timestamp: Some(frame.timestamp),
                     },
                 );
             }
@@ -477,9 +489,12 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut sorted_op_ids: Vec<_> = cache_op_started.keys().copied().collect();
     sorted_op_ids.sort();
     for op_id in &sorted_op_ids {
-        let (work_id, op_type, cache_key, started_archive_size) =
+        let (work_id, op_type, cache_key, started_archive_size, started_timestamp) =
             cache_op_started.get(op_id).unwrap();
         let finished = cache_op_finished.get(op_id);
+        let duration_ms = finished
+            .and_then(|f| f.finished_timestamp)
+            .map(|ft| ft - started_timestamp);
         let op = CacheOperation {
             operation_type: op_type.clone(),
             cache_key: cache_key.clone(),
@@ -492,6 +507,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             failure_id: finished.and_then(|f| f.failure_id),
             remote_cache_location: finished.and_then(|f| f.remote_cache_location.clone()),
             rejected_reason: finished.and_then(|f| f.rejected_reason),
+            duration_ms,
         };
         task_cache_ops
             .entry(TaskId::new(*work_id))
@@ -656,6 +672,7 @@ struct CacheOpFinished {
     failure_id: Option<i64>,
     remote_cache_location: Option<String>,
     rejected_reason: Option<u64>,
+    finished_timestamp: Option<i64>,
 }
 
 struct FinishedInfo {

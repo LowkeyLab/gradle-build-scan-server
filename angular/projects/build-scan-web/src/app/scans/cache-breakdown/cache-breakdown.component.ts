@@ -21,6 +21,7 @@ interface TaskEdge {
     cacheable: boolean | null;
     cachingDisabledReason: string | null;
     originExecutionTime: number | null;
+    cacheOperations: { operationType: string; succeeded: boolean }[] | null;
   };
 }
 
@@ -96,6 +97,20 @@ const CATEGORY_ORDER = [
                 </div>
               </div>
             }
+            <div class="mt-3 flex flex-wrap gap-2">
+              <div class="flex items-center gap-1.5 text-sm">
+                <span class="badge badge-sm badge-success">{{ tierBreakdown().localHits }}</span>
+                <span class="opacity-70">Local hits</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-sm">
+                <span class="badge badge-sm" style="background:oklch(72% 0.15 230);color:white">{{ tierBreakdown().remoteHits }}</span>
+                <span class="opacity-70">Remote hits</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-sm">
+                <span class="badge badge-sm badge-ghost">{{ tierBreakdown().misses }}</span>
+                <span class="opacity-70">Misses</span>
+              </div>
+            </div>
             @if (missPatterns().length > 0) {
               <div class="mt-3">
                 <div class="text-xs font-semibold opacity-70 mb-1">
@@ -180,6 +195,36 @@ export class CacheBreakdownComponent {
     return [...patterns.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([reason, count]) => ({ reason, count }));
+  });
+
+  tierBreakdown = computed(() => {
+    const edges = this.taskEdges() as TaskEdge[];
+    let localHits = 0;
+    let remoteHits = 0;
+    let misses = 0;
+    for (const e of edges) {
+      const ops = e.node.cacheOperations ?? [];
+      const localHit = ops.some(
+        (op) => op.operationType === "LocalLoad" && op.succeeded,
+      );
+      const remoteHit = ops.some(
+        (op) => op.operationType === "RemoteLoad" && op.succeeded,
+      );
+      const hasLoadOps = ops.some(
+        (op) => op.operationType === "LocalLoad" || op.operationType === "RemoteLoad",
+      );
+      const allLoadsFailed =
+        hasLoadOps &&
+        ops
+          .filter(
+            (op) => op.operationType === "LocalLoad" || op.operationType === "RemoteLoad",
+          )
+          .every((op) => !op.succeeded);
+      if (localHit) localHits++;
+      else if (remoteHit) remoteHits++;
+      else if (allLoadsFailed) misses++;
+    }
+    return { localHits, remoteHits, misses };
   });
 
   constructor() {

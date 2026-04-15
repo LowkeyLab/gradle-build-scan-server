@@ -220,6 +220,7 @@ impl BuildScanService {
                             succeeded,
                             archive_size: cache_op.archive_size,
                             cache_key: cache_op.cache_key.clone(),
+                            duration_ms: cache_op.duration_ms,
                         };
                         db::insert_cache_operation(&mut *tx, &domain_op)
                             .await

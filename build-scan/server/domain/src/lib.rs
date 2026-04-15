@@ -406,4 +406,5 @@ pub struct CacheOperation {
     pub succeeded: bool,
     pub archive_size: Option<i64>,
     pub cache_key: Option<String>,
+    pub duration_ms: Option<i64>,
 }

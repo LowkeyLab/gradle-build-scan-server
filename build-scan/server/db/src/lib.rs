@@ -62,6 +62,7 @@ struct CacheOperationRow {
     succeeded: i64,
     archive_size: Option<i64>,
     cache_key: Option<String>,
+    duration_ms: Option<i64>,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -286,6 +287,7 @@ impl TryFrom<CacheOperationRow> for domain::CacheOperation {
             succeeded: row.succeeded != 0,
             archive_size: row.archive_size,
             cache_key: row.cache_key,
+            duration_ms: row.duration_ms,
         })
     }
 }
@@ -299,6 +301,7 @@ impl From<&domain::CacheOperation> for CacheOperationRow {
             succeeded: if op.succeeded { 1 } else { 0 },
             archive_size: op.archive_size,
             cache_key: op.cache_key.clone(),
+            duration_ms: op.duration_ms,
         }
     }
 }
@@ -549,8 +552,8 @@ pub async fn insert_cache_operation<'c, E: sqlx::Executor<'c, Database = sqlx::S
 ) -> Result<()> {
     let row = CacheOperationRow::from(op);
     sqlx::query(
-        "INSERT INTO task_cache_operations (id, task_id, operation_type, succeeded, archive_size, cache_key) \
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO task_cache_operations (id, task_id, operation_type, succeeded, archive_size, cache_key, duration_ms) \
+         VALUES (?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&row.id)
     .bind(&row.task_id)
@@ -558,6 +561,7 @@ pub async fn insert_cache_operation<'c, E: sqlx::Executor<'c, Database = sqlx::S
     .bind(row.succeeded)
     .bind(row.archive_size)
     .bind(row.cache_key.as_deref())
+    .bind(row.duration_ms)
     .execute(executor)
     .await?;
     Ok(())
@@ -568,7 +572,7 @@ pub async fn list_cache_operations(
     task_id: &str,
 ) -> Result<Vec<domain::CacheOperation>> {
     let rows = sqlx::query_as::<_, CacheOperationRow>(
-        "SELECT id, task_id, operation_type, succeeded, archive_size, cache_key \
+        "SELECT id, task_id, operation_type, succeeded, archive_size, cache_key, duration_ms \
          FROM task_cache_operations WHERE task_id = ? ORDER BY rowid",
     )
     .bind(task_id)

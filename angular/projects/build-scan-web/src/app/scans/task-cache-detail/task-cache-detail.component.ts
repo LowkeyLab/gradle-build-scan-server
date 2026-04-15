@@ -24,6 +24,7 @@ interface CacheOperation {
   succeeded: boolean;
   archiveSize: number | null;
   cacheKey: string | null;
+  durationMs: number | null;
 }
 
 @Component({
@@ -154,8 +155,15 @@ export class TaskCacheDetailComponent {
       RemoteStore: "Remote store",
     };
     const label = labels[op.operationType] ?? op.operationType;
+    const parts: string[] = [];
     if (op.archiveSize && op.archiveSize > 0) {
-      return prefix + " " + label + " (" + formatBytes(op.archiveSize) + ")";
+      parts.push(formatBytes(op.archiveSize));
+    }
+    if (op.durationMs != null) {
+      parts.push(this.formatMs(op.durationMs));
+    }
+    if (parts.length > 0) {
+      return prefix + " " + label + " (" + parts.join(", ") + ")";
     }
     return prefix + " " + label;
   }
