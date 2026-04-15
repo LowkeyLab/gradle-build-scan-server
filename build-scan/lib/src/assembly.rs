@@ -494,7 +494,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         let finished = cache_op_finished.get(op_id);
         let duration_ms = finished
             .and_then(|f| f.finished_timestamp)
-            .map(|ft| ft - started_timestamp);
+            .map(|ft| (ft - started_timestamp).max(0));
         let op = CacheOperation {
             operation_type: op_type.clone(),
             cache_key: cache_key.clone(),
@@ -947,9 +947,76 @@ mod tests {
         assert_eq!(op.hit, Some(true));
         assert_eq!(op.archive_size, Some(8192));
         assert_eq!(op.failure_id, None);
+        assert_eq!(op.duration_ms, Some(500)); // 3000 - 2500
         assert_eq!(op.stored, None);
         assert_eq!(op.remote_cache_location, None);
         assert_eq!(op.rejected_reason, None);
+    }
+
+    #[test]
+    fn test_assemble_cache_operation_duration_none_when_finished_missing() {
+        use events::{BuildCacheLocalLoadStartedEvent, TaskFinishedEvent, TaskIdentityEvent, TaskStartedEvent};
+        use models::CacheOperationType;
+
+        let task_id = TaskId::new(99);
+        let work_id: i64 = 99;
+        let op_id: i64 = 200;
+
+        let events = vec![
+            (
+                frame(117, 1000),
+                DecodedEvent::TaskIdentity(TaskIdentityEvent {
+                    id: task_id,
+                    build_path: ":".into(),
+                    task_path: ":app:test".into(),
+                }),
+            ),
+            (
+                frame(1563, 2000),
+                DecodedEvent::TaskStarted(TaskStartedEvent {
+                    id: task_id,
+                    build_path: ":".into(),
+                    path: ":app:test".into(),
+                    class_name: None,
+                }),
+            ),
+            (
+                frame(2074, 5000),
+                DecodedEvent::TaskFinished(TaskFinishedEvent {
+                    id: task_id,
+                    path: ":app:test".into(),
+                    outcome: Some(3),
+                    cacheable: Some(true),
+                    caching_disabled_reason_category: None,
+                    caching_disabled_explanation: None,
+                    origin_build_invocation_id: None,
+                    origin_build_cache_key: None,
+                    origin_execution_time: None,
+                    actionable: Some(true),
+                    skip_reason_message: None,
+                    up_to_date_messages: None,
+                }),
+            ),
+            (
+                frame(144, 3000),
+                DecodedEvent::BuildCacheLocalLoadStarted(BuildCacheLocalLoadStartedEvent {
+                    work_id,
+                    id: op_id,
+                    cache_key: Some("def456".into()),
+                }),
+            ),
+            // No BuildCacheLocalLoadFinished event — simulates truncated/incomplete scan
+        ];
+
+        let payload = assemble(events);
+        assert_eq!(payload.tasks.len(), 1);
+        let task = &payload.tasks[0];
+        assert_eq!(task.cache_operations.len(), 1);
+
+        let op = &task.cache_operations[0];
+        assert_eq!(op.operation_type, CacheOperationType::LocalLoad);
+        assert_eq!(op.duration_ms, None); // No finished event → no duration
+        assert_eq!(op.hit, None);
     }
 
     #[test]
