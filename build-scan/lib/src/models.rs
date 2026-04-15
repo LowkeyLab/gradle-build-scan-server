@@ -109,6 +109,8 @@ pub struct CacheOperation {
     pub remote_cache_location: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

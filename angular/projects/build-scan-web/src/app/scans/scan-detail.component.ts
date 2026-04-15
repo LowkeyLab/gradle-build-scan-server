@@ -63,6 +63,7 @@ const GET_BUILD_SCAN = gql`
               succeeded
               archiveSize
               cacheKey
+              durationMs
             }
           }
           cursor

@@ -13,6 +13,7 @@ function buildTaskEdge(
       cacheable: null,
       cachingDisabledReason: null,
       originExecutionTime: null,
+      cacheOperations: null,
       ...overrides,
     },
   };
@@ -71,7 +72,7 @@ describe("CacheBreakdownComponent", () => {
   it("should show legend entries for present categories only", () => {
     render([buildTaskEdge("FromCache"), buildTaskEdge("UpToDate")]);
     const legendItems = fixture.nativeElement.querySelectorAll(
-      ".flex.flex-wrap .flex.items-center",
+      ".flex.flex-wrap:not([data-testid='tier-breakdown']) .flex.items-center",
     );
     expect(legendItems.length).toBe(2);
     const labels = Array.from(legendItems).map((el: any) =>

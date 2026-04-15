@@ -55,6 +55,16 @@ pub static MIGRATOR: Migrator = Migrator {
             checksum: Cow::Borrowed(&[]),
             no_tx: false,
         },
+        Migration {
+            version: 7,
+            description: Cow::Borrowed("add duration_ms to cache operations"),
+            migration_type: MigrationType::Simple,
+            sql: Cow::Borrowed(include_str!(
+                "sql/007_add_duration_ms_to_cache_operations.sql"
+            )),
+            checksum: Cow::Borrowed(&[]),
+            no_tx: false,
+        },
     ]),
     ignore_missing: false,
     locking: true,

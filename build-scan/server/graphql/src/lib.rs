@@ -337,6 +337,10 @@ impl CacheOperation {
     fn cache_key(&self) -> Option<&str> {
         self.op.cache_key.as_deref()
     }
+
+    fn duration_ms(&self) -> Option<f64> {
+        self.op.duration_ms.map(|d| d as f64)
+    }
 }
 
 // ---------------------------------------------------------------------------
