@@ -1,5 +1,24 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":approveMajorUpdates", ":automergeAll"],
+  "packageRules": [
+    {
+      "matchManagers": ["bazel-module"],
+      "matchDatasources": ["maven"],
+      "postUpgradeTasks": {
+        "commands": ["env REPIN=1 bazel run @maven//:pin"],
+        "fileFilters": ["maven_install.json"],
+        "executionMode": "update"
+      }
+    },
+    {
+      "matchManagers": ["cargo"],
+      "postUpgradeTasks": {
+        "commands": ["bazel mod deps --lockfile_mode=update"],
+        "fileFilters": ["MODULE.bazel.lock"],
+        "executionMode": "update"
+      }
+    }
+  ],
   "postUpdateOptions": ["gomodTidy"]
 }
