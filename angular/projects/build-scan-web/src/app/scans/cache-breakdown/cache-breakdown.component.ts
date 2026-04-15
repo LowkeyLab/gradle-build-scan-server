@@ -97,7 +97,7 @@ const CATEGORY_ORDER = [
                 </div>
               </div>
             }
-            <div class="mt-3 flex flex-wrap gap-2">
+            <div class="mt-3 flex flex-wrap gap-2" data-testid="tier-breakdown">
               <div class="flex items-center gap-1.5 text-sm">
                 <span class="badge badge-sm badge-success">{{ tierBreakdown().localHits }}</span>
                 <span class="opacity-70">Local hits</span>
