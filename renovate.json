@@ -3,15 +3,6 @@
   "extends": ["config:recommended", ":approveMajorUpdates", ":automergeAll"],
   "packageRules": [
     {
-      "matchManagers": ["bazel-module"],
-      "matchDatasources": ["maven"],
-      "postUpgradeTasks": {
-        "commands": ["env REPIN=1 bazel run @maven//:pin"],
-        "fileFilters": ["maven_install.json"],
-        "executionMode": "update"
-      }
-    },
-    {
       "matchManagers": ["cargo"],
       "postUpgradeTasks": {
         "commands": ["bazel mod deps --lockfile_mode=update"],
