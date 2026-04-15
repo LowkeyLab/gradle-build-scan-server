@@ -57,6 +57,7 @@ pub struct PendingUpload {
     pub build_tool_type: Option<String>,
     pub build_tool_version: Option<String>,
     pub plugin_version: Option<String>,
+    pub payload_size: Option<u64>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -137,6 +138,7 @@ pub async fn handle_token_request(
         build_tool_type: token_request.build_tool_type.or(Some(tool_type.clone())),
         build_tool_version: token_request.build_tool_version,
         plugin_version: token_request.build_agent_version.or(Some(version.clone())),
+        payload_size: token_request.payload_size,
     };
     state.ingest.insert_pending(pending);
 
@@ -198,6 +200,24 @@ pub async fn handle_scan_upload(
         .and_then(|bytes| String::from_utf8(bytes).ok())
         .unwrap_or(raw_token);
 
+    let content_type = headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if !content_type.starts_with(mime::SCAN) {
+        let failure = UploadFailure {
+            message: format!("Expected Content-Type starting with {}", mime::SCAN),
+            retry: false,
+        };
+        let body = serde_json::to_vec(&failure).unwrap_or_default();
+        return axum::http::Response::builder()
+            .status(StatusCode::UNSUPPORTED_MEDIA_TYPE)
+            .header("Content-Type", mime::SCAN_UPLOAD_FAILURE)
+            .body(axum::body::Body::from(body))
+            .expect("response builder should not fail");
+    }
+
     let pending = match state.ingest.take_pending(&upload_token) {
         Some(p) => p,
         None => {
@@ -213,6 +233,25 @@ pub async fn handle_scan_upload(
                 .expect("response builder should not fail");
         }
     };
+
+    if let Some(expected_size) = pending.payload_size {
+        let actual_size = body.len() as u64;
+        if actual_size > expected_size {
+            state.ingest.put_pending(pending);
+            let failure = UploadFailure {
+                message: format!(
+                    "Payload size {actual_size} exceeds declared size {expected_size}"
+                ),
+                retry: true,
+            };
+            let body = serde_json::to_vec(&failure).unwrap_or_default();
+            return axum::http::Response::builder()
+                .status(StatusCode::PAYLOAD_TOO_LARGE)
+                .header("Content-Type", mime::SCAN_UPLOAD_FAILURE)
+                .body(axum::body::Body::from(body))
+                .expect("response builder should not fail");
+        }
+    }
 
     let req = UploadRequest {
         scan_id: pending.scan_id,
