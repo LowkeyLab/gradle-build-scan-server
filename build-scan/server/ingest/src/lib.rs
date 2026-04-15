@@ -205,9 +205,9 @@ pub async fn handle_scan_upload(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
 
-    if content_type != mime::SCAN {
+    if !content_type.starts_with(mime::SCAN) {
         let failure = UploadFailure {
-            message: format!("Expected Content-Type {}", mime::SCAN),
+            message: format!("Expected Content-Type starting with {}", mime::SCAN),
             retry: false,
         };
         let body = serde_json::to_vec(&failure).unwrap_or_default();
