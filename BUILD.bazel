@@ -4,6 +4,18 @@ load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@gazelle//:def.bzl", "DEFAULT_LANGUAGES", "gazelle", "gazelle_binary")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 
+# Platform definition for rules_rs experimental toolchains.
+# The toolchains require libc constraint values that the default host platform
+# does not provide.
+platform(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:gnu.2.28",
+    ],
+)
+
 npm_link_all_packages(name = "node_modules")
 
 exports_files(
