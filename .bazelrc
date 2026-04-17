@@ -3,6 +3,11 @@ try-import %workspace%/tools/java17.bazelrc
 
 ### YOUR PROJECT SPECIFIC OPTIONS GO HERE ###
 
+# Platform for rules_rs experimental toolchains (requires libc constraint)
+common --platforms=//:linux_x86_64
+common --extra_execution_platforms=//:linux_x86_64
+common --host_platform=//:linux_x86_64
+
 # https://github.com/aspect-build/rules_lint/issues/741
 common:lint --nobuild_event_binary_file_path_conversion
 common:ci --remote_download_toplevel
