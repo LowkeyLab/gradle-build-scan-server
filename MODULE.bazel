@@ -45,7 +45,7 @@ use_repo(multitool, "multitool")
 # rules_rs v0.0.56+ bundles its own internal rules_rust; provision @rules_rust
 # from it so BUILD files and crate toolchain types share the same module.
 bazel_dep(name = "rules_rs", version = "0.0.58")
-bazel_dep(name = "llvm", version = "0.7.0")
+bazel_dep(name = "llvm", version = "0.7.1")
 
 rules_rust = use_extension("@rules_rs//rs/experimental:rules_rust.bzl", "rules_rust")
 use_repo(rules_rust, "rules_rust")
