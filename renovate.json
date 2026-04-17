@@ -9,6 +9,15 @@
         "fileFilters": ["MODULE.bazel.lock"],
         "executionMode": "update"
       }
+    },
+    {
+      "matchManagers": ["bazel_module"],
+      "matchPackageNames": ["bazelrc-preset"],
+      "postUpgradeTasks": {
+        "commands": ["bazel run //tools:preset.update"],
+        "fileFilters": ["tools/preset.bazelrc"],
+        "executionMode": "update"
+      }
     }
   ],
   "postUpdateOptions": ["gomodTidy"]
