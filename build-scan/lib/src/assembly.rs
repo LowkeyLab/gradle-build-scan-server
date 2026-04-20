@@ -31,8 +31,10 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     // Test events are strictly interleaved: each TestCase is followed by its TestResult.
     // We collect all TestCase events (including non-method metadata) and all TestResult events
     // in order, then pair them positionally to assign outcomes.
-    let mut all_test_cases: Vec<Option<models::TestCase>> = Vec::new();
-    let mut test_results: Vec<models::TestOutcome> = Vec::new();
+    // Each entry stores (Option<TestCase>, frame_timestamp) — timestamps are stored for ALL
+    // events including None placeholders to maintain positional alignment.
+    let mut all_test_cases: Vec<(Option<models::TestCase>, i64)> = Vec::new();
+    let mut test_results: Vec<(models::TestOutcome, i64, Option<models::FailureId>)> = Vec::new();
     let mut executor_names: HashMap<models::ExecutorId, String> = HashMap::new();
     let mut task_registration_summary: Option<events::TaskRegistrationSummaryEvent> = None;
     let mut basic_memory_stats: Option<events::BasicMemoryStatsEvent> = None;
@@ -177,16 +179,18 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         .executor_name
                         .clone()
                         .or_else(|| executor_names.get(&e.executor_id).cloned());
-                    all_test_cases.push(Some(models::TestCase {
+                    all_test_cases.push((Some(models::TestCase {
                         class_name: e.class_name.clone(),
                         method_name: e.method_name.clone(),
                         executor_name,
                         outcome: None,
-                    }));
+                        duration_ms: None,
+                        failure_id: None,
+                    }), frame.timestamp));
                 } else {
                     // Non-method event (class-level or executor-init): placeholder to
                     // keep positional alignment with TestResult events.
-                    all_test_cases.push(None);
+                    all_test_cases.push((None, frame.timestamp));
                 }
             }
             DecodedEvent::TestExecutorStarted(_) => {}
@@ -199,7 +203,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 } else {
                     models::TestOutcome::Passed
                 };
-                test_results.push(outcome);
+                test_results.push((outcome, frame.timestamp, e.failure_id));
             }
             DecodedEvent::BuildCacheLocalLoadStarted(e) => {
                 cache_op_started.insert(
@@ -598,9 +602,14 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         .map(Some)
                         .chain(std::iter::repeat(None)),
                 )
-                .filter_map(|(tc, outcome)| {
+                .filter_map(|((tc, case_timestamp), result)| {
                     tc.map(|mut test_case| {
-                        test_case.outcome = outcome;
+                        if let Some((outcome, result_timestamp, failure_id)) = result {
+                            test_case.outcome = Some(outcome);
+                            let duration = result_timestamp - case_timestamp;
+                            test_case.duration_ms = if duration >= 0 { Some(duration) } else { None };
+                            test_case.failure_id = failure_id;
+                        }
                         test_case
                     })
                 })
@@ -729,6 +738,7 @@ mod tests {
                     id: 100,
                     failed: false,
                     skipped: false,
+                    failure_id: None,
                 }),
             ),
             (
@@ -747,6 +757,7 @@ mod tests {
                     id: 101,
                     failed: false,
                     skipped: false,
+                    failure_id: None,
                 }),
             ),
         ];
@@ -784,6 +795,7 @@ mod tests {
                     id: 100,
                     failed: false,
                     skipped: false,
+                    failure_id: None,
                 }),
             ),
             (
@@ -802,6 +814,7 @@ mod tests {
                     id: 200,
                     failed: true,
                     skipped: false,
+                    failure_id: Some(models::FailureId::new(42)),
                 }),
             ),
         ];
@@ -817,6 +830,41 @@ mod tests {
             "expected Failed, got {:?}",
             payload.tests[1].outcome
         );
+        // Duration is computed from frame timestamp deltas
+        assert_eq!(payload.tests[0].duration_ms, Some(1), "testPass: 1001 - 1000 = 1ms");
+        assert_eq!(payload.tests[1].duration_ms, Some(1), "testFail: 2001 - 2000 = 1ms");
+        // failure_id is propagated from TestResult
+        assert!(payload.tests[0].failure_id.is_none(), "passing test should have no failure_id");
+        assert_eq!(payload.tests[1].failure_id, Some(models::FailureId::new(42)));
+    }
+
+    #[test]
+    fn test_assemble_test_duration_negative_is_none() {
+        // If result timestamp < case timestamp (shouldn't happen but defensive), duration is None
+        let events = vec![
+            (
+                frame(798, 5000),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: ExecutorId::new(1),
+                    class_name: "org.example.Test".into(),
+                    method_name: Some("test()".into()),
+                    executor_name: None,
+                }),
+            ),
+            (
+                frame(284, 4000), // timestamp before TestCase
+                DecodedEvent::TestResult(TestResultEvent {
+                    task: TaskId::new(1),
+                    id: 1,
+                    failed: false,
+                    skipped: false,
+                    failure_id: None,
+                }),
+            ),
+        ];
+        let payload = assemble(events);
+        assert_eq!(payload.tests.len(), 1);
+        assert_eq!(payload.tests[0].duration_ms, None, "negative duration should produce None");
     }
 
     #[test]

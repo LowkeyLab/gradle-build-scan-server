@@ -11,6 +11,7 @@ rust_library(
         "sql/005_task_cache_detail.sql",
         "sql/006_task_cache_operations.sql",
         "sql/007_add_duration_ms_to_cache_operations.sql",
+        "sql/008_test_duration_and_failure.sql",
     ],
     visibility = ["//visibility:public"],
     deps = ["@crates//:sqlx"],

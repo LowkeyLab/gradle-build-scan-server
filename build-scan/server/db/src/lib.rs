@@ -73,6 +73,9 @@ struct TestRow {
     method_name: Option<String>,
     executor_name: Option<String>,
     outcome: Option<String>,
+    duration_ms: Option<i64>,
+    failure_message: Option<String>,
+    failure_stacktrace: Option<String>,
 }
 
 fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>> {
@@ -248,6 +251,9 @@ impl TryFrom<TestRow> for domain::Test {
             method_name: row.method_name.map(domain::MethodName),
             executor_name: row.executor_name.map(domain::ExecutorName),
             outcome,
+            duration_ms: row.duration_ms,
+            failure_message: row.failure_message,
+            failure_stacktrace: row.failure_stacktrace,
         })
     }
 }
@@ -261,6 +267,9 @@ impl From<&domain::Test> for TestRow {
             method_name: test.method_name.as_ref().map(|m| m.0.clone()),
             executor_name: test.executor_name.as_ref().map(|e| e.0.clone()),
             outcome: test.outcome.map(|o| o.to_string()),
+            duration_ms: test.duration_ms,
+            failure_message: test.failure_message.clone(),
+            failure_stacktrace: test.failure_stacktrace.clone(),
         }
     }
 }
@@ -482,8 +491,8 @@ pub async fn insert_test<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
 ) -> Result<()> {
     let row = TestRow::from(test);
     sqlx::query(
-        "INSERT INTO tests (id, scan_id, class_name, method_name, executor_name, outcome) \
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tests (id, scan_id, class_name, method_name, executor_name, outcome, duration_ms, failure_message, failure_stacktrace) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&row.id)
     .bind(&row.scan_id)
@@ -491,6 +500,9 @@ pub async fn insert_test<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     .bind(row.method_name.as_deref())
     .bind(row.executor_name.as_deref())
     .bind(row.outcome.as_deref())
+    .bind(row.duration_ms)
+    .bind(row.failure_message.as_deref())
+    .bind(row.failure_stacktrace.as_deref())
     .execute(executor)
     .await?;
     Ok(())
@@ -504,7 +516,7 @@ pub async fn list_tests(
 ) -> Result<Vec<domain::Test>> {
     let rows = if let Some(cursor) = after_id {
         sqlx::query_as::<_, TestRow>(
-            "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+            "SELECT id, scan_id, class_name, method_name, executor_name, outcome, duration_ms, failure_message, failure_stacktrace \
              FROM tests WHERE scan_id = ? AND id > ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -514,7 +526,7 @@ pub async fn list_tests(
         .await?
     } else {
         sqlx::query_as::<_, TestRow>(
-            "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+            "SELECT id, scan_id, class_name, method_name, executor_name, outcome, duration_ms, failure_message, failure_stacktrace \
              FROM tests WHERE scan_id = ? ORDER BY id LIMIT ?",
         )
         .bind(scan_id)
@@ -537,13 +549,52 @@ pub async fn count_tests(pool: &SqlitePool, scan_id: &str) -> Result<i64> {
 
 pub async fn get_test(pool: &SqlitePool, id: &str) -> Result<Option<domain::Test>> {
     let row = sqlx::query_as::<_, TestRow>(
-        "SELECT id, scan_id, class_name, method_name, executor_name, outcome \
+        "SELECT id, scan_id, class_name, method_name, executor_name, outcome, duration_ms, failure_message, failure_stacktrace \
          FROM tests WHERE id = ?",
     )
     .bind(id)
     .fetch_optional(pool)
     .await?;
     row.map(domain::Test::try_from).transpose()
+}
+
+pub async fn test_summary(pool: &SqlitePool, scan_id: &str) -> Result<domain::TestSummary> {
+    #[derive(sqlx::FromRow)]
+    struct SummaryRow {
+        outcome: Option<String>,
+        count: i64,
+        total_duration_ms: Option<i64>,
+    }
+    let rows = sqlx::query_as::<_, SummaryRow>(
+        "SELECT outcome, COUNT(*) as count, SUM(duration_ms) as total_duration_ms \
+         FROM tests WHERE scan_id = ? GROUP BY outcome",
+    )
+    .bind(scan_id)
+    .fetch_all(pool)
+    .await?;
+
+    let mut passed = 0i64;
+    let mut failed = 0i64;
+    let mut skipped = 0i64;
+    let mut total_duration_ms: Option<i64> = None;
+    for row in rows {
+        let count = row.count;
+        if let Some(duration) = row.total_duration_ms {
+            *total_duration_ms.get_or_insert(0) += duration;
+        }
+        match row.outcome.as_deref() {
+            Some("Passed") => passed = count,
+            Some("Failed") => failed = count,
+            Some("Skipped") => skipped = count,
+            _ => {}
+        }
+    }
+    Ok(domain::TestSummary {
+        passed,
+        failed,
+        skipped,
+        total_duration_ms,
+    })
 }
 
 pub async fn insert_cache_operation<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(

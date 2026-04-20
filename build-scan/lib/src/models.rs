@@ -393,4 +393,8 @@ pub struct TestCase {
     pub executor_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcome: Option<TestOutcome>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub failure_id: Option<FailureId>,
 }

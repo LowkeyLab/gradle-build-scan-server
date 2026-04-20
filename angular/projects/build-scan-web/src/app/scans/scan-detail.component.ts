@@ -73,6 +73,12 @@ const GET_BUILD_SCAN = gql`
           endCursor
         }
       }
+      testSummary @include(if: $includeTests) {
+        passed
+        failed
+        skipped
+        totalDurationMs
+      }
       tests(first: $firstTests, after: $afterTests)
         @include(if: $includeTests) {
         edges {
@@ -82,6 +88,9 @@ const GET_BUILD_SCAN = gql`
             methodName
             executorName
             outcome
+            durationMs
+            failureMessage
+            failureStacktrace
           }
           cursor
         }
@@ -135,6 +144,7 @@ const GET_BUILD_SCAN = gql`
               <app-tests-table
                 [testEdges]="scan.tests.edges"
                 [testCount]="scan.testCount"
+                [testSummary]="scan.testSummary"
               />
             </section>
           }
