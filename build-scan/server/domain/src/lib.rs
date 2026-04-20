@@ -396,6 +396,20 @@ pub struct Test {
     pub executor_name: Option<ExecutorName>,
     #[builder(setter(strip_option), default)]
     pub outcome: Option<TestOutcome>,
+    #[builder(setter(strip_option), default)]
+    pub duration_ms: Option<i64>,
+    #[builder(setter(strip_option), default)]
+    pub failure_message: Option<String>,
+    #[builder(setter(strip_option), default)]
+    pub failure_stacktrace: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TestSummary {
+    pub passed: i64,
+    pub failed: i64,
+    pub skipped: i64,
+    pub total_duration_ms: Option<i64>,
 }
 
 #[derive(Debug, Clone)]

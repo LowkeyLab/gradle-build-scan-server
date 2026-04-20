@@ -250,6 +250,9 @@ impl BuildScanService {
                     if let Some(o) = &test.outcome {
                         test_builder.outcome(map_test_outcome(o));
                     }
+                    if let Some(d) = test.duration_ms {
+                        test_builder.duration_ms(d);
+                    }
 
                     let domain_test = test_builder
                         .build()
@@ -315,6 +318,10 @@ impl BuildScanService {
 
     pub async fn count_tests(&self, scan_id: &str) -> Result<i64> {
         db::count_tests(&self.pool, scan_id).await
+    }
+
+    pub async fn test_summary(&self, scan_id: &str) -> Result<domain::TestSummary> {
+        db::test_summary(&self.pool, scan_id).await
     }
 
     pub async fn get_test(&self, id: &str) -> Result<Option<domain::Test>> {

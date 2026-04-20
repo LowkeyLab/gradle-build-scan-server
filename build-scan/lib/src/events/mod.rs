@@ -478,6 +478,7 @@ pub struct TestResultEvent {
     pub id: i64,
     pub failed: bool,
     pub skipped: bool,
+    pub failure_id: Option<FailureId>,
 }
 
 #[derive(Debug, Clone)]

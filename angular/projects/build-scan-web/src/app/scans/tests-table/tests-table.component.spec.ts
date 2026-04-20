@@ -10,6 +10,9 @@ function buildTestEdge(overrides: Record<string, unknown> = {}) {
       methodName: "testSomething",
       executorName: "Gradle Test Executor 1",
       outcome: "Passed",
+      durationMs: 123,
+      failureMessage: null,
+      failureStacktrace: null,
       ...overrides,
     },
     cursor: "tc1",
@@ -51,6 +54,7 @@ describe("TestsTableComponent", () => {
       "Class Name",
       "Method Name",
       "Outcome",
+      "Duration",
       "Executor",
     ]);
   });
@@ -61,7 +65,8 @@ describe("TestsTableComponent", () => {
     expect(cells[0].textContent.trim()).toBe("com.example.FooTest");
     expect(cells[1].textContent.trim()).toBe("testSomething");
     expect(cells[2].textContent).toContain("Passed");
-    expect(cells[3].textContent.trim()).toBe("Gradle Test Executor 1");
+    expect(cells[3].textContent.trim()).toBe("123ms");
+    expect(cells[4].textContent.trim()).toBe("Gradle Test Executor 1");
   });
 
   it("should apply badge-success for Passed outcome", () => {
@@ -91,7 +96,19 @@ describe("TestsTableComponent", () => {
   it("should show dash for null executorName", () => {
     render([buildTestEdge({ executorName: null })]);
     const cells = fixture.nativeElement.querySelectorAll("tbody td");
+    expect(cells[4].textContent.trim()).toBe("—");
+  });
+
+  it("should show dash for null durationMs", () => {
+    render([buildTestEdge({ durationMs: null })]);
+    const cells = fixture.nativeElement.querySelectorAll("tbody td");
     expect(cells[3].textContent.trim()).toBe("—");
+  });
+
+  it("should format duration in seconds for large values", () => {
+    render([buildTestEdge({ durationMs: 1500 })]);
+    const cells = fixture.nativeElement.querySelectorAll("tbody td");
+    expect(cells[3].textContent.trim()).toBe("1.50s");
   });
 
   it("should render multiple test rows", () => {
@@ -104,11 +121,32 @@ describe("TestsTableComponent", () => {
           methodName: "testOther",
           executorName: null,
           outcome: "Failed",
+          durationMs: 50,
+          failureMessage: "expected true but was false",
+          failureStacktrace: "at com.example.BarTest.testOther(BarTest.java:10)",
         },
         cursor: "tc2",
       },
     ]);
     const rows = fixture.nativeElement.querySelectorAll("tbody tr");
     expect(rows.length).toBe(2);
+  });
+
+  it("should show summary stats when testSummary is provided", () => {
+    fixture.componentRef.setInput("testEdges", [buildTestEdge()]);
+    fixture.componentRef.setInput("testCount", 1);
+    fixture.componentRef.setInput("testSummary", {
+      passed: 5,
+      failed: 2,
+      skipped: 1,
+      totalDurationMs: 3000,
+    });
+    fixture.detectChanges();
+    const badges = fixture.nativeElement.querySelectorAll(".badge-lg");
+    expect(badges.length).toBe(4);
+    expect(badges[0].textContent).toContain("5 passed");
+    expect(badges[1].textContent).toContain("2 failed");
+    expect(badges[2].textContent).toContain("1 skipped");
+    expect(badges[3].textContent).toContain("3.00s total");
   });
 });

@@ -168,6 +168,15 @@ impl BuildScan {
         Ok(count)
     }
 
+    async fn test_summary(&self, context: &Context) -> FieldResult<TestSummary> {
+        let summary = context
+            .service
+            .test_summary(&self.scan.id.0.to_string())
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+        Ok(TestSummary { summary })
+    }
+
     async fn tests(
         &self,
         context: &Context,
@@ -379,6 +388,45 @@ impl Test {
 
     fn outcome(&self) -> Option<String> {
         self.test.outcome.map(|o| o.to_string())
+    }
+
+    fn duration_ms(&self) -> Option<i32> {
+        self.test.duration_ms.map(|d| d as i32)
+    }
+
+    fn failure_message(&self) -> Option<&str> {
+        self.test.failure_message.as_deref()
+    }
+
+    fn failure_stacktrace(&self) -> Option<&str> {
+        self.test.failure_stacktrace.as_deref()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TestSummary type
+// ---------------------------------------------------------------------------
+
+pub struct TestSummary {
+    pub summary: domain::TestSummary,
+}
+
+#[graphql_object(context = Context)]
+impl TestSummary {
+    fn passed(&self) -> i32 {
+        self.summary.passed as i32
+    }
+
+    fn failed(&self) -> i32 {
+        self.summary.failed as i32
+    }
+
+    fn skipped(&self) -> i32 {
+        self.summary.skipped as i32
+    }
+
+    fn total_duration_ms(&self) -> Option<i32> {
+        self.summary.total_duration_ms.map(|d| d as i32)
     }
 }
 

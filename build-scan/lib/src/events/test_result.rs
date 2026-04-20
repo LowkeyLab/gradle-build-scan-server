@@ -1,5 +1,5 @@
 use error::ParseError;
-use models::TaskId;
+use models::{FailureId, TaskId};
 
 use super::{BodyDecoder, DecodedEvent, TestResultEvent};
 
@@ -43,17 +43,18 @@ impl BodyDecoder for TestResultDecoder {
         let skipped = kryo::is_field_present(flags as u16, 3);
 
         // Bit 4 indicates the presence of a failureId field in the wire format.
-        // We read-and-discard it because the bytes must be consumed to keep `pos`
-        // correct, but no downstream consumer currently uses failureId.
-        if kryo::is_field_present(flags as u16, 4) {
-            let _failure_id = kryo::read_task_id(body, &mut pos)?;
-        }
+        let failure_id = if kryo::is_field_present(flags as u16, 4) {
+            Some(FailureId::new(kryo::read_task_id(body, &mut pos)?))
+        } else {
+            None
+        };
 
         Ok(DecodedEvent::TestResult(TestResultEvent {
             task,
             id,
             failed,
             skipped,
+            failure_id,
         }))
     }
 }
@@ -78,6 +79,7 @@ mod tests {
             assert_eq!(e.id, 100);
             assert!(!e.failed);
             assert!(!e.skipped);
+            assert!(e.failure_id.is_none());
         } else {
             panic!("expected TestResult");
         }
@@ -140,6 +142,7 @@ mod tests {
         if let DecodedEvent::TestResult(e) = result {
             assert!(e.failed);
             assert!(!e.skipped);
+            assert_eq!(e.failure_id, Some(FailureId::new(999)));
         } else {
             panic!("expected TestResult");
         }

@@ -65,6 +65,16 @@ pub static MIGRATOR: Migrator = Migrator {
             checksum: Cow::Borrowed(&[]),
             no_tx: false,
         },
+        Migration {
+            version: 8,
+            description: Cow::Borrowed("add test duration and failure details"),
+            migration_type: MigrationType::Simple,
+            sql: Cow::Borrowed(include_str!(
+                "sql/008_test_duration_and_failure.sql"
+            )),
+            checksum: Cow::Borrowed(&[]),
+            no_tx: false,
+        },
     ]),
     ignore_missing: false,
     locking: true,
