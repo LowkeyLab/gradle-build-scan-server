@@ -73,7 +73,7 @@ const GET_BUILD_SCAN = gql`
           endCursor
         }
       }
-      testSummary {
+      testSummary @include(if: $includeTests) {
         passed
         failed
         skipped

@@ -390,8 +390,14 @@ impl Test {
         self.test.outcome.map(|o| o.to_string())
     }
 
-    fn duration_ms(&self) -> Option<i32> {
-        self.test.duration_ms.map(|d| d as i32)
+    fn duration_ms(&self) -> FieldResult<Option<i32>> {
+        self.test
+            .duration_ms
+            .map(|d| {
+                i32::try_from(d)
+                    .map_err(|_| FieldError::from("duration_ms exceeds GraphQL Int range"))
+            })
+            .transpose()
     }
 
     fn failure_message(&self) -> Option<&str> {
@@ -425,8 +431,14 @@ impl TestSummary {
         self.summary.skipped as i32
     }
 
-    fn total_duration_ms(&self) -> Option<i32> {
-        self.summary.total_duration_ms.map(|d| d as i32)
+    fn total_duration_ms(&self) -> FieldResult<Option<i32>> {
+        self.summary
+            .total_duration_ms
+            .map(|d| {
+                i32::try_from(d)
+                    .map_err(|_| FieldError::from("total_duration_ms exceeds GraphQL Int range"))
+            })
+            .transpose()
     }
 }
 

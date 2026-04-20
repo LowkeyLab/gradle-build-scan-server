@@ -46,7 +46,11 @@ import {
             @for (edge of testEdges(); track edge.node.id) {
               <tr
                 [class.cursor-pointer]="edge.node.outcome === 'Failed' && edge.node.failureMessage"
-                (click)="toggleExpanded(edge.node.id)"
+                [attr.tabindex]="edge.node.outcome === 'Failed' && edge.node.failureMessage ? '0' : null"
+                [attr.aria-expanded]="edge.node.outcome === 'Failed' && edge.node.failureMessage ? expandedIds().has(edge.node.id) : null"
+                (click)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
+                (keydown.enter)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
+                (keydown.space)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
               >
                 <td class="font-mono text-sm">{{ edge.node.className }}</td>
                 <td class="font-mono text-sm">

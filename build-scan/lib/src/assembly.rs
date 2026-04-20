@@ -814,7 +814,7 @@ mod tests {
                     id: 200,
                     failed: true,
                     skipped: false,
-                    failure_id: None,
+                    failure_id: Some(models::FailureId::new(42)),
                 }),
             ),
         ];
@@ -830,6 +830,41 @@ mod tests {
             "expected Failed, got {:?}",
             payload.tests[1].outcome
         );
+        // Duration is computed from frame timestamp deltas
+        assert_eq!(payload.tests[0].duration_ms, Some(1), "testPass: 1001 - 1000 = 1ms");
+        assert_eq!(payload.tests[1].duration_ms, Some(1), "testFail: 2001 - 2000 = 1ms");
+        // failure_id is propagated from TestResult
+        assert!(payload.tests[0].failure_id.is_none(), "passing test should have no failure_id");
+        assert_eq!(payload.tests[1].failure_id, Some(models::FailureId::new(42)));
+    }
+
+    #[test]
+    fn test_assemble_test_duration_negative_is_none() {
+        // If result timestamp < case timestamp (shouldn't happen but defensive), duration is None
+        let events = vec![
+            (
+                frame(798, 5000),
+                DecodedEvent::TestCase(TestCaseEvent {
+                    executor_id: ExecutorId::new(1),
+                    class_name: "org.example.Test".into(),
+                    method_name: Some("test()".into()),
+                    executor_name: None,
+                }),
+            ),
+            (
+                frame(284, 4000), // timestamp before TestCase
+                DecodedEvent::TestResult(TestResultEvent {
+                    task: TaskId::new(1),
+                    id: 1,
+                    failed: false,
+                    skipped: false,
+                    failure_id: None,
+                }),
+            ),
+        ];
+        let payload = assemble(events);
+        assert_eq!(payload.tests.len(), 1);
+        assert_eq!(payload.tests[0].duration_ms, None, "negative duration should produce None");
     }
 
     #[test]
