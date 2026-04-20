@@ -79,10 +79,12 @@ JSON.stringify({
   timeline: document.querySelector("app-task-timeline") !== null,
   cacheBreakdown: document.querySelector("app-cache-breakdown") !== null,
   tasksTable: document.querySelector("app-tasks-table") !== null,
-  testsTable: document.querySelector("app-tests-table") !== null
+  testsTable: document.querySelector("app-tests-table") !== null,
+  testDurationColumn: Array.from(document.querySelectorAll("th")).some(h => h.textContent.trim() === "Duration"),
+  testSummaryBadges: document.querySelectorAll(".badge-lg").length
 })
 EOF
-# Expected: all true
+# Expected: all true, testSummaryBadges >= 3
 
 # 4. Take a screenshot (use dark theme for visibility in headless)
 agent-browser eval 'document.documentElement.setAttribute("data-theme", "dark")'
@@ -91,6 +93,7 @@ agent-browser screenshot --full /tmp/scan-detail.png
 # 5. Clean up
 agent-browser close
 ```
+
 
 ## Adding npm Dependencies
 
