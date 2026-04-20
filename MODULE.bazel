@@ -8,8 +8,6 @@ bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_oci", version = "2.3.0")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
-bazel_dep(name = "rules_multitool", version = "1.11.1")
-bazel_dep(name = "bazel_env.bzl", version = "0.7.2")
 bazel_dep(name = "bazelrc-preset.bzl", version = "1.9.2")
 
 # We have to take a dependency on rules_python in order to set bootstrap=script
@@ -36,9 +34,6 @@ git_override(
     remote = "https://github.com/devversion/rules_angular.git",
 )
 
-multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
-multitool.hub(lockfile = "//tools:tools.lock.json")
-use_repo(multitool, "multitool")
 
 #########################
 # Support for Rust, see https://github.com/bazelbuild/rules_rust
