@@ -4,10 +4,10 @@ This repository uses [Aspect Workflows](https://aspect.build) to provide an exce
 
 ## Formatting code
 
-The `format` command is provided by the `.envrc` file, and the bazel-env.bzl setup in this repo.
+The `format` command is provided by Bazel via the `//tools/format` target.
 
-- Run `format` to re-format all files locally.
-- Run `format path/to/file` to re-format a single file.
+- Run `bazel run //tools/format` to re-format all files locally.
+- Run `bazel run //tools/format -- path/to/file` to re-format a single file.
 - Run `git config core.hooksPath githooks` to add the formatter pre-commit hook.
 - For CI verification, setup `format` task, see https://docs.aspect.build/workflows/features/lint#formatting
 
@@ -24,13 +24,11 @@ The command collects the correct report files, presents them with colored bounda
 
 ## Installing dev tools
 
-For developers to be able to run additional CLI tools without needing manual installation:
+Dev tools are provided by the Nix dev shell (see `flake.nix`). Tools are automatically available on PATH via direnv.
 
-1. Add the tool to `tools/tools.lock.json`
-2. Run <code>bazel run //tools:bazel_env</code> (following any instructions it prints)
-3. When working within the workspace, tools will be available on the PATH
-
-See https://blog.aspect.build/run-tools-installed-by-bazel for details.
+1. Install Nix with flakes enabled
+2. Run `direnv allow` in the workspace
+3. Tools will be available on the PATH automatically
 
 ## Working with Cargo
 

@@ -24,9 +24,15 @@ jobs:
             common --config=ci
             build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}
             test --test_env=XDG_CACHE_HOME
-      - name: Install tools via bazel
+      - name: Install Aspect CLI
         run: |
-          bazel run --config=quiet //tools:bazel_env print-path >> $GITHUB_PATH
+          ASPECT_VERSION="2026.4.2"
+          ASPECT_SHA256="58057a7bfb94838749cbb3fedc015baeefa1887caf00e1ed4dd5eb8ef00c6cef"
+          mkdir -p "$HOME/.local/bin"
+          curl -sSL "https://github.com/aspect-build/aspect-cli/releases/download/v${ASPECT_VERSION}/aspect-cli-x86_64-unknown-linux-musl" -o "$HOME/.local/bin/aspect"
+          echo "${ASPECT_SHA256}  $HOME/.local/bin/aspect" | sha256sum --check
+          chmod +x "$HOME/.local/bin/aspect"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify aspect CLI
         run: aspect --version
       - name: Run Bazel Lints
