@@ -23,6 +23,8 @@
       binaryReleases = {
         aspect = {
           version = "2026.4.2";
+          # Note: aspect-cli does not publish aarch64-linux binaries.
+          # The tool will be unavailable on that platform (filtered by wrappedTools).
           binaries = {
             "x86_64-linux" = {
               url = "https://github.com/aspect-build/aspect-cli/releases/download/v2026.4.2/aspect-cli-x86_64-unknown-linux-musl";
@@ -131,6 +133,7 @@
               pkgs.rustc
               pkgs.gcc
               pkgs.gradle
+              pkgs.nodejs
               pkgs.pre-commit
               pkgs.starpls
             ] ++ wrappedTools;

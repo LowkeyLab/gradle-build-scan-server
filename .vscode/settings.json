@@ -9,7 +9,7 @@
     "*.axl": "starlark"
   },
   "C_Cpp.workspaceParsingPriority": "medium",
-  "prettier.prettierPath": "prettier",
+  "prettier.prettierPath": "./node_modules/prettier",
   "bazel.buildifierFixOnFormat": true,
   "bazel.enableCodeLens": true,
   "bazel.buildifierExecutable": "buildifier",

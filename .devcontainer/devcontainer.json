@@ -4,5 +4,5 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "postCreateCommand": "direnv allow"
+  "postCreateCommand": "bash -lc 'if ! command -v nix >/dev/null 2>&1; then curl -fsSL https://install.determinate.systems/nix | sh -s -- install --no-confirm; fi && . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh && direnv allow'"
 }
