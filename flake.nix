@@ -6,6 +6,7 @@
     nix-wrapper-modules.url = "github:BirdeeHub/nix-wrapper-modules";
     nix-wrapper-modules.inputs.nixpkgs.follows = "nixpkgs";
     llm-agents.url = "github:numtide/llm-agents.nix";
+    llm-agents.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
