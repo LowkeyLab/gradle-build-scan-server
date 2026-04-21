@@ -85,6 +85,14 @@ pub struct Timestamp(pub i64);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Duration(pub i64);
 
+/// Cache archive size in bytes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ArchiveSize(pub i64);
+
+/// Test count (passed/failed/skipped totals in a test summary)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct TestCount(pub i64);
+
 // === From impls for newtype wrappers (enables derive_builder setter(into)) ===
 
 impl From<Uuid> for BuildScanId {
@@ -178,6 +186,16 @@ impl From<i64> for Timestamp {
     }
 }
 impl From<i64> for Duration {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+impl From<i64> for ArchiveSize {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+impl From<i64> for TestCount {
     fn from(v: i64) -> Self {
         Self(v)
     }
@@ -397,7 +415,7 @@ pub struct Test {
     #[builder(setter(strip_option), default)]
     pub outcome: Option<TestOutcome>,
     #[builder(setter(strip_option), default)]
-    pub duration_ms: Option<i64>,
+    pub duration_ms: Option<Duration>,
     #[builder(setter(strip_option), default)]
     pub failure_message: Option<String>,
     #[builder(setter(strip_option), default)]
@@ -406,10 +424,10 @@ pub struct Test {
 
 #[derive(Debug, Clone)]
 pub struct TestSummary {
-    pub passed: i64,
-    pub failed: i64,
-    pub skipped: i64,
-    pub total_duration_ms: Option<i64>,
+    pub passed: TestCount,
+    pub failed: TestCount,
+    pub skipped: TestCount,
+    pub total_duration_ms: Option<Duration>,
 }
 
 #[derive(Debug, Clone)]
@@ -418,7 +436,7 @@ pub struct CacheOperation {
     pub task_id: TaskId,
     pub operation_type: CacheOperationType,
     pub succeeded: bool,
-    pub archive_size: Option<i64>,
+    pub archive_size: Option<ArchiveSize>,
     pub cache_key: Option<String>,
-    pub duration_ms: Option<i64>,
+    pub duration_ms: Option<Duration>,
 }

@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use error::ParseError;
-use models::{ExecutorId, FailureId, FileRefId, TaskId, TransformId};
+use models::{
+    Duration, ExecutorId, FailureId, FileRefId, MemoryBytes, ProcessorCount, TaskCount, TaskId,
+    TransformId,
+};
 
 pub mod basic_memory_stats;
 pub mod build_agent;
@@ -338,7 +341,7 @@ pub struct FileRefRootEntry {
 
 #[derive(Debug, Clone)]
 pub struct HardwareEvent {
-    pub num_processors: i32,
+    pub num_processors: ProcessorCount,
 }
 
 #[derive(Debug, Clone)]
@@ -385,26 +388,26 @@ pub struct ScopeIdsEvent {
 
 #[derive(Debug, Clone)]
 pub struct TaskRegistrationSummaryEvent {
-    pub task_count: i32,
+    pub task_count: TaskCount,
 }
 
 #[derive(Debug, Clone)]
 pub struct BasicMemoryStatsEvent {
-    pub free: Option<i64>,
-    pub total: Option<i64>,
-    pub max: Option<i64>,
+    pub free: Option<MemoryBytes>,
+    pub total: Option<MemoryBytes>,
+    pub max: Option<MemoryBytes>,
     pub peak_snapshots: Vec<MemoryPoolSnapshotEvent>,
-    pub gc_time: Option<i64>,
+    pub gc_time: Option<Duration>,
 }
 
 #[derive(Debug, Clone)]
 pub struct MemoryPoolSnapshotEvent {
     pub name: Option<String>,
     pub heap: bool,
-    pub init: Option<i64>,
-    pub used: Option<i64>,
-    pub committed: Option<i64>,
-    pub max: Option<i64>,
+    pub init: Option<MemoryBytes>,
+    pub used: Option<MemoryBytes>,
+    pub committed: Option<MemoryBytes>,
+    pub max: Option<MemoryBytes>,
 }
 
 #[derive(Debug, Clone)]

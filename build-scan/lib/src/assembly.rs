@@ -474,14 +474,16 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                     .and_then(|f| f.caching_disabled_explanation.clone()),
                 origin_build_cache_key: fin.and_then(|f| f.origin_build_cache_key.clone()),
                 actionable: fin.and_then(|f| f.actionable),
-                started_at,
-                finished_at,
-                duration_ms,
+                started_at: started_at.map(models::Timestamp::new),
+                finished_at: finished_at.map(models::Timestamp::new),
+                duration_ms: duration_ms.map(models::Duration::new),
                 inputs,
                 up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
                 origin_build_invocation_id: fin
                     .and_then(|f| f.origin_build_invocation_id.clone()),
-                origin_execution_time: fin.and_then(|f| f.origin_execution_time),
+                origin_execution_time: fin
+                    .and_then(|f| f.origin_execution_time)
+                    .map(models::Duration::new),
                 cache_operations: Vec::new(),
             }
         })
@@ -506,12 +508,15 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
             stored: finished.and_then(|f| f.stored),
             archive_size: finished
                 .and_then(|f| f.archive_size)
-                .or(*started_archive_size),
-            archive_entry_count: finished.and_then(|f| f.archive_entry_count),
+                .or(*started_archive_size)
+                .map(models::ArchiveSize::new),
+            archive_entry_count: finished
+                .and_then(|f| f.archive_entry_count)
+                .map(models::EntryCount::new),
             failure_id: finished.and_then(|f| f.failure_id),
             remote_cache_location: finished.and_then(|f| f.remote_cache_location.clone()),
             rejected_reason: finished.and_then(|f| f.rejected_reason),
-            duration_ms,
+            duration_ms: duration_ms.map(models::Duration::new),
         };
         task_cache_ops
             .entry(TaskId::new(*work_id))
@@ -528,7 +533,10 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
 
     let mut raw_events: Vec<RawEventSummary> = raw_counts
         .into_iter()
-        .map(|(wire_id, count)| RawEventSummary { wire_id, count })
+        .map(|(wire_id, count)| RawEventSummary {
+            wire_id,
+            count: models::EventCount::new(count),
+        })
         .collect();
     raw_events.sort_by_key(|r| r.wire_id);
 
@@ -607,7 +615,11 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         if let Some((outcome, result_timestamp, failure_id)) = result {
                             test_case.outcome = Some(outcome);
                             let duration = result_timestamp - case_timestamp;
-                            test_case.duration_ms = if duration >= 0 { Some(duration) } else { None };
+                            test_case.duration_ms = if duration >= 0 {
+                                Some(models::Duration::new(duration))
+                            } else {
+                                None
+                            };
                             test_case.failure_id = failure_id;
                         }
                         test_case
@@ -831,8 +843,16 @@ mod tests {
             payload.tests[1].outcome
         );
         // Duration is computed from frame timestamp deltas
-        assert_eq!(payload.tests[0].duration_ms, Some(1), "testPass: 1001 - 1000 = 1ms");
-        assert_eq!(payload.tests[1].duration_ms, Some(1), "testFail: 2001 - 2000 = 1ms");
+        assert_eq!(
+            payload.tests[0].duration_ms,
+            Some(models::Duration::new(1)),
+            "testPass: 1001 - 1000 = 1ms"
+        );
+        assert_eq!(
+            payload.tests[1].duration_ms,
+            Some(models::Duration::new(1)),
+            "testFail: 2001 - 2000 = 1ms"
+        );
         // failure_id is propagated from TestResult
         assert!(payload.tests[0].failure_id.is_none(), "passing test should have no failure_id");
         assert_eq!(payload.tests[1].failure_id, Some(models::FailureId::new(42)));
@@ -909,9 +929,9 @@ mod tests {
         assert_eq!(payload.tasks.len(), 1);
         let task = &payload.tasks[0];
         assert_eq!(task.task_path, ":app:build");
-        assert_eq!(task.started_at, Some(2000));
-        assert_eq!(task.finished_at, Some(3000));
-        assert_eq!(task.duration_ms, Some(1000));
+        assert_eq!(task.started_at, Some(models::Timestamp::new(2000)));
+        assert_eq!(task.finished_at, Some(models::Timestamp::new(3000)));
+        assert_eq!(task.duration_ms, Some(models::Duration::new(1000)));
         assert!(matches!(task.outcome, Some(TaskOutcome::Success)));
         assert!(task.inputs.is_none());
         assert!(task.cache_operations.is_empty());
@@ -993,9 +1013,9 @@ mod tests {
         assert_eq!(op.operation_type, CacheOperationType::LocalLoad);
         assert_eq!(op.cache_key.as_deref(), Some("abc123"));
         assert_eq!(op.hit, Some(true));
-        assert_eq!(op.archive_size, Some(8192));
+        assert_eq!(op.archive_size, Some(models::ArchiveSize::new(8192)));
         assert_eq!(op.failure_id, None);
-        assert_eq!(op.duration_ms, Some(500)); // 3000 - 2500
+        assert_eq!(op.duration_ms, Some(models::Duration::new(500))); // 3000 - 2500
         assert_eq!(op.stored, None);
         assert_eq!(op.remote_cache_location, None);
         assert_eq!(op.rejected_reason, None);
