@@ -2,16 +2,16 @@ import {
   Component,
   ChangeDetectionStrategy,
   input,
-  computed,
   output,
 } from "@angular/core";
 import { DatePipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
 
-interface SectionNav {
-  id: string;
+type ScanTab = "overview" | "tasks" | "tests";
+
+interface TabNav {
+  id: ScanTab;
   label: string;
-  icon: string;
 }
 
 @Component({
@@ -67,15 +67,6 @@ interface SectionNav {
             <span
               class="text-[0.625rem] font-semibold tracking-wider uppercase opacity-50"
               >Tests</span
-            >
-          </div>
-          <div class="flex flex-col p-2 rounded-md bg-base-300 col-span-2">
-            <span class="font-mono text-xl font-bold text-info">{{
-              cacheAvoidanceRate()
-            }}</span>
-            <span
-              class="text-[0.625rem] font-semibold tracking-wider uppercase opacity-50"
-              >Cache Avoidance</span
             >
           </div>
         </div>
@@ -155,23 +146,20 @@ interface SectionNav {
           <div
             class="text-[0.625rem] font-bold tracking-widest uppercase opacity-50 mb-1"
           >
-            Sections
+            Tabs
           </div>
-          @for (section of sections(); track section.id) {
+          @for (tab of tabs; track tab.id) {
             <button
               type="button"
               class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm cursor-pointer transition-all duration-150"
               [class]="
-                activeSection() === section.id
+                activeTab() === tab.id
                   ? 'bg-primary/15 text-primary'
                   : 'opacity-60 hover:bg-base-300 hover:opacity-100'
               "
-              (click)="navigateToSection(section.id)"
+              (click)="navigateToTab(tab.id)"
             >
-              <span class="w-5 text-center" aria-hidden="true">{{
-                section.icon
-              }}</span>
-              <span>{{ section.label }}</span>
+              <span>{{ tab.label }}</span>
             </button>
           }
         </nav>
@@ -190,38 +178,16 @@ interface SectionNav {
 })
 export class ScanSidebarComponent {
   scan = input.required<any>();
-  activeSection = input<string>("cache-breakdown");
-  sectionClicked = output<string>();
+  activeTab = input<ScanTab>("overview");
+  tabClicked = output<ScanTab>();
 
-  sections = computed<SectionNav[]>(() => {
-    const scan = this.scan();
-    const items: SectionNav[] = [
-      { id: "cache-breakdown", label: "Cache Performance", icon: "\u25A4" },
-      { id: "task-timeline", label: "Timeline", icon: "\u2590" },
-      { id: "tasks-table", label: "Tasks", icon: "\u2630" },
-    ];
-    if (scan.testCount > 0) {
-      items.push({ id: "tests-table", label: "Tests", icon: "\u2713" });
-    }
-    return items;
-  });
+  tabs: TabNav[] = [
+    { id: "overview", label: "Overview" },
+    { id: "tasks", label: "Tasks" },
+    { id: "tests", label: "Tests" },
+  ];
 
-  cacheAvoidanceRate = computed(() => {
-    const scan = this.scan();
-    const edges = scan.tasks?.edges ?? [];
-    if (edges.length === 0) return "\u2014";
-    const avoided = edges.filter(
-      (e: any) =>
-        e.node.outcome === "FromCache" ||
-        e.node.outcome === "UpToDate" ||
-        e.node.outcome === "NoSource" ||
-        e.node.outcome === "AvoidedForUnknownReason",
-    ).length;
-    const pct = Math.round((avoided / edges.length) * 100);
-    return `${pct}%`;
-  });
-
-  navigateToSection(sectionId: string) {
-    this.sectionClicked.emit(sectionId);
+  navigateToTab(tabId: ScanTab) {
+    this.tabClicked.emit(tabId);
   }
 }

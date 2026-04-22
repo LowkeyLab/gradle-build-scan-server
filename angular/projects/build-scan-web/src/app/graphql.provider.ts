@@ -24,6 +24,16 @@ export function provideGraphql() {
                   };
                 },
               },
+              buildScan: {
+                keyArgs: ["id"],
+                merge(existing: any, incoming: any) {
+                  if (!existing) return incoming;
+                  return {
+                    ...existing,
+                    ...incoming,
+                  };
+                },
+              },
             },
           },
           BuildScan: {
