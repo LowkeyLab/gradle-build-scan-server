@@ -10,7 +10,9 @@ impl BodyDecoder for HardwareDecoder {
         let mut pos = 0;
         let num_processors = kryo::read_positive_varint_i32(body, &mut pos)?;
 
-        Ok(DecodedEvent::Hardware(HardwareEvent { num_processors }))
+        Ok(DecodedEvent::Hardware(HardwareEvent {
+            num_processors: models::ProcessorCount::new(num_processors),
+        }))
     }
 }
 
@@ -24,7 +26,7 @@ mod tests {
         let decoder = HardwareDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::Hardware(e) = result {
-            assert_eq!(e.num_processors, 8);
+            assert_eq!(e.num_processors, models::ProcessorCount::new(8));
         } else {
             panic!("expected Hardware");
         }

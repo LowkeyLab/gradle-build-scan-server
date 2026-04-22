@@ -12,19 +12,25 @@ impl BodyDecoder for BasicMemoryStatsDecoder {
         let mut table = kryo::StringInternTable::new();
 
         let free = if kryo::is_field_present(flags as u16, 0) {
-            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
+            Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+                body, &mut pos,
+            )?))
         } else {
             None
         };
 
         let total = if kryo::is_field_present(flags as u16, 1) {
-            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
+            Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+                body, &mut pos,
+            )?))
         } else {
             None
         };
 
         let max = if kryo::is_field_present(flags as u16, 2) {
-            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
+            Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+                body, &mut pos,
+            )?))
         } else {
             None
         };
@@ -41,7 +47,9 @@ impl BodyDecoder for BasicMemoryStatsDecoder {
         };
 
         let gc_time = if kryo::is_field_present(flags as u16, 4) {
-            Some(kryo::read_kryo_long_unsigned(body, &mut pos)?)
+            Some(models::Duration::new(kryo::read_kryo_long_unsigned(
+                body, &mut pos,
+            )?))
         } else {
             None
         };
@@ -73,25 +81,33 @@ fn decode_memory_pool_snapshot(
     let heap = kryo::is_field_present(flags as u16, 1);
 
     let init = if kryo::is_field_present(flags as u16, 2) {
-        Some(kryo::read_kryo_long_unsigned(body, pos)?)
+        Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+            body, pos,
+        )?))
     } else {
         None
     };
 
     let used = if kryo::is_field_present(flags as u16, 3) {
-        Some(kryo::read_kryo_long_unsigned(body, pos)?)
+        Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+            body, pos,
+        )?))
     } else {
         None
     };
 
     let committed = if kryo::is_field_present(flags as u16, 4) {
-        Some(kryo::read_kryo_long_unsigned(body, pos)?)
+        Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+            body, pos,
+        )?))
     } else {
         None
     };
 
     let max = if kryo::is_field_present(flags as u16, 5) {
-        Some(kryo::read_kryo_long_unsigned(body, pos)?)
+        Some(models::MemoryBytes::new(kryo::read_kryo_long_unsigned(
+            body, pos,
+        )?))
     } else {
         None
     };
@@ -144,9 +160,9 @@ mod tests {
         let decoder = BasicMemoryStatsDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::BasicMemoryStats(e) = result {
-            assert_eq!(e.free, Some(100));
-            assert_eq!(e.total, Some(512));
-            assert_eq!(e.max, Some(1024));
+            assert_eq!(e.free, Some(models::MemoryBytes::new(100)));
+            assert_eq!(e.total, Some(models::MemoryBytes::new(512)));
+            assert_eq!(e.max, Some(models::MemoryBytes::new(1024)));
             assert!(e.peak_snapshots.is_empty());
             assert_eq!(e.gc_time, None);
         } else {
@@ -237,27 +253,27 @@ mod tests {
         let decoder = BasicMemoryStatsDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::BasicMemoryStats(e) = result {
-            assert_eq!(e.free, Some(100));
-            assert_eq!(e.total, Some(512));
-            assert_eq!(e.max, Some(1024));
-            assert_eq!(e.gc_time, Some(42));
+            assert_eq!(e.free, Some(models::MemoryBytes::new(100)));
+            assert_eq!(e.total, Some(models::MemoryBytes::new(512)));
+            assert_eq!(e.max, Some(models::MemoryBytes::new(1024)));
+            assert_eq!(e.gc_time, Some(models::Duration::new(42)));
             assert_eq!(e.peak_snapshots.len(), 2);
 
             let s1 = &e.peak_snapshots[0];
             assert_eq!(s1.name, Some("Eden Space".to_string()));
             assert!(s1.heap);
-            assert_eq!(s1.init, Some(50));
-            assert_eq!(s1.used, Some(200));
-            assert_eq!(s1.committed, Some(256));
-            assert_eq!(s1.max, Some(512));
+            assert_eq!(s1.init, Some(models::MemoryBytes::new(50)));
+            assert_eq!(s1.used, Some(models::MemoryBytes::new(200)));
+            assert_eq!(s1.committed, Some(models::MemoryBytes::new(256)));
+            assert_eq!(s1.max, Some(models::MemoryBytes::new(512)));
 
             let s2 = &e.peak_snapshots[1];
             assert_eq!(s2.name, Some("Eden Space".to_string())); // back-ref
             assert!(!s2.heap);
-            assert_eq!(s2.init, Some(10));
-            assert_eq!(s2.used, Some(30));
-            assert_eq!(s2.committed, Some(64));
-            assert_eq!(s2.max, Some(128));
+            assert_eq!(s2.init, Some(models::MemoryBytes::new(10)));
+            assert_eq!(s2.used, Some(models::MemoryBytes::new(30)));
+            assert_eq!(s2.committed, Some(models::MemoryBytes::new(64)));
+            assert_eq!(s2.max, Some(models::MemoryBytes::new(128)));
         } else {
             panic!("expected BasicMemoryStats");
         }

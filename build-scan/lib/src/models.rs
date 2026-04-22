@@ -50,6 +50,168 @@ impl FileRefId {
     }
 }
 
+// === Domain newtypes for numeric values ===
+
+/// Duration in milliseconds
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Duration(pub(crate) i64);
+
+impl Duration {
+    pub fn new(ms: i64) -> Self {
+        Self(ms)
+    }
+    pub fn as_i64(&self) -> i64 {
+        self.0
+    }
+}
+
+impl From<i64> for Duration {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+
+/// Epoch milliseconds — a point in time
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Timestamp(pub(crate) i64);
+
+impl Timestamp {
+    pub fn new(ms: i64) -> Self {
+        Self(ms)
+    }
+    pub fn as_i64(&self) -> i64 {
+        self.0
+    }
+}
+
+impl From<i64> for Timestamp {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+
+/// Cache archive size in bytes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ArchiveSize(pub(crate) i64);
+
+impl ArchiveSize {
+    pub fn new(bytes: i64) -> Self {
+        Self(bytes)
+    }
+    pub fn as_i64(&self) -> i64 {
+        self.0
+    }
+}
+
+impl From<i64> for ArchiveSize {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+
+/// Memory pool bytes (free/total/max/init/used/committed)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct MemoryBytes(pub(crate) i64);
+
+impl MemoryBytes {
+    pub fn new(bytes: i64) -> Self {
+        Self(bytes)
+    }
+    pub fn as_i64(&self) -> i64 {
+        self.0
+    }
+}
+
+impl From<i64> for MemoryBytes {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+
+/// Cache archive entry count
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct EntryCount(pub(crate) i64);
+
+impl EntryCount {
+    pub fn new(count: i64) -> Self {
+        Self(count)
+    }
+    pub fn as_i64(&self) -> i64 {
+        self.0
+    }
+}
+
+impl From<i64> for EntryCount {
+    fn from(v: i64) -> Self {
+        Self(v)
+    }
+}
+
+/// Number of tasks registered in the build
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct TaskCount(pub(crate) i32);
+
+impl TaskCount {
+    pub fn new(count: i32) -> Self {
+        Self(count)
+    }
+    pub fn as_i32(&self) -> i32 {
+        self.0
+    }
+}
+
+impl From<i32> for TaskCount {
+    fn from(v: i32) -> Self {
+        Self(v)
+    }
+}
+
+/// Number of CPU processors
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ProcessorCount(pub(crate) i32);
+
+impl ProcessorCount {
+    pub fn new(count: i32) -> Self {
+        Self(count)
+    }
+    pub fn as_i32(&self) -> i32 {
+        self.0
+    }
+}
+
+impl From<i32> for ProcessorCount {
+    fn from(v: i32) -> Self {
+        Self(v)
+    }
+}
+
+/// Generic event tally in a raw event summary
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct EventCount(pub(crate) usize);
+
+impl EventCount {
+    pub fn new(count: usize) -> Self {
+        Self(count)
+    }
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
+}
+
+impl From<usize> for EventCount {
+    fn from(v: usize) -> Self {
+        Self(v)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BuildScanPayload {
     pub tasks: Vec<Task>,
@@ -100,9 +262,9 @@ pub struct CacheOperation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stored: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub archive_size: Option<i64>,
+    pub archive_size: Option<ArchiveSize>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub archive_entry_count: Option<i64>,
+    pub archive_entry_count: Option<EntryCount>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_id: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -110,7 +272,7 @@ pub struct CacheOperation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub duration_ms: Option<i64>,
+    pub duration_ms: Option<Duration>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,11 +295,11 @@ pub struct Task {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actionable: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub started_at: Option<i64>,
+    pub started_at: Option<Timestamp>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub finished_at: Option<i64>,
+    pub finished_at: Option<Timestamp>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub duration_ms: Option<i64>,
+    pub duration_ms: Option<Duration>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inputs: Option<TaskInputs>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -145,7 +307,7 @@ pub struct Task {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub origin_build_invocation_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub origin_execution_time: Option<i64>,
+    pub origin_execution_time: Option<Duration>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub cache_operations: Vec<CacheOperation>,
 }
@@ -179,7 +341,7 @@ impl TaskOutcome {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RawEventSummary {
     pub wire_id: u16,
-    pub count: usize,
+    pub count: EventCount,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -280,21 +442,21 @@ pub struct TransformExecutionRequestData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskRegistrationSummaryData {
-    pub task_count: i32,
+    pub task_count: TaskCount,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BasicMemoryStatsData {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub free: Option<i64>,
+    pub free: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub total: Option<i64>,
+    pub total: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub max: Option<i64>,
+    pub max: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub peak_snapshots: Vec<MemoryPoolSnapshotData>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub gc_time: Option<i64>,
+    pub gc_time: Option<Duration>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -303,13 +465,13 @@ pub struct MemoryPoolSnapshotData {
     pub name: Option<String>,
     pub heap: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub init: Option<i64>,
+    pub init: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub used: Option<i64>,
+    pub used: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub committed: Option<i64>,
+    pub committed: Option<MemoryBytes>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub max: Option<i64>,
+    pub max: Option<MemoryBytes>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -394,7 +556,7 @@ pub struct TestCase {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcome: Option<TestOutcome>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub duration_ms: Option<i64>,
+    pub duration_ms: Option<Duration>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failure_id: Option<FailureId>,
 }

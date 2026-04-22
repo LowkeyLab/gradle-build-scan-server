@@ -11,7 +11,9 @@ impl BodyDecoder for TaskRegistrationSummaryDecoder {
         let task_count = kryo::read_positive_varint_i32(body, &mut pos)?;
 
         Ok(DecodedEvent::TaskRegistrationSummary(
-            TaskRegistrationSummaryEvent { task_count },
+            TaskRegistrationSummaryEvent {
+                task_count: models::TaskCount::new(task_count),
+            },
         ))
     }
 }
@@ -26,7 +28,7 @@ mod tests {
         let decoder = TaskRegistrationSummaryDecoder;
         let result = decoder.decode(&data).unwrap();
         if let DecodedEvent::TaskRegistrationSummary(e) = result {
-            assert_eq!(e.task_count, 10);
+            assert_eq!(e.task_count, models::TaskCount::new(10));
         } else {
             panic!("expected TaskRegistrationSummary");
         }

@@ -340,7 +340,7 @@ impl CacheOperation {
     }
 
     fn archive_size(&self) -> Option<f64> {
-        self.op.archive_size.map(|s| s as f64)
+        self.op.archive_size.map(|s| s.0 as f64)
     }
 
     fn cache_key(&self) -> Option<&str> {
@@ -348,7 +348,7 @@ impl CacheOperation {
     }
 
     fn duration_ms(&self) -> Option<f64> {
-        self.op.duration_ms.map(|d| d as f64)
+        self.op.duration_ms.map(|d| d.0 as f64)
     }
 }
 
@@ -394,7 +394,7 @@ impl Test {
         self.test
             .duration_ms
             .map(|d| {
-                i32::try_from(d)
+                i32::try_from(d.0)
                     .map_err(|_| FieldError::from("duration_ms exceeds GraphQL Int range"))
             })
             .transpose()
@@ -420,22 +420,22 @@ pub struct TestSummary {
 #[graphql_object(context = Context)]
 impl TestSummary {
     fn passed(&self) -> i32 {
-        self.summary.passed as i32
+        self.summary.passed.0 as i32
     }
 
     fn failed(&self) -> i32 {
-        self.summary.failed as i32
+        self.summary.failed.0 as i32
     }
 
     fn skipped(&self) -> i32 {
-        self.summary.skipped as i32
+        self.summary.skipped.0 as i32
     }
 
     fn total_duration_ms(&self) -> FieldResult<Option<i32>> {
         self.summary
             .total_duration_ms
             .map(|d| {
-                i32::try_from(d)
+                i32::try_from(d.0)
                     .map_err(|_| FieldError::from("total_duration_ms exceeds GraphQL Int range"))
             })
             .transpose()

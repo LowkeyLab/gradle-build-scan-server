@@ -163,13 +163,13 @@ impl BuildScanService {
                         task_builder.cacheable(c);
                     }
                     if let Some(ts) = task.started_at {
-                        task_builder.start_timestamp(ts);
+                        task_builder.start_timestamp(ts.as_i64());
                     }
                     if let Some(ts) = task.finished_at {
-                        task_builder.finish_timestamp(ts);
+                        task_builder.finish_timestamp(ts.as_i64());
                     }
                     if let Some(t) = task.origin_execution_time {
-                        task_builder.origin_execution_time(t);
+                        task_builder.origin_execution_time(t.as_i64());
                     }
                     if let Some(ck) = cache_key_str {
                         task_builder.cache_key(ck);
@@ -218,9 +218,13 @@ impl BuildScanService {
                             task_id: domain_task.id.clone(),
                             operation_type: map_cache_operation_type(&cache_op.operation_type),
                             succeeded,
-                            archive_size: cache_op.archive_size,
+                            archive_size: cache_op
+                                .archive_size
+                                .map(|s| domain::ArchiveSize(s.as_i64())),
                             cache_key: cache_op.cache_key.clone(),
-                            duration_ms: cache_op.duration_ms,
+                            duration_ms: cache_op
+                                .duration_ms
+                                .map(|d| domain::Duration(d.as_i64())),
                         };
                         db::insert_cache_operation(&mut *tx, &domain_op)
                             .await
@@ -251,7 +255,7 @@ impl BuildScanService {
                         test_builder.outcome(map_test_outcome(o));
                     }
                     if let Some(d) = test.duration_ms {
-                        test_builder.duration_ms(d);
+                        test_builder.duration_ms(d.as_i64());
                     }
 
                     let domain_test = test_builder

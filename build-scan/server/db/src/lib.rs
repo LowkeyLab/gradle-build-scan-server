@@ -251,7 +251,7 @@ impl TryFrom<TestRow> for domain::Test {
             method_name: row.method_name.map(domain::MethodName),
             executor_name: row.executor_name.map(domain::ExecutorName),
             outcome,
-            duration_ms: row.duration_ms,
+            duration_ms: row.duration_ms.map(domain::Duration),
             failure_message: row.failure_message,
             failure_stacktrace: row.failure_stacktrace,
         })
@@ -267,7 +267,7 @@ impl From<&domain::Test> for TestRow {
             method_name: test.method_name.as_ref().map(|m| m.0.clone()),
             executor_name: test.executor_name.as_ref().map(|e| e.0.clone()),
             outcome: test.outcome.map(|o| o.to_string()),
-            duration_ms: test.duration_ms,
+            duration_ms: test.duration_ms.map(|d| d.0),
             failure_message: test.failure_message.clone(),
             failure_stacktrace: test.failure_stacktrace.clone(),
         }
@@ -294,9 +294,9 @@ impl TryFrom<CacheOperationRow> for domain::CacheOperation {
             task_id,
             operation_type,
             succeeded: row.succeeded != 0,
-            archive_size: row.archive_size,
+            archive_size: row.archive_size.map(domain::ArchiveSize),
             cache_key: row.cache_key,
-            duration_ms: row.duration_ms,
+            duration_ms: row.duration_ms.map(domain::Duration),
         })
     }
 }
@@ -308,9 +308,9 @@ impl From<&domain::CacheOperation> for CacheOperationRow {
             task_id: op.task_id.0.to_string(),
             operation_type: op.operation_type.to_string(),
             succeeded: if op.succeeded { 1 } else { 0 },
-            archive_size: op.archive_size,
+            archive_size: op.archive_size.map(|s| s.0),
             cache_key: op.cache_key.clone(),
-            duration_ms: op.duration_ms,
+            duration_ms: op.duration_ms.map(|d| d.0),
         }
     }
 }
@@ -590,10 +590,10 @@ pub async fn test_summary(pool: &SqlitePool, scan_id: &str) -> Result<domain::Te
         }
     }
     Ok(domain::TestSummary {
-        passed,
-        failed,
-        skipped,
-        total_duration_ms,
+        passed: domain::TestCount(passed),
+        failed: domain::TestCount(failed),
+        skipped: domain::TestCount(skipped),
+        total_duration_ms: total_duration_ms.map(domain::Duration),
     })
 }
 
