@@ -108,6 +108,7 @@ describe("ScanDetailComponent", () => {
   });
 
   afterEach(() => {
+    fixture.destroy();
     controller.verify();
   });
 
@@ -258,10 +259,11 @@ describe("ScanDetailComponent", () => {
     expect(fixture.componentInstance.isTabMounted("tests")).toBe(false);
 
     clickTab("Tasks");
-    const newTasks = controller.expectOne("GetScanTasks");
-    expect(newTasks.operation.variables).toEqual({
-      id: "QnVpbGRTY2FuOjQ1Ng==",
-      firstTasks: 100,
-    });
+    expect(
+      controller.match((op) => op.operationName === "GetScanTasks"),
+    ).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain(
+      "No tasks recorded for this scan.",
+    );
   });
 });

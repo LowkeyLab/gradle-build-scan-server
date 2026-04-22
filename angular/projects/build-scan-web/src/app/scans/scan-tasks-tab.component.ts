@@ -8,7 +8,7 @@ import {
   signal,
 } from "@angular/core";
 import { Apollo, gql } from "apollo-angular";
-import { filter, map, switchMap, tap } from "rxjs";
+import { EMPTY, filter, map, switchMap, tap } from "rxjs";
 import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { CacheBreakdownComponent } from "./cache-breakdown/cache-breakdown.component";
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
@@ -116,21 +116,6 @@ export class ScanTasksTabComponent implements OnInit {
           firstTasks: 100,
           afterTasks,
         },
-        updateQuery: (previous: any, { fetchMoreResult }: any) => {
-          if (!fetchMoreResult?.buildScan) return previous;
-          const previousEdges = previous.buildScan?.tasks?.edges ?? [];
-          const nextEdges = fetchMoreResult.buildScan.tasks?.edges ?? [];
-          return {
-            buildScan: {
-              ...previous.buildScan,
-              ...fetchMoreResult.buildScan,
-              tasks: {
-                ...fetchMoreResult.buildScan.tasks,
-                edges: [...previousEdges, ...nextEdges],
-              },
-            },
-          };
-        },
       })
       .then(({ data }: any) => {
         const scan = data?.buildScan;
@@ -153,6 +138,11 @@ export class ScanTasksTabComponent implements OnInit {
       .pipe(
         switchMap((id) => {
           this.taskEdges.set([]);
+          if (this.taskCount() === 0) {
+            this.loading.set(false);
+            return EMPTY;
+          }
+
           this.loading.set(true);
 
           const queryRef = this.apollo.watchQuery<any>({

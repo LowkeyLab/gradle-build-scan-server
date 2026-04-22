@@ -59,7 +59,7 @@ describe("ScanTasksTabComponent", () => {
   });
 
   afterEach(() => {
-    controller.verify();
+    fixture.destroy();
   });
 
   it("shows a loading state before the first result and then renders the task views", () => {
@@ -124,5 +124,24 @@ describe("ScanTasksTabComponent", () => {
     expect(rows.length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain("Tasks (1)");
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
+  });
+
+  it("skips querying when the overview already reports zero tasks", () => {
+    const zeroFixture = TestBed.createComponent(ScanTasksTabComponent);
+    zeroFixture.componentRef.setInput("scanId", "123");
+    zeroFixture.componentRef.setInput("taskCount", 0);
+    zeroFixture.detectChanges();
+
+    controller
+      .expectOne("GetScanTasks")
+      .flushData({ buildScan: buildTaskScan() });
+    fixture.detectChanges();
+
+    expect(controller.match("GetScanTasks")).toHaveLength(0);
+    expect(zeroFixture.nativeElement.textContent).toContain(
+      "No tasks recorded for this scan.",
+    );
+
+    zeroFixture.destroy();
   });
 });

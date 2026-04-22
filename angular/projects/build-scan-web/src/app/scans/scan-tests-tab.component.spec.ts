@@ -57,6 +57,7 @@ describe("ScanTestsTabComponent", () => {
   });
 
   afterEach(() => {
+    fixture.destroy();
     controller.verify();
   });
 
@@ -90,5 +91,39 @@ describe("ScanTestsTabComponent", () => {
 
     expect(controller.match("GetScanTests")).toHaveLength(0);
     expect(fixture.nativeElement.querySelector("app-tests-table")).toBeTruthy();
+  });
+
+  it("renders the tests table even when the query returns no edges for a non-zero test count", () => {
+    const pending = controller.expectOne("GetScanTests");
+    pending.flushData({
+      buildScan: buildTestScan({
+        tests: {
+          edges: [],
+          pageInfo: { hasNextPage: false, endCursor: null },
+        },
+      }),
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector("app-tests-table")).toBeTruthy();
+  });
+
+  it("skips querying when the overview already reports zero tests", () => {
+    const zeroFixture = TestBed.createComponent(ScanTestsTabComponent);
+    zeroFixture.componentRef.setInput("scanId", "123");
+    zeroFixture.componentRef.setInput("testCount", 0);
+    zeroFixture.detectChanges();
+
+    controller
+      .expectOne("GetScanTests")
+      .flushData({ buildScan: buildTestScan() });
+    fixture.detectChanges();
+
+    expect(controller.match("GetScanTests")).toHaveLength(0);
+    expect(zeroFixture.nativeElement.textContent).toContain(
+      "No tests recorded for this scan.",
+    );
+
+    zeroFixture.destroy();
   });
 });
