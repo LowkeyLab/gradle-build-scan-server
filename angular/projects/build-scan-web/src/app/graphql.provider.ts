@@ -24,17 +24,13 @@ export function provideGraphql() {
                   };
                 },
               },
-            },
-          },
-          BuildScan: {
-            fields: {
-              tasks: {
-                keyArgs: false,
-                merge(existing: any, incoming: any, { args }: any) {
-                  if (!existing || !args?.after) return incoming;
+              buildScan: {
+                keyArgs: ["id"],
+                merge(existing: any, incoming: any) {
+                  if (!existing) return incoming;
                   return {
+                    ...existing,
                     ...incoming,
-                    edges: [...existing.edges, ...incoming.edges],
                   };
                 },
               },
