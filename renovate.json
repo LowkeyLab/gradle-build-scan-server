@@ -6,7 +6,7 @@
   },
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["0 4 * * *"]
+    "schedule": ["* 4 * * *"]
   },
   "packageRules": [
     {
