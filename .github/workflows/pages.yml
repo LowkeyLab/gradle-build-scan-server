@@ -1,27 +1,32 @@
-name: Tests
+name: Pages
 permissions:
   contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
 on:
-  push:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
     branches: [main]
-  pull_request:
-    branches: [main]
-env:
-  MISE_EXPERIMENTAL: true
-  DOCS_SITE: https://lowkeylab.github.io/gradle-build-scan-server/
-  DOCS_BASE: /gradle-build-scan-server/
 jobs:
-  ci:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/configure-pages@v5
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: bazel-contrib/setup-bazel@d68576867819dfdec2cf9586a68795f81461da3e
         with:
           bazelisk-cache: true
           bazelrc: |
             common --config=ci
             build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}
-            test --test_env=XDG_CACHE_HOME
       - name: Install Aspect CLI
         run: |
           ASPECT_VERSION="2026.4.2"
@@ -33,15 +38,22 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Verify aspect CLI
         run: aspect --version
-      - name: Run Bazel Lints
-        run: |
-          aspect lint //...
-      - name: Run Bazel tests
-        run: |
-          aspect test //...
-      - name: Check docs
-        run: |
-          aspect test //docs:check
       - name: Build docs
         run: |
           bazel build //docs:build --action_env=DOCS_SITE --action_env=DOCS_BASE
+        env:
+          DOCS_SITE: https://lowkeylab.github.io/gradle-build-scan-server/
+          DOCS_BASE: /gradle-build-scan-server/
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: bazel-bin/docs/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -23,6 +23,8 @@ rust-project.json
 
 # JavaScript / Node.js
 node_modules/
+docs/.astro/
+docs/dist/
 
 # Runtime database
 build-scans.db

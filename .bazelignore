@@ -5,3 +5,7 @@ target/
 .worktrees/
 .local/
 .direnv/
+docs/.astro/
+docs/dist/
+docs/node_modules/
+node_modules/
