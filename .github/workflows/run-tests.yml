@@ -1,10 +1,6 @@
 name: Tests
 permissions:
   contents: read
-  pull-requests: write
-  packages: write
-  attestations: write
-  id-token: write
 on:
   push:
     branches: [main]
@@ -12,6 +8,8 @@ on:
     branches: [main]
 env:
   MISE_EXPERIMENTAL: true
+  DOCS_SITE: https://lowkeylab.github.io/gradle-build-scan-server/
+  DOCS_BASE: /gradle-build-scan-server/
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -41,3 +39,6 @@ jobs:
       - name: Run Bazel tests
         run: |
           aspect test //...
+      - name: Build docs
+        run: |
+          bazel build //docs:build --action_env=DOCS_SITE --action_env=DOCS_BASE
