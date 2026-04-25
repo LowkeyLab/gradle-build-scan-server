@@ -25,6 +25,7 @@ catalog:
   '@wry/trie': ^0.5.0
   apollo-angular: ^13.0.0
   astro: ^6.1.9
+  '@astrojs/starlight': ^0.38.4
   graphql: ^16.10.0
   graphql-tag: ^2.12.6
   optimism: ^0.18.1
