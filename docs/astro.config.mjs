@@ -11,8 +11,12 @@ function normalizeBasePath(value) {
 }
 
 const isDevServer = process.argv.includes("dev");
-const configuredSite = process.env.DOCS_SITE;
-const configuredBase = normalizeBasePath(process.env.DOCS_BASE);
+const productionSite = "https://lowkeylab.github.io/gradle-build-scan-server/";
+const productionBase = "/gradle-build-scan-server/";
+const configuredSite = process.env.DOCS_SITE || productionSite;
+const configuredBase = process.env.DOCS_BASE
+  ? normalizeBasePath(process.env.DOCS_BASE)
+  : productionBase;
 
 export default defineConfig({
   integrations: [
@@ -27,7 +31,7 @@ export default defineConfig({
     }),
   ],
   output: "static",
-  site: configuredSite || undefined,
+  site: isDevServer ? undefined : configuredSite,
   base: isDevServer ? "/" : configuredBase,
   trailingSlash: "always",
 });
