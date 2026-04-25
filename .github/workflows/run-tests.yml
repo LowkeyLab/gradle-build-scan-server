@@ -39,9 +39,6 @@ jobs:
       - name: Run Bazel tests
         run: |
           aspect test //...
-      - name: Check docs
-        run: |
-          aspect test //docs:check
       - name: Build docs
         run: |
           bazel build //docs:build --action_env=DOCS_SITE --action_env=DOCS_BASE
