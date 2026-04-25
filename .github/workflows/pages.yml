@@ -34,7 +34,7 @@ jobs:
           DOCS_SITE: https://lowkeylab.github.io/gradle-build-scan-server/
           DOCS_BASE: /gradle-build-scan-server/
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: bazel-bin/docs/dist
   deploy:
