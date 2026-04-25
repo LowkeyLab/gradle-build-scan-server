@@ -14,7 +14,7 @@ The `format` command is provided by Bazel via the `//tools/format` target.
 - Run `bazel run //tools/format` to re-format all files locally.
 - Run `bazel run //tools/format -- path/to/file` to re-format a single file.
 - Run `git config core.hooksPath githooks` to add the formatter pre-commit hook.
-- For CI verification, setup `format` task, see https://docs.aspect.build/workflows/features/lint#formatting
+- For CI verification, set up the `format` task in CI; see https://docs.aspect.build/workflows/features/lint#formatting
 
 ## Linting code
 

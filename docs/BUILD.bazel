@@ -18,10 +18,7 @@ astro_bin.astro_test(
     args = ["check"],
     chdir = package_name(),
     data = [
-        ":node_modules/@astrojs/check",
-        ":node_modules/@astrojs/starlight",
-        ":node_modules/astro",
-        ":node_modules/typescript",
+        ":node_modules",
         ":srcs",
     ],
 )
@@ -29,9 +26,7 @@ astro_bin.astro_test(
 astro_bin.astro(
     name = "build",
     srcs = [
-        ":node_modules/@astrojs/starlight",
-        ":node_modules/astro",
-        ":node_modules/typescript",
+        ":node_modules",
         ":srcs",
     ],
     args = ["build"],
