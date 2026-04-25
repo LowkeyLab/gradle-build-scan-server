@@ -1,2 +1,3 @@
 MODULE.bazel.lock
+flake.lock
 pnpm-lock.yaml
