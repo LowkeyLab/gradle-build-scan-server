@@ -1,5 +1,4 @@
 ---
-layout: ../layouts/DocsLayout.astro
 title: Bazel workflows
 description: Contributor workflows for formatting, linting, and working with Bazel in this repository.
 ---
