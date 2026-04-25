@@ -137,14 +137,6 @@
               llm-agents.packages.${system}.agent-browser
             ] ++ wrappedTools;
 
-            shellHook = ''
-              mkdir -p .bin
-              ln -sf ${pkgs.bashInteractive}/bin/bash .bin/bash
-              export PATH="$PWD/.bin:$PATH"
-
-              echo "Local bash symlink created in .bin/"
-            '';
-
             # Linux: set NIX_LD so bazelisk can run downloaded Bazel binaries
             # On NixOS, this additionally requires `programs.nix-ld.enable = true`
             env = pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
