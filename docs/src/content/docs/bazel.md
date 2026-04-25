@@ -6,6 +6,7 @@ description: Contributor workflows for formatting, linting, and working with Baz
 This repository uses [Aspect Workflows](https://aspect.build) to provide an excellent Bazel developer experience.
 
 The main project overview and runtime setup live on the [documentation home page](../).
+For a local validation flow that publishes a real scan and walks the UI with screenshots, see the [local build scan UI walkthrough](../local-build-scan-ui/).
 
 ## Formatting code
 

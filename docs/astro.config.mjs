@@ -22,10 +22,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Gradle Build Scan Server",
-      description:
-        "Project documentation for Gradle Build Scan Server.",
+      description: "Project documentation for Gradle Build Scan Server.",
       sidebar: [
         { label: "Overview", link: "/" },
+        { slug: "local-build-scan-ui" },
         { slug: "bazel" },
       ],
     }),

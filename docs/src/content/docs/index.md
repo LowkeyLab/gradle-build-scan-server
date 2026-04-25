@@ -41,6 +41,8 @@ develocity {
 
 The build scan will be uploaded to your server and viewable at `http://localhost:8080`.
 
+If you want an end-to-end local walkthrough with real UI screenshots, follow the [local build scan UI walkthrough](./local-build-scan-ui/).
+
 ## Docker
 
 ### Pull and run
