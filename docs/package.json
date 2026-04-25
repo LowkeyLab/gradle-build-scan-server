@@ -10,9 +10,9 @@
     "check": "astro check"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.8",
+    "@astrojs/check": "catalog:",
     "@astrojs/starlight": "catalog:",
     "astro": "catalog:",
-    "typescript": "^5.9.3"
+    "typescript": "catalog:"
   }
 }
