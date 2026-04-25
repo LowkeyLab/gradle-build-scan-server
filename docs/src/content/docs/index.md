@@ -1,5 +1,4 @@
 ---
-layout: ../layouts/DocsLayout.astro
 title: Gradle Build Scan Server
 description: A self-hosted server for receiving and viewing Gradle build scans.
 ---
