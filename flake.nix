@@ -102,13 +102,26 @@
             ) binaryReleases)
           );
 
-          # Wrapper so `bazel` invokes bazelisk
-          bazel = pkgs.writeShellScriptBin "bazel" ''exec ${pkgs.bazelisk}/bin/bazelisk "$@"'';
+          # Wrapper so `bazel` invokes bazelisk, with a real /bin/bash on Linux
+          bazel =
+            if pkgs.stdenv.isLinux then
+              pkgs.buildFHSEnv {
+                name = "bazel";
+                targetPkgs = pkgs: [
+                  pkgs.bashInteractive
+                  pkgs.bazelisk
+                  pkgs.zlib
+                ];
+                runScript = "bazelisk";
+              }
+            else
+              pkgs.writeShellScriptBin "bazel" ''exec ${pkgs.bazelisk}/bin/bazelisk "$@"'';
         in
         {
           default = pkgs.mkShell {
             packages = [
               bazel
+              pkgs.bashInteractive
               pkgs.bazelisk
               pkgs.bazel-watcher # ibazel
               pkgs.buildifier
