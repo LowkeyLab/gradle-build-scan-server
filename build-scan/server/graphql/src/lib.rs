@@ -255,6 +255,14 @@ impl Task {
         &self.task.task_path.0
     }
 
+    fn dependencies(&self) -> Vec<ID> {
+        self.task
+            .dependencies
+            .iter()
+            .map(|dependency| RelayId::encode("Task", &dependency.0.to_string()))
+            .collect()
+    }
+
     fn class_name(&self) -> Option<&str> {
         self.task.class_name.as_ref().map(|c| c.0.as_str())
     }

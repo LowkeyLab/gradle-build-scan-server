@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { TestBed, ComponentFixture } from "@angular/core/testing";
+import { TestBed, type ComponentFixture } from "@angular/core/testing";
 import {
   ApolloTestingModule,
   ApolloTestingController,
@@ -10,13 +10,12 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
     node: {
       id: "VGFzazox",
+      dependencies: [],
       taskPath: ":compileJava",
       className: "JavaCompile",
       outcome: "Success",
       cacheable: true,
       durationMs: 120,
-      startTimestamp: 1000,
-      finishTimestamp: 1120,
       cacheKey: "abc123",
       cachingDisabledReason: null,
       cachingDisabledExplanation: null,
@@ -31,7 +30,7 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
 }
 
 function buildTaskScan(
-  edges: any[] = [buildTaskEdge()],
+  edges: Array<ReturnType<typeof buildTaskEdge>> = [buildTaskEdge()],
   pageInfo: Record<string, unknown> = { hasNextPage: false, endCursor: null },
 ) {
   return {
@@ -64,23 +63,54 @@ describe("ScanTasksTabComponent", () => {
 
   it("shows a loading state before the first result and then renders the task views", () => {
     const pending = controller.expectOne("GetScanTasks");
+    const queryText = pending.operation.query.loc?.source.body ?? "";
     expect(pending.operation.variables).toEqual({
       id: "123",
       firstTasks: 100,
     });
+    expect(queryText).toContain("dependencies");
+    expect(queryText).not.toContain("taskDependencyGraph");
+    expect(queryText).not.toContain("startTimestamp");
+    expect(queryText).not.toContain("finishTimestamp");
     expect(fixture.nativeElement.textContent).toContain("Loading tasks…");
 
-    pending.flushData({ buildScan: buildTaskScan() });
+    pending.flushData({
+      buildScan: buildTaskScan([buildTaskEdge()], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    });
     fixture.detectChanges();
 
     expect(
       fixture.nativeElement.querySelector("app-cache-breakdown"),
     ).toBeTruthy();
     expect(
-      fixture.nativeElement.querySelector("app-task-timeline"),
+      fixture.nativeElement.querySelector("app-task-dependency-graph"),
     ).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain("Task Dependencies");
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll("tbody tr").length).toBe(1);
+  });
+
+  it("passes per-task dependencies through to the task timeline", () => {
+    const pending = controller.expectOne("GetScanTasks");
+
+    pending.flushData({
+      buildScan: buildTaskScan(
+        [
+          buildTaskEdge({
+            id: "VGFzazoy",
+            dependencies: ["VGFzazox"],
+          }),
+        ],
+        { hasNextPage: false, endCursor: null },
+      ),
+    });
+    fixture.detectChanges();
+
+    const timeline = fixture.componentInstance.taskEdges();
+    expect(timeline[0]?.node.dependencies).toEqual(["VGFzazox"]);
   });
 
   it("continues loading additional task pages when pageInfo hasNextPage is true", async () => {

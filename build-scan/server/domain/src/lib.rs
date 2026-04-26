@@ -378,6 +378,8 @@ pub struct Task {
     pub id: TaskId,
     pub scan_id: BuildScanId,
     pub task_path: TaskPath,
+    #[builder(default)]
+    pub dependencies: Vec<TaskId>,
     #[builder(setter(strip_option), default)]
     pub class_name: Option<ClassName>,
     #[builder(setter(strip_option), default)]

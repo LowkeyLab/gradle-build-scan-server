@@ -31,6 +31,7 @@
     "d3-chord": "catalog:",
     "d3-color": "catalog:",
     "d3-contour": "catalog:",
+    "d3-dag": "catalog:",
     "d3-delaunay": "catalog:",
     "d3-dispatch": "catalog:",
     "d3-drag": "catalog:",
@@ -60,7 +61,10 @@
     "graphql": "catalog:",
     "graphql-tag": "catalog:",
     "optimism": "catalog:",
+    "javascript-lp-solver": "catalog:",
+    "quadprog": "catalog:",
     "rxjs": "catalog:",
+    "stringify-object": "catalog:",
     "tslib": "catalog:",
     "zone.js": "catalog:"
   },

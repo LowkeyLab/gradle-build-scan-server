@@ -40,7 +40,7 @@ angular/
         ├── scan-list.component.ts       # /scans — paginated scan list
         ├── scan-detail.component.ts     # /scans/:id — orchestrator (GraphQL query + child layout)
         ├── build-metadata/              # Build outcome, timestamps, tool/OS/JVM info
-        ├── task-timeline/               # Gantt-style task execution timeline
+        ├── task-dependency-graph/       # Interactive task prerequisite graph
         ├── cache-breakdown/             # Cache hit/miss waffle chart (Observable Plot)
         ├── tasks-table/                 # Task list with caching status badges
         └── tests-table/                 # Test results with outcome badges
@@ -76,7 +76,7 @@ agent-browser wait 2000
 agent-browser eval --stdin <<'EOF'
 JSON.stringify({
   metadata: document.querySelector("app-build-metadata") !== null,
-  timeline: document.querySelector("app-task-timeline") !== null,
+  timeline: document.querySelector("app-task-dependency-graph") !== null,
   cacheBreakdown: document.querySelector("app-cache-breakdown") !== null,
   tasksTable: document.querySelector("app-tasks-table") !== null,
   testsTable: document.querySelector("app-tests-table") !== null

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::{NaiveDateTime, TimeZone, Utc};
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
+use std::collections::BTreeMap;
 use std::str::FromStr;
 
 pub async fn connect(url: &str) -> Result<SqlitePool> {
@@ -50,8 +51,14 @@ struct TaskRow {
     origin_execution_time: Option<i64>,
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
-    up_to_date_messages: Option<String>,  // JSON text, not Vec
+    up_to_date_messages: Option<String>, // JSON text, not Vec
     origin_build_invocation_id: Option<String>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct TaskDependencyRow {
+    task_id: String,
+    dependency_task_id: String,
 }
 
 #[derive(Debug, sqlx::FromRow)]
@@ -155,6 +162,7 @@ impl TryFrom<TaskRow> for domain::Task {
             id,
             scan_id,
             task_path: domain::TaskPath(row.task_path),
+            dependencies: vec![],
             class_name: row.class_name.map(domain::ClassName),
             outcome,
             cacheable: row.cacheable,
@@ -220,10 +228,9 @@ impl From<&domain::Task> for TaskRow {
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
             caching_disabled_reason: task.caching_disabled_reason.clone(),
             caching_disabled_explanation: task.caching_disabled_explanation.clone(),
-            up_to_date_messages: task
-                .up_to_date_messages
-                .as_ref()
-                .map(|msgs| serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")),
+            up_to_date_messages: task.up_to_date_messages.as_ref().map(|msgs| {
+                serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")
+            }),
             origin_build_invocation_id: task.origin_build_invocation_id.clone(),
         }
     }
@@ -454,6 +461,52 @@ pub async fn list_tasks(
     rows.into_iter()
         .map(domain::Task::try_from)
         .collect::<Result<Vec<_>>>()
+}
+
+pub async fn insert_task_dependency<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
+    task_id: &domain::TaskId,
+    dependency_task_id: &domain::TaskId,
+) -> Result<()> {
+    sqlx::query(
+        "INSERT OR IGNORE INTO task_dependencies (task_id, dependency_task_id) VALUES (?, ?)",
+    )
+    .bind(task_id.0.to_string())
+    .bind(dependency_task_id.0.to_string())
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn list_task_dependency_map_for_scan(
+    pool: &SqlitePool,
+    scan_id: &str,
+) -> Result<BTreeMap<uuid::Uuid, Vec<domain::TaskId>>> {
+    let rows = sqlx::query_as::<_, TaskDependencyRow>(
+        "SELECT td.task_id, td.dependency_task_id \
+         FROM task_dependencies td \
+         JOIN tasks task ON task.id = td.task_id \
+         WHERE task.scan_id = ? \
+         ORDER BY td.task_id, td.dependency_task_id",
+    )
+    .bind(scan_id)
+    .fetch_all(pool)
+    .await?;
+
+    let mut map = BTreeMap::<uuid::Uuid, Vec<domain::TaskId>>::new();
+    for row in rows {
+        let task_id = uuid::Uuid::parse_str(&row.task_id)
+            .with_context(|| format!("invalid task_id '{}'", row.task_id))?;
+        let dependency_task_id = uuid::Uuid::parse_str(&row.dependency_task_id)
+            .with_context(|| format!("invalid dependency_task_id '{}'", row.dependency_task_id))?;
+
+        map.entry(task_id)
+            .or_default()
+            .push(domain::TaskId(dependency_task_id));
+    }
+
+    Ok(map)
 }
 
 pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64> {

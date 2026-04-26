@@ -131,8 +131,10 @@
               pkgs.rustc
               pkgs.gcc
               pkgs.gradle
+              pkgs.jdk
               pkgs.nodejs
               pkgs.pre-commit
+              pkgs.sqlite
               pkgs.starpls
               llm-agents.packages.${system}.agent-browser
             ] ++ wrappedTools;
@@ -145,7 +147,12 @@
                 pkgs.stdenv.cc.cc.lib
                 pkgs.zlib
               ];
+              JAVA_HOME = "${pkgs.jdk}";
             };
+
+            shellHook = ''
+              export PATH="${pkgs.jdk}/bin:$PATH"
+            '';
           };
         }
       );
