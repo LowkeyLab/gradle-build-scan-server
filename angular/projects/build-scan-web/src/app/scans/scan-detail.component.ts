@@ -11,11 +11,39 @@ import { Apollo, gql } from "apollo-angular";
 import { filter, map, switchMap } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
 import { BuildMetadataComponent } from "./build-metadata/build-metadata.component";
-import { ScanSidebarComponent } from "./scan-sidebar/scan-sidebar.component";
+import { ScanDependenciesTabComponent } from "./scan-dependencies-tab.component";
+import {
+  ScanSidebarComponent,
+  type ScanTab,
+} from "./scan-sidebar/scan-sidebar.component";
 import { ScanTasksTabComponent } from "./scan-tasks-tab.component";
 import { ScanTestsTabComponent } from "./scan-tests-tab.component";
 
-type ScanTab = "overview" | "tasks" | "tests";
+interface BuildScanOverview {
+  id: string;
+  scanId: string;
+  buildToolType: string;
+  buildToolVersion: string;
+  pluginVersion: string;
+  outcome: string | null;
+  createdAt: string;
+  hostname: string | null;
+  osName: string | null;
+  osVersion: string | null;
+  jvmVendor: string | null;
+  jvmVersion: string | null;
+  requestedTasks: string[];
+  taskCount: number;
+  testCount: number;
+}
+
+interface GetBuildScanOverviewData {
+  buildScan: BuildScanOverview | null;
+}
+
+interface GetBuildScanOverviewVariables {
+  id: string;
+}
 
 const GET_BUILD_SCAN_OVERVIEW = gql`
   query GetBuildScanOverview($id: ID!) {
@@ -44,6 +72,7 @@ const GET_BUILD_SCAN_OVERVIEW = gql`
   imports: [
     AsyncPipe,
     BuildMetadataComponent,
+    ScanDependenciesTabComponent,
     ScanSidebarComponent,
     ScanTasksTabComponent,
     ScanTestsTabComponent,
@@ -74,6 +103,12 @@ const GET_BUILD_SCAN_OVERVIEW = gql`
             </section>
           }
 
+          @if (isTabMounted("dependencies")) {
+            <section [hidden]="selectedTab() !== 'dependencies'">
+              <app-scan-dependencies-tab [scanId]="scan.id" />
+            </section>
+          }
+
           @if (isTabMounted("tests")) {
             <section [hidden]="selectedTab() !== 'tests'">
               <app-scan-tests-tab
@@ -99,7 +134,7 @@ export class ScanDetailComponent {
   scan$ = toObservable(this.id).pipe(
     switchMap((id) =>
       this.apollo
-        .watchQuery<any>({
+        .watchQuery<GetBuildScanOverviewData, GetBuildScanOverviewVariables>({
           query: GET_BUILD_SCAN_OVERVIEW,
           variables: { id },
           errorPolicy: "all",
@@ -107,6 +142,7 @@ export class ScanDetailComponent {
         .valueChanges.pipe(
           filter((result) => !!result.data),
           map((result) => result.data.buildScan),
+          filter((scan): scan is BuildScanOverview => scan !== null),
         ),
     ),
   );

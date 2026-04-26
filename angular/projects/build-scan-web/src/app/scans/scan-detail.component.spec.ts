@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { TestBed, ComponentFixture } from "@angular/core/testing";
+import { TestBed, type ComponentFixture } from "@angular/core/testing";
 import {
   ApolloTestingModule,
   ApolloTestingController,
@@ -92,6 +92,22 @@ function buildTestScan(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function buildConfigurationDependenciesScan(
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    id: "QnVpbGRTY2FuOjEyMw==",
+    configurationDependencies: [
+      {
+        id: "6648731359144961106",
+        displayName: ":app:build",
+        details: [":list:build", ":utilities:build"],
+      },
+    ],
+    ...overrides,
+  };
+}
+
 describe("ScanDetailComponent", () => {
   let fixture: ComponentFixture<ScanDetailComponent>;
   let controller: ApolloTestingController;
@@ -132,7 +148,10 @@ describe("ScanDetailComponent", () => {
       candidate.textContent?.includes(label),
     );
     expect(button, `button ${label}`).toBeTruthy();
-    button!.click();
+    if (!button) {
+      throw new Error(`button ${label} not found`);
+    }
+    button.click();
     fixture.detectChanges();
   }
 
@@ -159,8 +178,12 @@ describe("ScanDetailComponent", () => {
     expect(
       fixture.nativeElement.querySelector("app-scan-tests-tab"),
     ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector("app-scan-dependencies-tab"),
+    ).toBeNull();
     expect(fixture.componentInstance.selectedTab()).toBe("overview");
     expect(fixture.componentInstance.isTabMounted("tasks")).toBe(false);
+    expect(fixture.componentInstance.isTabMounted("dependencies")).toBe(false);
     expect(fixture.componentInstance.isTabMounted("tests")).toBe(false);
   });
 
@@ -197,6 +220,45 @@ describe("ScanDetailComponent", () => {
       controller.match((op) => op.operationName === "GetScanTasks"),
     ).toHaveLength(0);
     expect(fixture.componentInstance.selectedTab()).toBe("tasks");
+  });
+
+  it("loads the Dependencies tab on demand", () => {
+    flushOverview();
+
+    clickTab("Dependencies");
+
+    const pendingDependencies = controller.expectOne(
+      "GetScanConfigurationDependencies",
+    );
+    expect(pendingDependencies.operation.variables).toEqual({
+      id: "QnVpbGRTY2FuOjEyMw==",
+    });
+    expect(fixture.nativeElement.textContent).toContain(
+      "Loading configurations…",
+    );
+
+    pendingDependencies.flushData({
+      buildScan: buildConfigurationDependenciesScan(),
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector("app-scan-dependencies-tab"),
+    ).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain("Configurations");
+    expect(fixture.componentInstance.selectedTab()).toBe("dependencies");
+    expect(fixture.componentInstance.isTabMounted("dependencies")).toBe(true);
+
+    clickTab("Overview");
+    expect(fixture.componentInstance.selectedTab()).toBe("overview");
+
+    clickTab("Dependencies");
+    expect(
+      controller.match(
+        (op) => op.operationName === "GetScanConfigurationDependencies",
+      ),
+    ).toHaveLength(0);
+    expect(fixture.componentInstance.selectedTab()).toBe("dependencies");
   });
 
   it("loads the Tests tab on demand", () => {
@@ -256,6 +318,7 @@ describe("ScanDetailComponent", () => {
 
     expect(fixture.componentInstance.selectedTab()).toBe("overview");
     expect(fixture.componentInstance.isTabMounted("tasks")).toBe(false);
+    expect(fixture.componentInstance.isTabMounted("dependencies")).toBe(false);
     expect(fixture.componentInstance.isTabMounted("tests")).toBe(false);
 
     clickTab("Tasks");

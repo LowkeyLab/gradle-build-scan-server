@@ -39,14 +39,14 @@ describe("ScanSidebarComponent", () => {
     return fixture;
   }
 
-  it("renders the Overview, Tasks, and Tests tab controls", () => {
+  it("renders the Overview, Tasks, Dependencies, and Tests tab controls", () => {
     const fixture = render();
     const buttons = Array.from(
       fixture.nativeElement.querySelectorAll("nav button"),
     ) as HTMLButtonElement[];
     const labels = buttons.map((button) => button.textContent?.trim());
 
-    expect(labels).toEqual(["Overview", "Tasks", "Tests"]);
+    expect(labels).toEqual(["Overview", "Tasks", "Dependencies", "Tests"]);
     expect(fixture.nativeElement.textContent).not.toContain("Cache Avoidance");
   });
 
@@ -64,7 +64,10 @@ describe("ScanSidebarComponent", () => {
     ) as HTMLElement | undefined;
     expect(tasksButton).toBeTruthy();
 
-    tasksButton!.click();
+    if (!tasksButton) {
+      throw new Error("Tasks button not found");
+    }
+    tasksButton.click();
     expect(clicked).toBe("tasks");
   });
 

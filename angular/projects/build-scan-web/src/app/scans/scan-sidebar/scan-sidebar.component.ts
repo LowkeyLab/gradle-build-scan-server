@@ -7,7 +7,24 @@ import {
 import { DatePipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
 
-type ScanTab = "overview" | "tasks" | "tests";
+export type ScanTab = "overview" | "tasks" | "dependencies" | "tests";
+
+interface SidebarScan {
+  scanId: string;
+  outcome: string | null;
+  createdAt: string;
+  requestedTasks: string[];
+  taskCount: number;
+  testCount: number;
+  buildToolType: string;
+  buildToolVersion: string;
+  pluginVersion: string;
+  hostname: string | null;
+  osName: string | null;
+  osVersion: string | null;
+  jvmVendor: string | null;
+  jvmVersion: string | null;
+}
 
 interface TabNav {
   id: ScanTab;
@@ -177,13 +194,14 @@ interface TabNav {
   `,
 })
 export class ScanSidebarComponent {
-  scan = input.required<any>();
+  scan = input.required<SidebarScan>();
   activeTab = input<ScanTab>("overview");
   tabClicked = output<ScanTab>();
 
   tabs: TabNav[] = [
     { id: "overview", label: "Overview" },
     { id: "tasks", label: "Tasks" },
+    { id: "dependencies", label: "Dependencies" },
     { id: "tests", label: "Tests" },
   ];
 
