@@ -378,6 +378,8 @@ pub struct Task {
     pub id: TaskId,
     pub scan_id: BuildScanId,
     pub task_path: TaskPath,
+    #[builder(default)]
+    pub dependencies: Vec<TaskId>,
     #[builder(setter(strip_option), default)]
     pub class_name: Option<ClassName>,
     #[builder(setter(strip_option), default)]
@@ -439,21 +441,4 @@ pub struct CacheOperation {
     pub archive_size: Option<ArchiveSize>,
     pub cache_key: Option<String>,
     pub duration_ms: Option<Duration>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskDependencyGraph {
-    pub nodes: Vec<TaskDependencyNode>,
-    pub edges: Vec<TaskDependencyEdge>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskDependencyNode {
-    pub id: TaskId,
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskDependencyEdge {
-    pub source_id: TaskId,
-    pub target_id: TaskId,
 }

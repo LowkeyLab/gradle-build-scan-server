@@ -108,19 +108,6 @@ impl BuildScan {
         Ok(count)
     }
 
-    async fn task_dependency_graph(
-        &self,
-        context: &Context,
-    ) -> FieldResult<Option<TaskDependencyGraph>> {
-        let graph = context
-            .service
-            .get_task_dependency_graph(&self.scan.id.0.to_string())
-            .await
-            .map_err(|e| FieldError::from(e.to_string()))?;
-
-        Ok(graph.map(|graph| TaskDependencyGraph { graph }))
-    }
-
     async fn tasks(
         &self,
         context: &Context,
@@ -250,57 +237,6 @@ pub struct Task {
     pub task: domain::Task,
 }
 
-pub struct TaskDependencyGraph {
-    pub graph: domain::TaskDependencyGraph,
-}
-
-#[graphql_object(context = Context)]
-impl TaskDependencyGraph {
-    fn nodes(&self) -> Vec<TaskDependencyNode> {
-        self.graph
-            .nodes
-            .iter()
-            .cloned()
-            .map(|node| TaskDependencyNode { node })
-            .collect()
-    }
-
-    fn edges(&self) -> Vec<TaskDependencyEdge> {
-        self.graph
-            .edges
-            .iter()
-            .cloned()
-            .map(|edge| TaskDependencyEdge { edge })
-            .collect()
-    }
-}
-
-pub struct TaskDependencyNode {
-    pub node: domain::TaskDependencyNode,
-}
-
-#[graphql_object(context = Context)]
-impl TaskDependencyNode {
-    fn id(&self) -> String {
-        RelayId::encode("Task", &self.node.id.0.to_string()).to_string()
-    }
-}
-
-pub struct TaskDependencyEdge {
-    pub edge: domain::TaskDependencyEdge,
-}
-
-#[graphql_object(context = Context)]
-impl TaskDependencyEdge {
-    fn source_id(&self) -> String {
-        RelayId::encode("Task", &self.edge.source_id.0.to_string()).to_string()
-    }
-
-    fn target_id(&self) -> String {
-        RelayId::encode("Task", &self.edge.target_id.0.to_string()).to_string()
-    }
-}
-
 #[graphql_object(context = Context, impl = NodeValue)]
 impl Task {
     fn id(&self) -> ID {
@@ -317,6 +253,14 @@ impl Task {
 
     fn task_path(&self) -> &str {
         &self.task.task_path.0
+    }
+
+    fn dependencies(&self) -> Vec<ID> {
+        self.task
+            .dependencies
+            .iter()
+            .map(|dependency| RelayId::encode("Task", &dependency.0.to_string()))
+            .collect()
     }
 
     fn class_name(&self) -> Option<&str> {

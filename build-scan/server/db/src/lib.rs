@@ -155,6 +155,7 @@ impl TryFrom<TaskRow> for domain::Task {
             id,
             scan_id,
             task_path: domain::TaskPath(row.task_path),
+            dependencies: vec![],
             class_name: row.class_name.map(domain::ClassName),
             outcome,
             cacheable: row.cacheable,

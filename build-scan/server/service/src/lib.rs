@@ -277,106 +277,6 @@ impl BuildScanService {
         db::get_build_scan(&self.pool, id).await
     }
 
-    pub async fn get_task_dependency_graph(
-        &self,
-        scan_id: &str,
-    ) -> Result<Option<domain::TaskDependencyGraph>> {
-        let Some(raw_payload) = db::get_build_scan_raw_payload(&self.pool, scan_id).await? else {
-            return Ok(None);
-        };
-
-        let payload = match lib::parse(&raw_payload) {
-            Ok(payload) => payload,
-            Err(error) => {
-                info!(scan_id = %scan_id, error = %error, "Skipping task dependency graph for unparsable stored payload");
-                return Ok(None);
-            }
-        };
-
-        let stored_tasks = db::list_tasks(&self.pool, scan_id, i64::MAX, None).await?;
-        let stored_ids_by_task_path: BTreeMap<String, domain::TaskId> = stored_tasks
-            .into_iter()
-            .map(|task| (task.task_path.0, task.id))
-            .collect();
-
-        let parsed_to_stored_ids: BTreeMap<models::TaskId, domain::TaskId> = payload
-            .tasks
-            .iter()
-            .filter_map(|task| {
-                stored_ids_by_task_path
-                    .get(&task.task_path)
-                    .cloned()
-                    .map(|stored_id| (task.id, stored_id))
-            })
-            .collect();
-
-        if parsed_to_stored_ids.is_empty() {
-            return Ok(None);
-        }
-
-        let mut node_ids = BTreeSet::new();
-        let mut edges = BTreeSet::new();
-
-        for stored_id in parsed_to_stored_ids.values() {
-            node_ids.insert(stored_id.0);
-        }
-
-        for planned_node in &payload.planned_nodes {
-            let Some(task_id) = planned_node.id else {
-                continue;
-            };
-            let Some(target_id) = parsed_to_stored_ids.get(&task_id).cloned() else {
-                continue;
-            };
-
-            node_ids.insert(target_id.0);
-
-            for dependency in &planned_node.dependencies {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
-                    node_ids.insert(source_id.0);
-                    edges.insert((source_id.0, target_id.0));
-                }
-            }
-
-            for dependency in &planned_node.must_run_after {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
-                    node_ids.insert(source_id.0);
-                    edges.insert((source_id.0, target_id.0));
-                }
-            }
-
-            for dependency in &planned_node.should_run_after {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
-                    node_ids.insert(source_id.0);
-                    edges.insert((source_id.0, target_id.0));
-                }
-            }
-
-            for finalized_by in &planned_node.finalized_by {
-                if let Some(finalizer_id) = parsed_to_stored_ids.get(finalized_by).cloned() {
-                    node_ids.insert(finalizer_id.0);
-                    edges.insert((target_id.0, finalizer_id.0));
-                }
-            }
-        }
-
-        Ok(Some(domain::TaskDependencyGraph {
-            nodes: node_ids
-                .into_iter()
-                .map(|id| domain::TaskDependencyNode {
-                    id: domain::TaskId(id),
-                })
-                .collect(),
-            edges: edges
-                .into_iter()
-                .map(|(source_id, target_id)| domain::TaskDependencyEdge {
-                    source_id: domain::TaskId(source_id),
-                    target_id: domain::TaskId(target_id),
-                })
-                .collect(),
-        }))
-    }
-
     pub async fn list_build_scans(
         &self,
         limit: i64,
@@ -387,7 +287,20 @@ impl BuildScanService {
     }
 
     pub async fn get_task(&self, id: &str) -> Result<Option<domain::Task>> {
-        db::get_task(&self.pool, id).await
+        let Some(task) = db::get_task(&self.pool, id).await? else {
+            return Ok(None);
+        };
+
+        let scan_id = task.scan_id.0.to_string();
+        let stored_tasks = db::list_tasks(&self.pool, &scan_id, i64::MAX, None).await?;
+        let dependencies_by_task_id = self
+            .build_task_dependency_map(&scan_id, &stored_tasks)
+            .await?;
+
+        Ok(Some(Self::hydrate_task_dependencies(
+            task,
+            &dependencies_by_task_id,
+        )))
     }
 
     pub async fn list_tasks(
@@ -396,7 +309,117 @@ impl BuildScanService {
         limit: i64,
         after_id: Option<&str>,
     ) -> Result<Vec<domain::Task>> {
-        db::list_tasks(&self.pool, scan_id, limit, after_id).await
+        let tasks = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
+        let stored_tasks = db::list_tasks(&self.pool, scan_id, i64::MAX, None).await?;
+        let dependencies_by_task_id = self
+            .build_task_dependency_map(scan_id, &stored_tasks)
+            .await?;
+
+        Ok(tasks
+            .into_iter()
+            .map(|task| Self::hydrate_task_dependencies(task, &dependencies_by_task_id))
+            .collect())
+    }
+
+    async fn build_task_dependency_map(
+        &self,
+        scan_id: &str,
+        stored_tasks: &[domain::Task],
+    ) -> Result<BTreeMap<Uuid, Vec<domain::TaskId>>> {
+        let mut dependencies_by_task_id: BTreeMap<Uuid, BTreeSet<Uuid>> = stored_tasks
+            .iter()
+            .map(|task| (task.id.0, BTreeSet::new()))
+            .collect();
+
+        let Some(raw_payload) = db::get_build_scan_raw_payload(&self.pool, scan_id).await? else {
+            return Ok(Self::finalize_dependency_map(dependencies_by_task_id));
+        };
+
+        let payload = match lib::parse(&raw_payload) {
+            Ok(payload) => payload,
+            Err(error) => {
+                info!(scan_id = %scan_id, error = %error, "Skipping task dependency hydration for unparsable stored payload");
+                return Ok(Self::finalize_dependency_map(dependencies_by_task_id));
+            }
+        };
+
+        let stored_ids_by_task_path: BTreeMap<&str, domain::TaskId> = stored_tasks
+            .iter()
+            .map(|task| (task.task_path.0.as_str(), task.id.clone()))
+            .collect();
+
+        let parsed_to_stored_ids: BTreeMap<models::TaskId, domain::TaskId> = payload
+            .tasks
+            .iter()
+            .filter_map(|task| {
+                stored_ids_by_task_path
+                    .get(task.task_path.as_str())
+                    .cloned()
+                    .map(|stored_id| (task.id, stored_id))
+            })
+            .collect();
+
+        for planned_node in &payload.planned_nodes {
+            let Some(task_id) = planned_node.id else {
+                continue;
+            };
+            let Some(target_id) = parsed_to_stored_ids.get(&task_id).cloned() else {
+                continue;
+            };
+
+            let target_dependencies = dependencies_by_task_id.entry(target_id.0).or_default();
+            for dependency in &planned_node.dependencies {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                    target_dependencies.insert(source_id.0);
+                }
+            }
+            for dependency in &planned_node.must_run_after {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                    target_dependencies.insert(source_id.0);
+                }
+            }
+            for dependency in &planned_node.should_run_after {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                    target_dependencies.insert(source_id.0);
+                }
+            }
+
+            for finalized_by in &planned_node.finalized_by {
+                if let Some(finalizer_id) = parsed_to_stored_ids.get(finalized_by) {
+                    dependencies_by_task_id
+                        .entry(finalizer_id.0)
+                        .or_default()
+                        .insert(target_id.0);
+                }
+            }
+        }
+
+        Ok(Self::finalize_dependency_map(dependencies_by_task_id))
+    }
+
+    fn finalize_dependency_map(
+        dependencies_by_task_id: BTreeMap<Uuid, BTreeSet<Uuid>>,
+    ) -> BTreeMap<Uuid, Vec<domain::TaskId>> {
+        dependencies_by_task_id
+            .into_iter()
+            .map(|(task_id, dependencies)| {
+                (
+                    task_id,
+                    dependencies.into_iter().map(domain::TaskId).collect(),
+                )
+            })
+            .collect()
+    }
+
+    fn hydrate_task_dependencies(
+        mut task: domain::Task,
+        dependencies_by_task_id: &BTreeMap<Uuid, Vec<domain::TaskId>>,
+    ) -> domain::Task {
+        task.dependencies = dependencies_by_task_id
+            .get(&task.id.0)
+            .cloned()
+            .unwrap_or_default();
+        task
     }
 
     pub async fn count_tasks(&self, scan_id: &str) -> Result<i64> {
