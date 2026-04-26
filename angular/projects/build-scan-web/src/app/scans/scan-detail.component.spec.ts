@@ -36,6 +36,7 @@ function buildTaskScan(overrides: Record<string, unknown> = {}) {
         {
           node: {
             id: "VGFzazox",
+            dependencies: [],
             taskPath: ":compileJava",
             className: "JavaCompile",
             outcome: "Success",

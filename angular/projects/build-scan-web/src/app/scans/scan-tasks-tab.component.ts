@@ -17,6 +17,7 @@ import { TasksTableComponent } from "./tasks-table/tasks-table.component";
 interface TaskEdge {
   node: {
     id: string;
+    dependencies: string[];
     taskPath: string;
     className: string;
     outcome: string;
@@ -40,14 +41,8 @@ interface TaskEdge {
   cursor: string;
 }
 
-interface TaskDependencyGraph {
-  nodes: Array<{ id: string }>;
-  edges: Array<{ sourceId: string; targetId: string }>;
-}
-
 interface TaskScan {
   id: string;
-  taskDependencyGraph: TaskDependencyGraph | null;
   tasks: {
     edges: TaskEdge[];
     pageInfo: {
@@ -68,7 +63,6 @@ interface GetScanTasksVariables {
 }
 
 interface PartialTaskScan {
-  taskDependencyGraph?: Partial<TaskDependencyGraph> | null;
   tasks?: {
     edges?: TaskEdge[];
     pageInfo?: {
@@ -78,33 +72,15 @@ interface PartialTaskScan {
   };
 }
 
-function normalizeTaskDependencyGraph(
-  graph: Partial<TaskDependencyGraph> | null | undefined,
-): TaskDependencyGraph | null {
-  if (!graph) return null;
-  return {
-    nodes: graph.nodes ?? [],
-    edges: graph.edges ?? [],
-  };
-}
-
 const GET_SCAN_TASKS = gql`
   query GetScanTasks($id: ID!, $firstTasks: Int!, $afterTasks: String) {
     buildScan(id: $id) {
       id
-      taskDependencyGraph {
-        nodes {
-          id
-        }
-        edges {
-          sourceId
-          targetId
-        }
-      }
       tasks(first: $firstTasks, after: $afterTasks) {
         edges {
           node {
             id
+            dependencies
             taskPath
             className
             outcome
@@ -162,10 +138,7 @@ const GET_SCAN_TASKS = gql`
           [taskCount]="taskCount()"
           [loading]="loading()"
         />
-        <app-task-timeline
-          [taskEdges]="taskEdges()"
-          [taskDependencyGraph]="taskDependencyGraph()"
-        />
+        <app-task-timeline [taskEdges]="taskEdges()" />
         <app-tasks-table [taskEdges]="taskEdges()" [taskCount]="taskCount()" />
       } @else if (!loading()) {
         <div
@@ -186,7 +159,6 @@ export class ScanTasksTabComponent implements OnInit {
   private scanId$ = toObservable(this.scanId);
 
   taskEdges = signal<TaskEdge[]>([]);
-  taskDependencyGraph = signal<TaskDependencyGraph | null>(null);
   loading = signal(true);
 
   private loadRemainingPages(
@@ -221,7 +193,6 @@ export class ScanTasksTabComponent implements OnInit {
       .pipe(
         switchMap((id) => {
           this.taskEdges.set([]);
-          this.taskDependencyGraph.set(null);
           if (this.taskCount() === 0) {
             this.loading.set(false);
             return EMPTY;
@@ -247,9 +218,6 @@ export class ScanTasksTabComponent implements OnInit {
             tap((scan) => {
               const edges = scan.tasks?.edges ?? [];
               const pageInfo = scan.tasks?.pageInfo;
-              this.taskDependencyGraph.set(
-                normalizeTaskDependencyGraph(scan.taskDependencyGraph),
-              );
               if (this.taskEdges().length === 0) {
                 this.taskEdges.set(edges);
                 if (pageInfo?.hasNextPage && pageInfo.endCursor) {

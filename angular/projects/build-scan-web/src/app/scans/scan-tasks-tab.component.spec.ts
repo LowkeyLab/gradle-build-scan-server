@@ -10,6 +10,7 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
     node: {
       id: "VGFzazox",
+      dependencies: [],
       taskPath: ":compileJava",
       className: "JavaCompile",
       outcome: "Success",
@@ -28,25 +29,12 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildTaskDependencyGraph(overrides: Record<string, unknown> = {}) {
-  return {
-    nodes: [{ id: "VGFzazox" }],
-    edges: [],
-    ...overrides,
-  };
-}
-
 function buildTaskScan(
   edges: Array<ReturnType<typeof buildTaskEdge>> = [buildTaskEdge()],
   pageInfo: Record<string, unknown> = { hasNextPage: false, endCursor: null },
-  taskDependencyGraph: Record<
-    string,
-    unknown
-  > | null = buildTaskDependencyGraph(),
 ) {
   return {
     id: "QnVpbGRTY2FuOjEyMw==",
-    taskDependencyGraph,
     tasks: {
       edges,
       pageInfo,
@@ -80,20 +68,17 @@ describe("ScanTasksTabComponent", () => {
       id: "123",
       firstTasks: 100,
     });
-    expect(queryText).toContain("taskDependencyGraph");
+    expect(queryText).toContain("dependencies");
+    expect(queryText).not.toContain("taskDependencyGraph");
     expect(queryText).not.toContain("startTimestamp");
     expect(queryText).not.toContain("finishTimestamp");
     expect(fixture.nativeElement.textContent).toContain("Loading tasks…");
 
     pending.flushData({
-      buildScan: buildTaskScan(
-        [buildTaskEdge()],
-        { hasNextPage: false, endCursor: null },
-        buildTaskDependencyGraph({
-          nodes: [{ id: "VGFzazox" }],
-          edges: [],
-        }),
-      ),
+      buildScan: buildTaskScan([buildTaskEdge()], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
     });
     fixture.detectChanges();
 
@@ -108,21 +93,24 @@ describe("ScanTasksTabComponent", () => {
     expect(fixture.nativeElement.querySelectorAll("tbody tr").length).toBe(1);
   });
 
-  it("shows the graph component empty state when the dependency graph payload has no nodes", () => {
+  it("passes per-task dependencies through to the task timeline", () => {
     const pending = controller.expectOne("GetScanTasks");
 
     pending.flushData({
       buildScan: buildTaskScan(
-        [buildTaskEdge()],
+        [
+          buildTaskEdge({
+            id: "VGFzazoy",
+            dependencies: ["VGFzazox"],
+          }),
+        ],
         { hasNextPage: false, endCursor: null },
-        buildTaskDependencyGraph({ nodes: [], edges: [] }),
       ),
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      "No task dependency graph available.",
-    );
+    const timeline = fixture.componentInstance.taskEdges();
+    expect(timeline[0]?.node.dependencies).toEqual(["VGFzazox"]);
   });
 
   it("continues loading additional task pages when pageInfo hasNextPage is true", async () => {
