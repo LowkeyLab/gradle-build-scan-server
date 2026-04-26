@@ -94,7 +94,8 @@ impl BuildScanService {
 
                 let requested_tasks: Vec<domain::RequestedTask> = payload
                     .requested_tasks
-                    .into_iter()
+                    .iter()
+                    .cloned()
                     .map(domain::RequestedTask::from)
                     .collect();
 
@@ -110,20 +111,20 @@ impl BuildScanService {
                 if !requested_tasks.is_empty() {
                     scan_builder.requested_tasks(requested_tasks);
                 }
-                if let Some(h) = payload.hostname {
-                    scan_builder.hostname(h);
+                if let Some(h) = &payload.hostname {
+                    scan_builder.hostname(h.clone());
                 }
-                if let Some(n) = payload.os_name {
-                    scan_builder.os_name(n);
+                if let Some(n) = &payload.os_name {
+                    scan_builder.os_name(n.clone());
                 }
-                if let Some(v) = payload.os_version {
-                    scan_builder.os_version(v);
+                if let Some(v) = &payload.os_version {
+                    scan_builder.os_version(v.clone());
                 }
-                if let Some(v) = payload.jvm_vendor {
-                    scan_builder.jvm_vendor(v);
+                if let Some(v) = &payload.jvm_vendor {
+                    scan_builder.jvm_vendor(v.clone());
                 }
-                if let Some(v) = payload.jvm_version {
-                    scan_builder.jvm_version(v);
+                if let Some(v) = &payload.jvm_version {
+                    scan_builder.jvm_version(v.clone());
                 }
 
                 let scan = scan_builder
@@ -141,6 +142,8 @@ impl BuildScanService {
                     .context("failed to store build scan")?;
 
                 let task_count = payload.tasks.len();
+                let mut persisted_task_ids_by_parsed_id =
+                    BTreeMap::<models::TaskId, domain::TaskId>::new();
                 for task in &payload.tasks {
                     let task_outcome = task.outcome.as_ref().map(map_task_outcome);
 
@@ -198,6 +201,8 @@ impl BuildScanService {
                         .await
                         .with_context(|| format!("failed to store task {}", task.task_path))?;
 
+                    persisted_task_ids_by_parsed_id.insert(task.id, domain_task.id.clone());
+
                     for cache_op in &task.cache_operations {
                         let succeeded = match cache_op.operation_type {
                             models::CacheOperationType::LocalLoad
@@ -228,6 +233,24 @@ impl BuildScanService {
                                 format!(
                                     "failed to store cache operation for task {}",
                                     task.task_path
+                                )
+                            })?;
+                    }
+                }
+
+                let dependencies_by_task_id = Self::build_task_dependency_map_from_payload(
+                    &payload,
+                    &persisted_task_ids_by_parsed_id,
+                );
+                for (task_id, dependency_ids) in dependencies_by_task_id {
+                    let task_id = domain::TaskId(task_id);
+                    for dependency_task_id in dependency_ids {
+                        db::insert_task_dependency(&mut *tx, &task_id, &dependency_task_id)
+                            .await
+                            .with_context(|| {
+                                format!(
+                                    "failed to store task dependency {} -> {}",
+                                    task_id.0, dependency_task_id.0
                                 )
                             })?;
                     }
@@ -292,10 +315,8 @@ impl BuildScanService {
         };
 
         let scan_id = task.scan_id.0.to_string();
-        let stored_tasks = db::list_tasks(&self.pool, &scan_id, i64::MAX, None).await?;
-        let dependencies_by_task_id = self
-            .build_task_dependency_map(&scan_id, &stored_tasks)
-            .await?;
+        let dependencies_by_task_id =
+            db::list_task_dependency_map_for_scan(&self.pool, &scan_id).await?;
 
         Ok(Some(Self::hydrate_task_dependencies(
             task,
@@ -310,10 +331,8 @@ impl BuildScanService {
         after_id: Option<&str>,
     ) -> Result<Vec<domain::Task>> {
         let tasks = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
-        let stored_tasks = db::list_tasks(&self.pool, scan_id, i64::MAX, None).await?;
-        let dependencies_by_task_id = self
-            .build_task_dependency_map(scan_id, &stored_tasks)
-            .await?;
+        let dependencies_by_task_id =
+            db::list_task_dependency_map_for_scan(&self.pool, scan_id).await?;
 
         Ok(tasks
             .into_iter()
@@ -321,71 +340,44 @@ impl BuildScanService {
             .collect())
     }
 
-    async fn build_task_dependency_map(
-        &self,
-        scan_id: &str,
-        stored_tasks: &[domain::Task],
-    ) -> Result<BTreeMap<Uuid, Vec<domain::TaskId>>> {
-        let mut dependencies_by_task_id: BTreeMap<Uuid, BTreeSet<Uuid>> = stored_tasks
-            .iter()
-            .map(|task| (task.id.0, BTreeSet::new()))
-            .collect();
-
-        let Some(raw_payload) = db::get_build_scan_raw_payload(&self.pool, scan_id).await? else {
-            return Ok(Self::finalize_dependency_map(dependencies_by_task_id));
-        };
-
-        let payload = match lib::parse(&raw_payload) {
-            Ok(payload) => payload,
-            Err(error) => {
-                info!(scan_id = %scan_id, error = %error, "Skipping task dependency hydration for unparsable stored payload");
-                return Ok(Self::finalize_dependency_map(dependencies_by_task_id));
-            }
-        };
-
-        let stored_ids_by_task_path: BTreeMap<&str, domain::TaskId> = stored_tasks
-            .iter()
-            .map(|task| (task.task_path.0.as_str(), task.id.clone()))
-            .collect();
-
-        let parsed_to_stored_ids: BTreeMap<models::TaskId, domain::TaskId> = payload
-            .tasks
-            .iter()
-            .filter_map(|task| {
-                stored_ids_by_task_path
-                    .get(task.task_path.as_str())
-                    .cloned()
-                    .map(|stored_id| (task.id, stored_id))
-            })
-            .collect();
+    fn build_task_dependency_map_from_payload(
+        payload: &models::BuildScanPayload,
+        persisted_task_ids_by_parsed_id: &BTreeMap<models::TaskId, domain::TaskId>,
+    ) -> BTreeMap<Uuid, Vec<domain::TaskId>> {
+        let mut dependencies_by_task_id: BTreeMap<Uuid, BTreeSet<Uuid>> =
+            persisted_task_ids_by_parsed_id
+                .values()
+                .cloned()
+                .map(|task_id| (task_id.0, BTreeSet::new()))
+                .collect();
 
         for planned_node in &payload.planned_nodes {
             let Some(task_id) = planned_node.id else {
                 continue;
             };
-            let Some(target_id) = parsed_to_stored_ids.get(&task_id).cloned() else {
+            let Some(target_id) = persisted_task_ids_by_parsed_id.get(&task_id).cloned() else {
                 continue;
             };
 
             let target_dependencies = dependencies_by_task_id.entry(target_id.0).or_default();
             for dependency in &planned_node.dependencies {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                if let Some(source_id) = persisted_task_ids_by_parsed_id.get(dependency) {
                     target_dependencies.insert(source_id.0);
                 }
             }
             for dependency in &planned_node.must_run_after {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                if let Some(source_id) = persisted_task_ids_by_parsed_id.get(dependency) {
                     target_dependencies.insert(source_id.0);
                 }
             }
             for dependency in &planned_node.should_run_after {
-                if let Some(source_id) = parsed_to_stored_ids.get(dependency) {
+                if let Some(source_id) = persisted_task_ids_by_parsed_id.get(dependency) {
                     target_dependencies.insert(source_id.0);
                 }
             }
 
             for finalized_by in &planned_node.finalized_by {
-                if let Some(finalizer_id) = parsed_to_stored_ids.get(finalized_by) {
+                if let Some(finalizer_id) = persisted_task_ids_by_parsed_id.get(finalized_by) {
                     dependencies_by_task_id
                         .entry(finalizer_id.0)
                         .or_default()
@@ -394,7 +386,7 @@ impl BuildScanService {
             }
         }
 
-        Ok(Self::finalize_dependency_map(dependencies_by_task_id))
+        Self::finalize_dependency_map(dependencies_by_task_id)
     }
 
     fn finalize_dependency_map(
