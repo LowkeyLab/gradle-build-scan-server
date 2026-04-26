@@ -265,7 +265,7 @@ function edgeKey(edge: TaskDependencyEdge): string {
 }
 
 @Component({
-  selector: "app-task-timeline",
+  selector: "app-task-dependency-graph",
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card bg-base-200 mb-6">
@@ -406,7 +406,7 @@ function edgeKey(edge: TaskDependencyEdge): string {
     </div>
   `,
 })
-export class TaskTimelineComponent {
+export class TaskDependencyGraphComponent {
   taskEdges = input.required<TaskEdge[]>();
   legendNodeItems = LEGEND_NODE_ITEMS;
   readonly edgeKey = edgeKey;
@@ -686,6 +686,10 @@ export class TaskTimelineComponent {
   }
 
   selectNode(nodeId: string): void {
+    if (this.selectedNodeId() === nodeId) {
+      this.clearSelectedNode();
+      return;
+    }
     this.selectedNodeId.set(nodeId);
     this.hoveredNodeId.set(null);
   }

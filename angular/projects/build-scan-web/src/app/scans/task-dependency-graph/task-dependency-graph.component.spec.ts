@@ -1,7 +1,7 @@
 import { type ComponentFixture, TestBed } from "@angular/core/testing";
 import { select, zoomIdentity, type ZoomBehavior } from "d3";
 import { beforeEach, describe, expect, it } from "vitest";
-import { TaskTimelineComponent } from "./task-timeline.component";
+import { TaskDependencyGraphComponent } from "./task-dependency-graph.component";
 
 function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
@@ -17,15 +17,15 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("TaskTimelineComponent", () => {
-  let fixture: ComponentFixture<TaskTimelineComponent>;
-  let component: TaskTimelineComponent;
+describe("TaskDependencyGraphComponent", () => {
+  let fixture: ComponentFixture<TaskDependencyGraphComponent>;
+  let component: TaskDependencyGraphComponent;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TaskTimelineComponent],
+      imports: [TaskDependencyGraphComponent],
     });
-    fixture = TestBed.createComponent(TaskTimelineComponent);
+    fixture = TestBed.createComponent(TaskDependencyGraphComponent);
     component = fixture.componentInstance;
   });
 
@@ -588,6 +588,33 @@ describe("TaskTimelineComponent", () => {
       );
 
       graph.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.highlightState()).toBeNull();
+      expect(selectedNode.getAttribute("data-highlight-state")).toBe("idle");
+    });
+
+    it("clears the persisted highlight when the selected node is clicked again", () => {
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+      ]);
+
+      const selectedNode = fixture.nativeElement.querySelector(
+        '[data-testid="dependency-node"][data-node-id="T3"]',
+      ) as SVGGElement;
+
+      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.highlightState()?.activeNodeId).toBe("T3");
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(selectedNode.getAttribute("data-highlight-state")).toBe(
+        "highlighted",
+      );
+
+      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       fixture.detectChanges();
 
       expect(component.highlightState()).toBeNull();
