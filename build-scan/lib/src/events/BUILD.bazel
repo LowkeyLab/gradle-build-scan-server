@@ -15,6 +15,7 @@ rust_library(
         "build_modes.rs",
         "build_requested_tasks.rs",
         "build_started.rs",
+        "configuration_dependencies.rs",
         "daemon_state.rs",
         "encoding.rs",
         "file_ref_roots.rs",
@@ -65,4 +66,5 @@ rust_library(
 rust_test(
     name = "events_test",
     crate = ":events",
+    deps = ["@crates//:hex"],
 )

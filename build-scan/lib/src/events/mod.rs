@@ -18,6 +18,7 @@ pub mod build_finished;
 pub mod build_modes;
 pub mod build_requested_tasks;
 pub mod build_started;
+pub mod configuration_dependencies;
 pub mod daemon_state;
 pub mod encoding;
 pub mod file_ref_roots;
@@ -109,6 +110,9 @@ pub enum DecodedEvent {
     BuildCacheLocalStoreFinished(BuildCacheLocalStoreFinishedEvent),
     BuildCacheRemoteStoreStarted(BuildCacheRemoteStoreStartedEvent),
     BuildCacheRemoteStoreFinished(BuildCacheRemoteStoreFinishedEvent),
+    ConfigurationResolutionStarted(ConfigurationResolutionStartedEvent),
+    ConfigurationResolutionFinished(ConfigurationResolutionFinishedEvent),
+    BuildWideConfigurationDependencies(BuildWideConfigurationDependenciesEvent),
     Raw(RawEvent),
 }
 
@@ -579,6 +583,24 @@ pub struct BuildCacheRemoteStoreFinishedEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct ConfigurationResolutionStartedEvent {
+    pub id: i64,
+    pub labels: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigurationResolutionFinishedEvent {
+    pub id: i64,
+    pub labels: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuildWideConfigurationDependenciesEvent {
+    pub root_node_id: Option<i64>,
+    pub artifact_labels: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct RawEvent {
     pub wire_id: u16,
     pub body: Vec<u8>,
@@ -731,6 +753,18 @@ impl DecoderRegistry {
                     has_remote_cache_location: true,
                 },
             ),
+        );
+        registry.register(
+            566,
+            Box::new(configuration_dependencies::ConfigurationResolutionFinishedDecoder),
+        );
+        registry.register(
+            567,
+            Box::new(configuration_dependencies::ConfigurationResolutionStartedDecoder),
+        );
+        registry.register(
+            1058,
+            Box::new(configuration_dependencies::BuildWideConfigurationDependenciesDecoder),
         );
 
         // Pack
