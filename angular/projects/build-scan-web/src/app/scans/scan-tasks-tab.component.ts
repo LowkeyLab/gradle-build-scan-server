@@ -11,7 +11,7 @@ import { Apollo, gql, type QueryRef } from "apollo-angular";
 import { EMPTY, filter, map, switchMap, tap } from "rxjs";
 import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { CacheBreakdownComponent } from "./cache-breakdown/cache-breakdown.component";
-import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
+import { TaskDependencyGraphComponent } from "./task-dependency-graph/task-dependency-graph.component";
 import { TasksTableComponent } from "./tasks-table/tasks-table.component";
 
 interface TaskEdge {
@@ -116,7 +116,7 @@ const GET_SCAN_TASKS = gql`
   selector: "app-scan-tasks-tab",
   imports: [
     CacheBreakdownComponent,
-    TaskTimelineComponent,
+    TaskDependencyGraphComponent,
     TasksTableComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -138,7 +138,7 @@ const GET_SCAN_TASKS = gql`
           [taskCount]="taskCount()"
           [loading]="loading()"
         />
-        <app-task-timeline [taskEdges]="taskEdges()" />
+        <app-task-dependency-graph [taskEdges]="taskEdges()" />
         <app-tasks-table [taskEdges]="taskEdges()" [taskCount]="taskCount()" />
       } @else if (!loading()) {
         <div

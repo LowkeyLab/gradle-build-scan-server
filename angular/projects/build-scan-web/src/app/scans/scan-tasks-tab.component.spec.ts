@@ -86,7 +86,7 @@ describe("ScanTasksTabComponent", () => {
       fixture.nativeElement.querySelector("app-cache-breakdown"),
     ).toBeTruthy();
     expect(
-      fixture.nativeElement.querySelector("app-task-timeline"),
+      fixture.nativeElement.querySelector("app-task-dependency-graph"),
     ).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain("Task Dependencies");
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
