@@ -50,7 +50,7 @@ struct TaskRow {
     origin_execution_time: Option<i64>,
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
-    up_to_date_messages: Option<String>,  // JSON text, not Vec
+    up_to_date_messages: Option<String>, // JSON text, not Vec
     origin_build_invocation_id: Option<String>,
 }
 
@@ -220,10 +220,9 @@ impl From<&domain::Task> for TaskRow {
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
             caching_disabled_reason: task.caching_disabled_reason.clone(),
             caching_disabled_explanation: task.caching_disabled_explanation.clone(),
-            up_to_date_messages: task
-                .up_to_date_messages
-                .as_ref()
-                .map(|msgs| serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")),
+            up_to_date_messages: task.up_to_date_messages.as_ref().map(|msgs| {
+                serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")
+            }),
             origin_build_invocation_id: task.origin_build_invocation_id.clone(),
         }
     }
@@ -422,6 +421,16 @@ pub async fn get_build_scan(pool: &SqlitePool, id: &str) -> Result<Option<domain
     .await?;
 
     row.map(domain::BuildScan::try_from).transpose()
+}
+
+pub async fn get_build_scan_raw_payload(pool: &SqlitePool, id: &str) -> Result<Option<Vec<u8>>> {
+    let payload =
+        sqlx::query_scalar::<_, Vec<u8>>("SELECT raw_payload FROM build_scans WHERE id = ?")
+            .bind(id)
+            .fetch_optional(pool)
+            .await?;
+
+    Ok(payload)
 }
 
 pub async fn list_tasks(

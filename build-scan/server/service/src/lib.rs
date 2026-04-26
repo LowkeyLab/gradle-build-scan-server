@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use models::TaskOutcome;
 use sqlx::SqlitePool;
+use std::collections::{BTreeMap, BTreeSet};
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -129,7 +130,6 @@ impl BuildScanService {
                     .build()
                     .map_err(|e| anyhow::anyhow!(e))
                     .context("failed to build BuildScan")?;
-
                 let mut tx = self
                     .pool
                     .begin()
@@ -209,9 +209,7 @@ impl BuildScanService {
                                 cache_op.stored.unwrap_or(false)
                             }
                             models::CacheOperationType::Pack
-                            | models::CacheOperationType::Unpack => {
-                                cache_op.failure_id.is_none()
-                            }
+                            | models::CacheOperationType::Unpack => cache_op.failure_id.is_none(),
                         };
                         let domain_op = domain::CacheOperation {
                             id: domain::CacheOperationId(Uuid::new_v4()),
@@ -222,9 +220,7 @@ impl BuildScanService {
                                 .archive_size
                                 .map(|s| domain::ArchiveSize(s.as_i64())),
                             cache_key: cache_op.cache_key.clone(),
-                            duration_ms: cache_op
-                                .duration_ms
-                                .map(|d| domain::Duration(d.as_i64())),
+                            duration_ms: cache_op.duration_ms.map(|d| domain::Duration(d.as_i64())),
                         };
                         db::insert_cache_operation(&mut *tx, &domain_op)
                             .await
@@ -279,6 +275,106 @@ impl BuildScanService {
 
     pub async fn get_build_scan(&self, id: &str) -> Result<Option<domain::BuildScan>> {
         db::get_build_scan(&self.pool, id).await
+    }
+
+    pub async fn get_task_dependency_graph(
+        &self,
+        scan_id: &str,
+    ) -> Result<Option<domain::TaskDependencyGraph>> {
+        let Some(raw_payload) = db::get_build_scan_raw_payload(&self.pool, scan_id).await? else {
+            return Ok(None);
+        };
+
+        let payload = match lib::parse(&raw_payload) {
+            Ok(payload) => payload,
+            Err(error) => {
+                info!(scan_id = %scan_id, error = %error, "Skipping task dependency graph for unparsable stored payload");
+                return Ok(None);
+            }
+        };
+
+        let stored_tasks = db::list_tasks(&self.pool, scan_id, i64::MAX, None).await?;
+        let stored_ids_by_task_path: BTreeMap<String, domain::TaskId> = stored_tasks
+            .into_iter()
+            .map(|task| (task.task_path.0, task.id))
+            .collect();
+
+        let parsed_to_stored_ids: BTreeMap<models::TaskId, domain::TaskId> = payload
+            .tasks
+            .iter()
+            .filter_map(|task| {
+                stored_ids_by_task_path
+                    .get(&task.task_path)
+                    .cloned()
+                    .map(|stored_id| (task.id, stored_id))
+            })
+            .collect();
+
+        if parsed_to_stored_ids.is_empty() {
+            return Ok(None);
+        }
+
+        let mut node_ids = BTreeSet::new();
+        let mut edges = BTreeSet::new();
+
+        for stored_id in parsed_to_stored_ids.values() {
+            node_ids.insert(stored_id.0);
+        }
+
+        for planned_node in &payload.planned_nodes {
+            let Some(task_id) = planned_node.id else {
+                continue;
+            };
+            let Some(target_id) = parsed_to_stored_ids.get(&task_id).cloned() else {
+                continue;
+            };
+
+            node_ids.insert(target_id.0);
+
+            for dependency in &planned_node.dependencies {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
+                    node_ids.insert(source_id.0);
+                    edges.insert((source_id.0, target_id.0));
+                }
+            }
+
+            for dependency in &planned_node.must_run_after {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
+                    node_ids.insert(source_id.0);
+                    edges.insert((source_id.0, target_id.0));
+                }
+            }
+
+            for dependency in &planned_node.should_run_after {
+                if let Some(source_id) = parsed_to_stored_ids.get(dependency).cloned() {
+                    node_ids.insert(source_id.0);
+                    edges.insert((source_id.0, target_id.0));
+                }
+            }
+
+            for finalized_by in &planned_node.finalized_by {
+                if let Some(finalizer_id) = parsed_to_stored_ids.get(finalized_by).cloned() {
+                    node_ids.insert(finalizer_id.0);
+                    edges.insert((target_id.0, finalizer_id.0));
+                }
+            }
+        }
+
+        Ok(Some(domain::TaskDependencyGraph {
+            nodes: node_ids
+                .into_iter()
+                .map(|id| domain::TaskDependencyNode {
+                    id: domain::TaskId(id),
+                })
+                .collect(),
+            edges: edges
+                .into_iter()
+                .map(|(source_id, target_id)| domain::TaskDependencyEdge {
+                    source_id: domain::TaskId(source_id),
+                    target_id: domain::TaskId(target_id),
+                })
+                .collect(),
+        }))
     }
 
     pub async fn list_build_scans(
