@@ -108,6 +108,36 @@ impl BuildScan {
         Ok(count)
     }
 
+    async fn configuration_dependencies(
+        &self,
+        context: &Context,
+    ) -> FieldResult<Vec<ConfigurationDependency>> {
+        let configurations = context
+            .service
+            .get_configuration_dependencies(&self.scan.id.0.to_string())
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+
+        Ok(configurations
+            .into_iter()
+            .map(|configuration| ConfigurationDependency { configuration })
+            .collect())
+    }
+
+    async fn configuration_dependency_graph(
+        &self,
+        context: &Context,
+        configuration_id: String,
+    ) -> FieldResult<Option<ConfigurationDependencyGraph>> {
+        let graph = context
+            .service
+            .get_configuration_dependency_graph(&self.scan.id.0.to_string(), &configuration_id)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+
+        Ok(graph.map(|graph| ConfigurationDependencyGraph { graph }))
+    }
+
     async fn tasks(
         &self,
         context: &Context,
@@ -235,6 +265,80 @@ impl BuildScan {
 
 pub struct Task {
     pub task: domain::Task,
+}
+
+pub struct ConfigurationDependency {
+    pub configuration: domain::ConfigurationDependency,
+}
+
+#[graphql_object(context = Context)]
+impl ConfigurationDependency {
+    fn id(&self) -> &str {
+        &self.configuration.id
+    }
+
+    fn display_name(&self) -> &str {
+        &self.configuration.display_name
+    }
+
+    fn details(&self) -> &Vec<String> {
+        &self.configuration.details
+    }
+}
+
+pub struct ConfigurationDependencyGraph {
+    pub graph: domain::ConfigurationDependencyGraph,
+}
+
+#[graphql_object(context = Context)]
+impl ConfigurationDependencyGraph {
+    fn nodes(&self) -> Vec<ConfigurationDependencyNode> {
+        self.graph
+            .nodes
+            .iter()
+            .cloned()
+            .map(|node| ConfigurationDependencyNode { node })
+            .collect()
+    }
+
+    fn edges(&self) -> Vec<ConfigurationDependencyEdge> {
+        self.graph
+            .edges
+            .iter()
+            .cloned()
+            .map(|edge| ConfigurationDependencyEdge { edge })
+            .collect()
+    }
+}
+
+pub struct ConfigurationDependencyNode {
+    pub node: domain::ConfigurationDependencyNode,
+}
+
+#[graphql_object(context = Context)]
+impl ConfigurationDependencyNode {
+    fn id(&self) -> &str {
+        &self.node.id
+    }
+
+    fn label(&self) -> &str {
+        &self.node.label
+    }
+}
+
+pub struct ConfigurationDependencyEdge {
+    pub edge: domain::ConfigurationDependencyEdge,
+}
+
+#[graphql_object(context = Context)]
+impl ConfigurationDependencyEdge {
+    fn source_id(&self) -> &str {
+        &self.edge.source_id
+    }
+
+    fn target_id(&self) -> &str {
+        &self.edge.target_id
+    }
 }
 
 #[graphql_object(context = Context, impl = NodeValue)]
