@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use events::DecodedEvent;
 use framing::FramedEvent;
@@ -43,10 +43,17 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut os_event: Option<events::OsEvent> = None;
     let mut jvm_event: Option<events::JvmEvent> = None;
     let mut requested_tasks: Vec<String> = Vec::new();
+    let mut configuration_resolution_started: BTreeMap<i64, Vec<String>> = BTreeMap::new();
+    let mut configuration_resolution_finished: BTreeMap<i64, Vec<String>> = BTreeMap::new();
+    let mut build_wide_configuration_dependencies: Option<
+        events::BuildWideConfigurationDependenciesEvent,
+    > = None;
 
     // Cache operation tracking: operation_id → (work_id, op_type, cache_key, started_archive_size, started_timestamp)
-    let mut cache_op_started: HashMap<i64, (i64, CacheOperationType, Option<String>, Option<i64>, i64)> =
-        HashMap::new();
+    let mut cache_op_started: HashMap<
+        i64,
+        (i64, CacheOperationType, Option<String>, Option<i64>, i64),
+    > = HashMap::new();
     let mut cache_op_finished: HashMap<i64, CacheOpFinished> = HashMap::new();
 
     for (frame, decoded) in &events {
@@ -179,14 +186,17 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         .executor_name
                         .clone()
                         .or_else(|| executor_names.get(&e.executor_id).cloned());
-                    all_test_cases.push((Some(models::TestCase {
-                        class_name: e.class_name.clone(),
-                        method_name: e.method_name.clone(),
-                        executor_name,
-                        outcome: None,
-                        duration_ms: None,
-                        failure_id: None,
-                    }), frame.timestamp));
+                    all_test_cases.push((
+                        Some(models::TestCase {
+                            class_name: e.class_name.clone(),
+                            method_name: e.method_name.clone(),
+                            executor_name,
+                            outcome: None,
+                            duration_ms: None,
+                            failure_id: None,
+                        }),
+                        frame.timestamp,
+                    ));
                 } else {
                     // Non-method event (class-level or executor-init): placeholder to
                     // keep positional alignment with TestResult events.
@@ -367,6 +377,15 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                     },
                 );
             }
+            DecodedEvent::ConfigurationResolutionStarted(e) => {
+                configuration_resolution_started.insert(e.id, e.labels.clone());
+            }
+            DecodedEvent::ConfigurationResolutionFinished(e) => {
+                configuration_resolution_finished.insert(e.id, e.labels.clone());
+            }
+            DecodedEvent::BuildWideConfigurationDependencies(e) => {
+                build_wide_configuration_dependencies = Some(e.clone());
+            }
             DecodedEvent::Raw(r) => {
                 *raw_counts.entry(r.wire_id).or_insert(0) += 1;
             }
@@ -479,8 +498,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 duration_ms: duration_ms.map(models::Duration::new),
                 inputs,
                 up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
-                origin_build_invocation_id: fin
-                    .and_then(|f| f.origin_build_invocation_id.clone()),
+                origin_build_invocation_id: fin.and_then(|f| f.origin_build_invocation_id.clone()),
                 origin_execution_time: fin
                     .and_then(|f| f.origin_execution_time)
                     .map(models::Duration::new),
@@ -560,10 +578,38 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
         })
         .collect();
 
+    let mut configuration_ids: Vec<i64> = configuration_resolution_started
+        .keys()
+        .chain(configuration_resolution_finished.keys())
+        .copied()
+        .collect();
+    configuration_ids.sort_unstable();
+    configuration_ids.dedup();
+
+    let configuration_resolutions = configuration_ids
+        .into_iter()
+        .map(|id| models::ConfigurationResolutionData {
+            id,
+            started_labels: configuration_resolution_started
+                .remove(&id)
+                .unwrap_or_default(),
+            finished_labels: configuration_resolution_finished
+                .remove(&id)
+                .unwrap_or_default(),
+        })
+        .collect();
+
     BuildScanPayload {
         tasks,
         planned_nodes: planned_nodes_data,
         transform_execution_requests: transform_requests_data,
+        configuration_resolutions,
+        build_wide_configuration_dependencies: build_wide_configuration_dependencies.map(|event| {
+            models::BuildWideConfigurationDependenciesData {
+                root_node_id: event.root_node_id,
+                artifact_labels: event.artifact_labels,
+            }
+        }),
         raw_events,
         task_registration_summary: task_registration_summary.map(|e| {
             models::TaskRegistrationSummaryData {
@@ -854,8 +900,14 @@ mod tests {
             "testFail: 2001 - 2000 = 1ms"
         );
         // failure_id is propagated from TestResult
-        assert!(payload.tests[0].failure_id.is_none(), "passing test should have no failure_id");
-        assert_eq!(payload.tests[1].failure_id, Some(models::FailureId::new(42)));
+        assert!(
+            payload.tests[0].failure_id.is_none(),
+            "passing test should have no failure_id"
+        );
+        assert_eq!(
+            payload.tests[1].failure_id,
+            Some(models::FailureId::new(42))
+        );
     }
 
     #[test]
@@ -884,7 +936,10 @@ mod tests {
         ];
         let payload = assemble(events);
         assert_eq!(payload.tests.len(), 1);
-        assert_eq!(payload.tests[0].duration_ms, None, "negative duration should produce None");
+        assert_eq!(
+            payload.tests[0].duration_ms, None,
+            "negative duration should produce None"
+        );
     }
 
     #[test]
@@ -1023,7 +1078,9 @@ mod tests {
 
     #[test]
     fn test_assemble_cache_operation_duration_none_when_finished_missing() {
-        use events::{BuildCacheLocalLoadStartedEvent, TaskFinishedEvent, TaskIdentityEvent, TaskStartedEvent};
+        use events::{
+            BuildCacheLocalLoadStartedEvent, TaskFinishedEvent, TaskIdentityEvent, TaskStartedEvent,
+        };
         use models::CacheOperationType;
 
         let task_id = TaskId::new(99);

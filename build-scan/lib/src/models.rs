@@ -219,6 +219,10 @@ pub struct BuildScanPayload {
     pub planned_nodes: Vec<PlannedNodeData>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub transform_execution_requests: Vec<TransformExecutionRequestData>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub configuration_resolutions: Vec<ConfigurationResolutionData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub build_wide_configuration_dependencies: Option<BuildWideConfigurationDependenciesData>,
     pub raw_events: Vec<RawEventSummary>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub task_registration_summary: Option<TaskRegistrationSummaryData>,
@@ -342,6 +346,23 @@ impl TaskOutcome {
 pub struct RawEventSummary {
     pub wire_id: u16,
     pub count: EventCount,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigurationResolutionData {
+    pub id: i64,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub started_labels: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub finished_labels: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BuildWideConfigurationDependenciesData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub root_node_id: Option<i64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub artifact_labels: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
