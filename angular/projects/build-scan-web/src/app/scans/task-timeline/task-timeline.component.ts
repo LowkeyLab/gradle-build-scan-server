@@ -28,21 +28,10 @@ import {
 interface TaskEdge {
   node: {
     id: string;
+    dependencies: string[];
     taskPath: string;
     outcome: string;
   };
-}
-
-interface TaskDependencyGraphInput {
-  nodes?: Array<{ id: string } | string> | null;
-  edges?: Array<{
-    sourceId?: string | null;
-    targetId?: string | null;
-    source?: string | null;
-    target?: string | null;
-    fromId?: string | null;
-    toId?: string | null;
-  }> | null;
 }
 
 interface TaskDependencyNode {
@@ -120,30 +109,40 @@ const POSITION_PRECISION = 1000;
 const ZOOM_SCALE_EXTENT = [0.6, 2.5] as const;
 const ZOOM_BOUNDS_PADDING = 96;
 
+const SUCCESS_STYLE = {
+  fillColor: "oklch(72% 0.17 150 / 0.18)",
+  strokeColor: "oklch(72% 0.17 150)",
+};
+
+const UP_TO_DATE_STYLE = {
+  fillColor: "oklch(72% 0.17 150 / 0.12)",
+  strokeColor: "oklch(72% 0.17 150 / 0.7)",
+};
+
+const FROM_CACHE_STYLE = {
+  fillColor: "oklch(72% 0.15 230 / 0.18)",
+  strokeColor: "oklch(72% 0.15 230)",
+};
+
+const FAILED_STYLE = {
+  fillColor: "oklch(62% 0.2 25 / 0.18)",
+  strokeColor: "oklch(62% 0.2 25)",
+};
+
+const SKIPPED_STYLE = {
+  fillColor: "oklch(75% 0.15 75 / 0.18)",
+  strokeColor: "oklch(75% 0.15 75)",
+};
+
 const OUTCOME_STYLES: Record<
   string,
   { fillColor: string; strokeColor: string }
 > = {
-  Success: {
-    fillColor: "oklch(72% 0.17 150 / 0.18)",
-    strokeColor: "oklch(72% 0.17 150)",
-  },
-  UpToDate: {
-    fillColor: "oklch(72% 0.17 150 / 0.12)",
-    strokeColor: "oklch(72% 0.17 150 / 0.7)",
-  },
-  FromCache: {
-    fillColor: "oklch(72% 0.15 230 / 0.18)",
-    strokeColor: "oklch(72% 0.15 230)",
-  },
-  Failed: {
-    fillColor: "oklch(62% 0.2 25 / 0.18)",
-    strokeColor: "oklch(62% 0.2 25)",
-  },
-  Skipped: {
-    fillColor: "oklch(75% 0.15 75 / 0.18)",
-    strokeColor: "oklch(75% 0.15 75)",
-  },
+  Success: SUCCESS_STYLE,
+  UpToDate: UP_TO_DATE_STYLE,
+  FromCache: FROM_CACHE_STYLE,
+  Failed: FAILED_STYLE,
+  Skipped: SKIPPED_STYLE,
 };
 
 const FALLBACK_STYLE = {
@@ -152,12 +151,12 @@ const FALLBACK_STYLE = {
 };
 
 const LEGEND_NODE_ITEMS: LegendNodeItem[] = [
-  { label: "Success", ...OUTCOME_STYLES["Success"] },
-  { label: "From Cache", ...OUTCOME_STYLES["FromCache"] },
-  { label: "Up To Date", ...OUTCOME_STYLES["UpToDate"] },
-  { label: "Skipped", ...OUTCOME_STYLES["Skipped"] },
+  { label: "Success", ...SUCCESS_STYLE },
+  { label: "From Cache", ...FROM_CACHE_STYLE },
+  { label: "Up To Date", ...UP_TO_DATE_STYLE },
+  { label: "Skipped", ...SKIPPED_STYLE },
   { label: "Other / Unknown", ...FALLBACK_STYLE },
-  { label: "Failed", ...OUTCOME_STYLES["Failed"] },
+  { label: "Failed", ...FAILED_STYLE },
 ];
 
 const DAG_LAYOUT = sugiyama()
@@ -176,22 +175,6 @@ function truncateTaskLabel(label: string): string {
   return `${label.slice(0, 25)}…`;
 }
 
-function readNodeId(node: { id: string } | string): string | null {
-  if (typeof node === "string") return node;
-  return node?.id ?? null;
-}
-
-function readEdgeEndpoint(
-  edge: NonNullable<TaskDependencyGraphInput["edges"]>[number],
-  keys: Array<keyof NonNullable<TaskDependencyGraphInput["edges"]>[number]>,
-): string | null {
-  for (const key of keys) {
-    const value = edge[key];
-    if (typeof value === "string" && value.length > 0) return value;
-  }
-  return null;
-}
-
 function compareLabels(
   left: { label: string; id: string },
   right: { label: string; id: string },
@@ -206,17 +189,20 @@ function formatCoord(value: number): string {
 
 function buildOrthogonalPath(points: readonly Point[]): string {
   if (points.length === 0) return "";
+  const start = points[0];
+  if (!start) return "";
   if (points.length === 1) {
-    return `M ${formatCoord(points[0]!.x)} ${formatCoord(points[0]!.y)}`;
+    return `M ${formatCoord(start.x)} ${formatCoord(start.y)}`;
   }
 
   const commands: string[] = [
-    `M ${formatCoord(points[0]!.x)} ${formatCoord(points[0]!.y)}`,
+    `M ${formatCoord(start.x)} ${formatCoord(start.y)}`,
   ];
 
   for (let index = 1; index < points.length; index += 1) {
-    const previous = points[index - 1]!;
-    const current = points[index]!;
+    const previous = points[index - 1];
+    const current = points[index];
+    if (!previous || !current) continue;
     const midY = previous.y + (current.y - previous.y) / 2;
 
     commands.push(`L ${formatCoord(previous.x)} ${formatCoord(midY)}`);
@@ -422,7 +408,6 @@ function edgeKey(edge: TaskDependencyEdge): string {
 })
 export class TaskTimelineComponent {
   taskEdges = input.required<TaskEdge[]>();
-  taskDependencyGraph = input<TaskDependencyGraphInput | null>(null);
   legendNodeItems = LEGEND_NODE_ITEMS;
   readonly edgeKey = edgeKey;
 
@@ -466,15 +451,7 @@ export class TaskTimelineComponent {
       tasks.set(edge.node.id, edge.node);
     }
 
-    const graph = this.taskDependencyGraph();
-    const rawNodes = graph?.nodes ?? [];
-    const rawEdges = graph?.edges ?? [];
-
-    const nodes = rawNodes
-      .map(readNodeId)
-      .filter((id): id is string => !!id)
-      .map((id) => tasks.get(id))
-      .filter((task): task is TaskEdge["node"] => !!task)
+    const nodes = [...tasks.values()]
       .sort((a, b) => a.taskPath.localeCompare(b.taskPath))
       .map((task) => ({
         id: task.id,
@@ -485,11 +462,13 @@ export class TaskTimelineComponent {
 
     const nodeIds = new Set(nodes.map((node) => node.id));
     const seenEdges = new Set<string>();
-    const edges = rawEdges
-      .map((edge) => ({
-        sourceId: readEdgeEndpoint(edge, ["sourceId", "source", "fromId"]),
-        targetId: readEdgeEndpoint(edge, ["targetId", "target", "toId"]),
-      }))
+    const edges = [...tasks.values()]
+      .flatMap((task) =>
+        (task.dependencies ?? []).map((sourceId) => ({
+          sourceId,
+          targetId: task.id,
+        })),
+      )
       .filter(
         (edge): edge is TaskDependencyEdge =>
           !!edge.sourceId &&

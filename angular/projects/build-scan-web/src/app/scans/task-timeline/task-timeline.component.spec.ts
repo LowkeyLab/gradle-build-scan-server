@@ -7,23 +7,13 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
     node: {
       id: "VGFzazox",
+      dependencies: [],
       taskPath: ":compileJava",
       outcome: "Success",
       durationMs: 120,
       ...overrides,
     },
     cursor: "c1",
-  };
-}
-
-function buildTaskDependencyGraph(overrides: Record<string, unknown> = {}) {
-  return {
-    nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }],
-    edges: [
-      { sourceId: "T1", targetId: "T2" },
-      { sourceId: "T1", targetId: "T3" },
-    ],
-    ...overrides,
   };
 }
 
@@ -39,17 +29,13 @@ describe("TaskTimelineComponent", () => {
     component = fixture.componentInstance;
   });
 
-  function render(
-    edges: Array<ReturnType<typeof buildTaskEdge>>,
-    graph: Record<string, unknown> | null = buildTaskDependencyGraph(),
-  ) {
+  function render(edges: Array<ReturnType<typeof buildTaskEdge>>) {
     fixture.componentRef.setInput("taskEdges", edges);
-    fixture.componentRef.setInput("taskDependencyGraph", graph);
     fixture.detectChanges();
   }
 
   describe("graph layout", () => {
-    it("builds labeled nodes and directed edges from the dependency graph payload", () => {
+    it("builds labeled nodes and directed edges from per-task dependencies", () => {
       render([
         buildTaskEdge({
           id: "T1",
@@ -57,10 +43,12 @@ describe("TaskTimelineComponent", () => {
         }),
         buildTaskEdge({
           id: "T2",
+          dependencies: ["T1"],
           taskPath: ":processResources",
         }),
         buildTaskEdge({
           id: "T3",
+          dependencies: ["T1"],
           taskPath: ":test",
         }),
       ]);
@@ -78,42 +66,33 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("ignores graph entries that do not map to loaded task labels", () => {
-      render(
-        [
-          buildTaskEdge({
-            id: "T1",
-            taskPath: ":compileJava",
-          }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "MISSING" }],
-          edges: [{ sourceId: "T1", targetId: "MISSING" }],
-        },
-      );
+      render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+        }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["MISSING"],
+          taskPath: ":processResources",
+        }),
+      ]);
 
       const graph = component.graph();
       expect(graph.nodes).toEqual([
         expect.objectContaining({ id: "T1", label: ":compileJava" }),
+        expect.objectContaining({ id: "T2", label: ":processResources" }),
       ]);
       expect(graph.edges).toEqual([]);
     });
 
     it("orders nodes within a Sugiyama layer to reduce dependency crossings", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":yank" }),
-          buildTaskEdge({ id: "T4", taskPath: ":zeta" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }, { id: "T4" }],
-          edges: [
-            { sourceId: "T1", targetId: "T4" },
-            { sourceId: "T2", targetId: "T3" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":yank" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T1"], taskPath: ":zeta" }),
+      ]);
 
       const secondLayerLabels = component
         .layout()
@@ -121,14 +100,18 @@ describe("TaskTimelineComponent", () => {
         .sort((left, right) => left.column - right.column)
         .map((node) => node.label);
 
-      expect(secondLayerLabels).toEqual([":zeta", ":yank"]);
+      expect(secondLayerLabels).toEqual([":yank", ":zeta"]);
     });
 
     it("renders routed d3-dag link points for sibling edges in a top-to-bottom flow", () => {
       render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-        buildTaskEdge({ id: "T3", taskPath: ":test" }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+        }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
       ]);
 
       const edges = component.layout().edges;
@@ -183,16 +166,10 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("keeps isolated nodes by seeding graphConnect with single-node placeholders", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-          buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }],
-          edges: [],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
+      ]);
 
       const layout = component.layout();
       expect(layout.nodes.map((node) => node.id)).toEqual(["T1", "T2"]);
@@ -202,32 +179,14 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("derives recursive upstream highlight state for hovered nodes", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-          buildTaskEdge({ id: "T4", taskPath: ":delta" }),
-          buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-          buildTaskEdge({ id: "T6", taskPath: ":zeta" }),
-        ],
-        {
-          nodes: [
-            { id: "T1" },
-            { id: "T2" },
-            { id: "T3" },
-            { id: "T4" },
-            { id: "T5" },
-            { id: "T6" },
-          ],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T3", targetId: "T4" },
-            { sourceId: "T5", targetId: "T6" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
+        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
+        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
+      ]);
 
       component.setHoveredNode("T4");
 
@@ -251,32 +210,14 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("keeps click selection active until another node or blank space is clicked", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-          buildTaskEdge({ id: "T4", taskPath: ":delta" }),
-          buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-          buildTaskEdge({ id: "T6", taskPath: ":zeta" }),
-        ],
-        {
-          nodes: [
-            { id: "T1" },
-            { id: "T2" },
-            { id: "T3" },
-            { id: "T4" },
-            { id: "T5" },
-            { id: "T6" },
-          ],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T3", targetId: "T4" },
-            { sourceId: "T5", targetId: "T6" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
+        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
+        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
+      ]);
 
       component.selectNode("T4");
       component.setHoveredNode("T6");
@@ -310,10 +251,12 @@ describe("TaskTimelineComponent", () => {
         }),
         buildTaskEdge({
           id: "T2",
+          dependencies: ["T1"],
           taskPath: ":processResources",
         }),
         buildTaskEdge({
           id: "T3",
+          dependencies: ["T1"],
           taskPath: ":test",
         }),
       ]);
@@ -359,7 +302,7 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("renders an empty-state message when the dependency graph payload is empty", () => {
-      render([buildTaskEdge()], { nodes: [], edges: [] });
+      render([]);
 
       const card = fixture.nativeElement.querySelector(".card.bg-base-200");
       expect(card).toBeTruthy();
@@ -377,21 +320,19 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("renders long-span edges with explicit routing attributes", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-          buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-          buildTaskEdge({ id: "T3", taskPath: ":test" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T1", targetId: "T3" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+        }),
+        buildTaskEdge({
+          id: "T3",
+          dependencies: ["T1", "T2"],
+          taskPath: ":test",
+        }),
+      ]);
 
       const longSpanEdge = fixture.nativeElement.querySelector(
         '[data-testid="dependency-edge"][data-edge-span="2"]',
@@ -411,8 +352,12 @@ describe("TaskTimelineComponent", () => {
     it("resets the viewport zoom when the graph layout changes", () => {
       render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-        buildTaskEdge({ id: "T3", taskPath: ":test" }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+        }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
       ]);
 
       const svg = fixture.nativeElement.querySelector(
@@ -436,22 +381,16 @@ describe("TaskTimelineComponent", () => {
         "translate(24,36) scale(1.75)",
       );
 
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-          buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-          buildTaskEdge({ id: "T3", taskPath: ":test" }),
-          buildTaskEdge({ id: "T4", taskPath: ":check" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }, { id: "T4" }],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T1", targetId: "T3" },
-            { sourceId: "T2", targetId: "T4" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+        }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T2"], taskPath: ":check" }),
+      ]);
 
       const rerenderedSvg = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-graph"]',
@@ -469,32 +408,14 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("adds hover styling hooks that highlight upstream chains and dim unrelated graph elements", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-          buildTaskEdge({ id: "T4", taskPath: ":delta" }),
-          buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-          buildTaskEdge({ id: "T6", taskPath: ":zeta" }),
-        ],
-        {
-          nodes: [
-            { id: "T1" },
-            { id: "T2" },
-            { id: "T3" },
-            { id: "T4" },
-            { id: "T5" },
-            { id: "T6" },
-          ],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T3", targetId: "T4" },
-            { sourceId: "T5", targetId: "T6" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
+        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
+        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
+      ]);
 
       const hoveredNode = fixture.nativeElement.querySelector(
         '[data-testid="dependency-node"][data-node-id="T4"]',
@@ -542,32 +463,14 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("persists click-based highlighting and suppresses hover until the selection is cleared", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-          buildTaskEdge({ id: "T4", taskPath: ":delta" }),
-          buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-          buildTaskEdge({ id: "T6", taskPath: ":zeta" }),
-        ],
-        {
-          nodes: [
-            { id: "T1" },
-            { id: "T2" },
-            { id: "T3" },
-            { id: "T4" },
-            { id: "T5" },
-            { id: "T6" },
-          ],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T3", targetId: "T4" },
-            { sourceId: "T5", targetId: "T6" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
+        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
+        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
+      ]);
 
       const graph = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-graph"]',
@@ -608,20 +511,11 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("clears a persisted selection when the selected node disappears after a graph rerender", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+      ]);
 
       const initiallySelectedNode = fixture.nativeElement.querySelector(
         '[data-testid="dependency-node"][data-node-id="T3"]',
@@ -634,16 +528,10 @@ describe("TaskTimelineComponent", () => {
 
       expect(component.highlightState()?.activeNodeId).toBe("T3");
 
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }],
-          edges: [{ sourceId: "T1", targetId: "T2" }],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+      ]);
       fixture.detectChanges();
 
       expect(
@@ -667,22 +555,12 @@ describe("TaskTimelineComponent", () => {
     });
 
     it("preserves click selection on edge clicks and clears it only on blank svg space", () => {
-      render(
-        [
-          buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-          buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-          buildTaskEdge({ id: "T3", taskPath: ":gamma" }),
-          buildTaskEdge({ id: "T4", taskPath: ":delta" }),
-        ],
-        {
-          nodes: [{ id: "T1" }, { id: "T2" }, { id: "T3" }, { id: "T4" }],
-          edges: [
-            { sourceId: "T1", targetId: "T2" },
-            { sourceId: "T2", targetId: "T3" },
-            { sourceId: "T3", targetId: "T4" },
-          ],
-        },
-      );
+      render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
+      ]);
 
       const graph = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-graph"]',
