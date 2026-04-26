@@ -69,9 +69,15 @@ pub static MIGRATOR: Migrator = Migrator {
             version: 8,
             description: Cow::Borrowed("add test duration and failure details"),
             migration_type: MigrationType::Simple,
-            sql: Cow::Borrowed(include_str!(
-                "sql/008_test_duration_and_failure.sql"
-            )),
+            sql: Cow::Borrowed(include_str!("sql/008_test_duration_and_failure.sql")),
+            checksum: Cow::Borrowed(&[]),
+            no_tx: false,
+        },
+        Migration {
+            version: 9,
+            description: Cow::Borrowed("persist configuration dependencies"),
+            migration_type: MigrationType::Simple,
+            sql: Cow::Borrowed(include_str!("sql/009_configuration_dependencies.sql")),
             checksum: Cow::Borrowed(&[]),
             no_tx: false,
         },
