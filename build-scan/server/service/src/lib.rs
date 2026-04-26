@@ -48,6 +48,89 @@ fn map_task_outcome(outcome: &models::TaskOutcome) -> domain::TaskOutcome {
     }
 }
 
+fn push_unique_string(values: &mut Vec<String>, value: String) {
+    if !value.is_empty() && !values.iter().any(|existing| existing == &value) {
+        values.push(value);
+    }
+}
+
+fn configuration_labels(resolution: &models::ConfigurationResolutionData) -> Vec<String> {
+    let mut labels = Vec::new();
+
+    for label in &resolution.finished_labels {
+        push_unique_string(&mut labels, label.clone());
+    }
+    for label in &resolution.started_labels {
+        push_unique_string(&mut labels, label.clone());
+    }
+
+    labels
+}
+
+fn build_persisted_configuration_dependency(
+    scan_id: domain::BuildScanId,
+    resolution: &models::ConfigurationResolutionData,
+) -> domain::PersistedConfigurationDependency {
+    let labels = configuration_labels(resolution);
+    let display_name = labels
+        .first()
+        .cloned()
+        .unwrap_or_else(|| format!("Resolution {}", resolution.id));
+    let details = labels
+        .into_iter()
+        .filter(|label| label != &display_name)
+        .collect();
+
+    domain::PersistedConfigurationDependency {
+        scan_id,
+        configuration_id: resolution.id,
+        display_name,
+        details,
+        started_labels: resolution.started_labels.clone(),
+        finished_labels: resolution.finished_labels.clone(),
+    }
+}
+
+fn build_configuration_dependency_graph(
+    configuration: &domain::ConfigurationDependency,
+    dependency_labels: Vec<String>,
+) -> Option<domain::ConfigurationDependencyGraph> {
+    if dependency_labels.is_empty() {
+        return None;
+    }
+
+    let root_id = format!("configuration:{}", configuration.id);
+    let mut nodes = vec![domain::ConfigurationDependencyNode {
+        id: root_id.clone(),
+        label: configuration.display_name.clone(),
+    }];
+    let mut edges = Vec::new();
+
+    for (index, label) in dependency_labels.into_iter().take(48).enumerate() {
+        let node_id = format!("dependency:{}:{}", configuration.id, index);
+        nodes.push(domain::ConfigurationDependencyNode {
+            id: node_id.clone(),
+            label,
+        });
+        edges.push(domain::ConfigurationDependencyEdge {
+            source_id: root_id.clone(),
+            target_id: node_id,
+        });
+    }
+
+    Some(domain::ConfigurationDependencyGraph { nodes, edges })
+}
+
+fn map_configuration_dependency(
+    dependency: domain::PersistedConfigurationDependency,
+) -> domain::ConfigurationDependency {
+    domain::ConfigurationDependency {
+        id: dependency.configuration_id.to_string(),
+        display_name: dependency.display_name,
+        details: dependency.details,
+    }
+}
+
 pub struct BuildScanService {
     pool: SqlitePool,
 }
@@ -129,6 +212,7 @@ impl BuildScanService {
                     .build()
                     .map_err(|e| anyhow::anyhow!(e))
                     .context("failed to build BuildScan")?;
+                let persisted_scan_id = domain::BuildScanId(scan_uuid);
 
                 let mut tx = self
                     .pool
@@ -209,9 +293,7 @@ impl BuildScanService {
                                 cache_op.stored.unwrap_or(false)
                             }
                             models::CacheOperationType::Pack
-                            | models::CacheOperationType::Unpack => {
-                                cache_op.failure_id.is_none()
-                            }
+                            | models::CacheOperationType::Unpack => cache_op.failure_id.is_none(),
                         };
                         let domain_op = domain::CacheOperation {
                             id: domain::CacheOperationId(Uuid::new_v4()),
@@ -222,9 +304,7 @@ impl BuildScanService {
                                 .archive_size
                                 .map(|s| domain::ArchiveSize(s.as_i64())),
                             cache_key: cache_op.cache_key.clone(),
-                            duration_ms: cache_op
-                                .duration_ms
-                                .map(|d| domain::Duration(d.as_i64())),
+                            duration_ms: cache_op.duration_ms.map(|d| domain::Duration(d.as_i64())),
                         };
                         db::insert_cache_operation(&mut *tx, &domain_op)
                             .await
@@ -268,9 +348,51 @@ impl BuildScanService {
                         .with_context(|| format!("failed to store test {}", test.class_name))?;
                 }
 
+                let configuration_dependency_count = payload.configuration_resolutions.len();
+                for resolution in &payload.configuration_resolutions {
+                    let dependency = build_persisted_configuration_dependency(
+                        persisted_scan_id.clone(),
+                        resolution,
+                    );
+
+                    db::insert_configuration_dependency(&mut *tx, &dependency)
+                        .await
+                        .with_context(|| {
+                            format!("failed to store configuration dependency {}", resolution.id)
+                        })?;
+                }
+
+                let artifact_label_count =
+                    if let Some(dependencies) = &payload.build_wide_configuration_dependencies {
+                        for (ordinal, label) in dependencies.artifact_labels.iter().enumerate() {
+                            let artifact_label =
+                                domain::PersistedConfigurationDependencyArtifactLabel {
+                                    scan_id: persisted_scan_id.clone(),
+                                    ordinal: ordinal as i64,
+                                    label: label.clone(),
+                                };
+
+                            db::insert_configuration_dependency_artifact_label(
+                                &mut *tx,
+                                &artifact_label,
+                            )
+                            .await
+                            .with_context(|| {
+                                format!(
+                                    "failed to store configuration dependency artifact label {}",
+                                    ordinal
+                                )
+                            })?;
+                        }
+
+                        dependencies.artifact_labels.len()
+                    } else {
+                        0
+                    };
+
                 tx.commit().await.context("failed to commit transaction")?;
 
-                info!(scan_id = %scan_id, task_count = task_count, test_count = test_count, "Stored build scan successfully");
+                info!(scan_id = %scan_id, task_count = task_count, test_count = test_count, configuration_dependency_count = configuration_dependency_count, artifact_label_count = artifact_label_count, "Stored build scan successfully");
             }
         }
 
@@ -279,6 +401,51 @@ impl BuildScanService {
 
     pub async fn get_build_scan(&self, id: &str) -> Result<Option<domain::BuildScan>> {
         db::get_build_scan(&self.pool, id).await
+    }
+
+    pub async fn get_configuration_dependencies(
+        &self,
+        scan_id: &str,
+    ) -> Result<Vec<domain::ConfigurationDependency>> {
+        Ok(db::list_configuration_dependencies(&self.pool, scan_id)
+            .await?
+            .into_iter()
+            .map(map_configuration_dependency)
+            .collect())
+    }
+
+    pub async fn get_configuration_dependency_graph(
+        &self,
+        scan_id: &str,
+        configuration_id: &str,
+    ) -> Result<Option<domain::ConfigurationDependencyGraph>> {
+        let Ok(configuration_id) = configuration_id.parse::<i64>() else {
+            return Ok(None);
+        };
+
+        let Some(configuration) =
+            db::get_configuration_dependency(&self.pool, scan_id, configuration_id).await?
+        else {
+            return Ok(None);
+        };
+
+        let artifact_labels =
+            db::list_configuration_dependency_artifact_labels(&self.pool, scan_id)
+                .await?
+                .into_iter()
+                .map(|label| label.label)
+                .collect::<Vec<_>>();
+        let configuration = map_configuration_dependency(configuration.clone());
+        let dependency_labels = if artifact_labels.is_empty() {
+            configuration.details.clone()
+        } else {
+            artifact_labels
+        };
+
+        Ok(build_configuration_dependency_graph(
+            &configuration,
+            dependency_labels,
+        ))
     }
 
     pub async fn list_build_scans(
@@ -337,5 +504,120 @@ impl BuildScanService {
         task_id: &str,
     ) -> Result<Vec<domain::CacheOperation>> {
         db::list_cache_operations(&self.pool, task_id).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn persisted_configuration_dependency(
+        configuration_id: i64,
+        display_name: &str,
+        details: &[&str],
+    ) -> domain::PersistedConfigurationDependency {
+        domain::PersistedConfigurationDependency {
+            scan_id: domain::BuildScanId(Uuid::nil()),
+            configuration_id,
+            display_name: display_name.to_string(),
+            details: details.iter().map(|detail| detail.to_string()).collect(),
+            started_labels: Vec::new(),
+            finished_labels: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn configuration_dependency_graph_uses_persisted_artifact_labels() {
+        let configuration = map_configuration_dependency(persisted_configuration_dependency(
+            6648731359144961106,
+            ":app:build",
+            &[":list:build"],
+        ));
+
+        let graph = build_configuration_dependency_graph(
+            &configuration,
+            vec![
+                "junit-jupiter-api-5.12.1.jar".to_string(),
+                "hamcrest-3.0.jar".to_string(),
+            ],
+        )
+        .expect("graph should be built");
+
+        assert_eq!(graph.nodes[0].id, "configuration:6648731359144961106");
+        assert_eq!(graph.nodes[0].label, ":app:build");
+        assert_eq!(graph.nodes[1].label, "junit-jupiter-api-5.12.1.jar");
+        assert_eq!(graph.nodes[2].label, "hamcrest-3.0.jar");
+        assert_eq!(
+            graph.edges[0].source_id,
+            "configuration:6648731359144961106"
+        );
+        assert_eq!(graph.edges[0].target_id, "dependency:6648731359144961106:0");
+    }
+
+    #[test]
+    fn persisted_configuration_dependency_keeps_raw_labels_and_derives_summary() {
+        let dependency = build_persisted_configuration_dependency(
+            domain::BuildScanId(Uuid::nil()),
+            &models::ConfigurationResolutionData {
+                id: 19,
+                started_labels: vec![
+                    ":app:compileClasspath".to_string(),
+                    "shared-label".to_string(),
+                ],
+                finished_labels: vec![
+                    ":app:runtimeClasspath".to_string(),
+                    "shared-label".to_string(),
+                ],
+            },
+        );
+
+        assert_eq!(dependency.configuration_id, 19);
+        assert_eq!(dependency.display_name, ":app:runtimeClasspath");
+        assert_eq!(
+            dependency.details,
+            vec![
+                "shared-label".to_string(),
+                ":app:compileClasspath".to_string()
+            ]
+        );
+        assert_eq!(
+            dependency.started_labels,
+            vec![
+                ":app:compileClasspath".to_string(),
+                "shared-label".to_string(),
+            ]
+        );
+        assert_eq!(
+            dependency.finished_labels,
+            vec![
+                ":app:runtimeClasspath".to_string(),
+                "shared-label".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn configuration_dependency_graph_falls_back_to_persisted_details() {
+        let configuration = map_configuration_dependency(persisted_configuration_dependency(
+            77,
+            ":app:build",
+            &[":list:build", ":utilities:build"],
+        ));
+
+        let graph =
+            build_configuration_dependency_graph(&configuration, configuration.details.clone())
+                .expect("graph should be built");
+
+        assert_eq!(graph.nodes.len(), 3);
+        assert_eq!(graph.nodes[1].label, ":list:build");
+        assert_eq!(graph.nodes[2].label, ":utilities:build");
+    }
+
+    #[test]
+    fn configuration_dependency_graph_is_absent_without_any_persisted_labels() {
+        let configuration =
+            map_configuration_dependency(persisted_configuration_dependency(77, ":app:build", &[]));
+
+        assert!(build_configuration_dependency_graph(&configuration, Vec::new()).is_none());
     }
 }

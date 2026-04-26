@@ -1,4 +1,4 @@
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "service",
@@ -16,4 +16,9 @@ rust_library(
         "@crates//:tracing",
         "@crates//:uuid",
     ],
+)
+
+rust_test(
+    name = "service_test",
+    crate = ":service",
 )
