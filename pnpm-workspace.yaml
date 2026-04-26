@@ -59,6 +59,7 @@ catalog:
   d3-contour: '4'
   d3-delaunay: '6'
   d3-dispatch: '3'
+  d3-dag: ^1.2.1
   d3-drag: '3'
   d3-dsv: '3'
   d3-ease: '3'
@@ -83,4 +84,7 @@ catalog:
   d3-zoom: '3'
   interval-tree-1d: ^1.0.0
   isoformat: ^0.2.0
+  javascript-lp-solver: ^1.0.3
+  quadprog: ^1.6.1
+  stringify-object: ^6.0.0
   typescript-eslint: ^8.49.0

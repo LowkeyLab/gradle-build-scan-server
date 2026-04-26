@@ -39,7 +39,8 @@ process_styles(
     ],
 )
 
-# Transitive deps of @observablehq/plot -> d3 -> d3-* sub-packages
+# Transitive deps of @observablehq/plot -> d3 -> d3-* sub-packages,
+# d3-dag -> d3-array/javascript-lp-solver/quadprog/stringify-object,
 # and interval-tree-1d -> binary-search-bounds.
 # Bazel sandboxing requires these to be explicitly listed.
 _PLOT_TRANSITIVE_DEPS = [
@@ -55,6 +56,7 @@ _PLOT_TRANSITIVE_DEPS = [
     "//angular:node_modules/d3-chord",
     "//angular:node_modules/d3-color",
     "//angular:node_modules/d3-contour",
+    "//angular:node_modules/d3-dag",
     "//angular:node_modules/d3-delaunay",
     "//angular:node_modules/d3-dispatch",
     "//angular:node_modules/d3-drag",
@@ -81,6 +83,9 @@ _PLOT_TRANSITIVE_DEPS = [
     "//angular:node_modules/d3-zoom",
     "//angular:node_modules/interval-tree-1d",
     "//angular:node_modules/isoformat",
+    "//angular:node_modules/javascript-lp-solver",
+    "//angular:node_modules/quadprog",
+    "//angular:node_modules/stringify-object",
 ]
 
 ng_application(
