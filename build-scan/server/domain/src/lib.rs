@@ -440,3 +440,45 @@ pub struct CacheOperation {
     pub cache_key: Option<String>,
     pub duration_ms: Option<Duration>,
 }
+
+#[derive(Debug, Clone)]
+pub struct ConfigurationDependency {
+    pub id: String,
+    pub display_name: String,
+    pub details: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PersistedConfigurationDependency {
+    pub scan_id: BuildScanId,
+    pub configuration_id: i64,
+    pub display_name: String,
+    pub details: Vec<String>,
+    pub started_labels: Vec<String>,
+    pub finished_labels: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PersistedConfigurationDependencyArtifactLabel {
+    pub scan_id: BuildScanId,
+    pub ordinal: i64,
+    pub label: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigurationDependencyGraph {
+    pub nodes: Vec<ConfigurationDependencyNode>,
+    pub edges: Vec<ConfigurationDependencyEdge>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigurationDependencyNode {
+    pub id: String,
+    pub label: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigurationDependencyEdge {
+    pub source_id: String,
+    pub target_id: String,
+}

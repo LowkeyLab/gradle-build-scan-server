@@ -50,7 +50,7 @@ struct TaskRow {
     origin_execution_time: Option<i64>,
     caching_disabled_reason: Option<String>,
     caching_disabled_explanation: Option<String>,
-    up_to_date_messages: Option<String>,  // JSON text, not Vec
+    up_to_date_messages: Option<String>, // JSON text, not Vec
     origin_build_invocation_id: Option<String>,
 }
 
@@ -78,10 +78,31 @@ struct TestRow {
     failure_stacktrace: Option<String>,
 }
 
+#[derive(Debug, sqlx::FromRow)]
+struct ConfigurationDependencyRow {
+    scan_id: String,
+    configuration_id: i64,
+    display_name: String,
+    details_json: String,
+    started_labels_json: String,
+    finished_labels_json: String,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct ConfigurationDependencyArtifactLabelRow {
+    scan_id: String,
+    ordinal: i64,
+    label: String,
+}
+
 fn parse_datetime(s: &str) -> Result<chrono::DateTime<Utc>> {
     NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
         .map(|dt| Utc.from_utc_datetime(&dt))
         .with_context(|| format!("invalid datetime '{s}'"))
+}
+
+fn parse_json_string_vec(value: &str, field_name: &str) -> Result<Vec<String>> {
+    serde_json::from_str(value).with_context(|| format!("invalid {field_name} JSON"))
 }
 
 impl TryFrom<BuildScanRow> for domain::BuildScan {
@@ -220,10 +241,9 @@ impl From<&domain::Task> for TaskRow {
             origin_execution_time: task.origin_execution_time.map(|d| d.0),
             caching_disabled_reason: task.caching_disabled_reason.clone(),
             caching_disabled_explanation: task.caching_disabled_explanation.clone(),
-            up_to_date_messages: task
-                .up_to_date_messages
-                .as_ref()
-                .map(|msgs| serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")),
+            up_to_date_messages: task.up_to_date_messages.as_ref().map(|msgs| {
+                serde_json::to_string(msgs).expect("failed to serialize up_to_date_messages")
+            }),
             origin_build_invocation_id: task.origin_build_invocation_id.clone(),
         }
     }
@@ -270,6 +290,76 @@ impl From<&domain::Test> for TestRow {
             duration_ms: test.duration_ms.map(|d| d.0),
             failure_message: test.failure_message.clone(),
             failure_stacktrace: test.failure_stacktrace.clone(),
+        }
+    }
+}
+
+impl TryFrom<ConfigurationDependencyRow> for domain::PersistedConfigurationDependency {
+    type Error = anyhow::Error;
+
+    fn try_from(row: ConfigurationDependencyRow) -> Result<Self, Self::Error> {
+        let scan_id = domain::BuildScanId(
+            uuid::Uuid::parse_str(&row.scan_id)
+                .with_context(|| format!("invalid scan_id '{}'", row.scan_id))?,
+        );
+
+        Ok(domain::PersistedConfigurationDependency {
+            scan_id,
+            configuration_id: row.configuration_id,
+            display_name: row.display_name,
+            details: parse_json_string_vec(&row.details_json, "details_json")?,
+            started_labels: parse_json_string_vec(&row.started_labels_json, "started_labels_json")?,
+            finished_labels: parse_json_string_vec(
+                &row.finished_labels_json,
+                "finished_labels_json",
+            )?,
+        })
+    }
+}
+
+impl From<&domain::PersistedConfigurationDependency> for ConfigurationDependencyRow {
+    fn from(dependency: &domain::PersistedConfigurationDependency) -> Self {
+        Self {
+            scan_id: dependency.scan_id.0.to_string(),
+            configuration_id: dependency.configuration_id,
+            display_name: dependency.display_name.clone(),
+            details_json: serde_json::to_string(&dependency.details)
+                .expect("failed to serialize details_json"),
+            started_labels_json: serde_json::to_string(&dependency.started_labels)
+                .expect("failed to serialize started_labels_json"),
+            finished_labels_json: serde_json::to_string(&dependency.finished_labels)
+                .expect("failed to serialize finished_labels_json"),
+        }
+    }
+}
+
+impl TryFrom<ConfigurationDependencyArtifactLabelRow>
+    for domain::PersistedConfigurationDependencyArtifactLabel
+{
+    type Error = anyhow::Error;
+
+    fn try_from(row: ConfigurationDependencyArtifactLabelRow) -> Result<Self, Self::Error> {
+        let scan_id = domain::BuildScanId(
+            uuid::Uuid::parse_str(&row.scan_id)
+                .with_context(|| format!("invalid scan_id '{}'", row.scan_id))?,
+        );
+
+        Ok(domain::PersistedConfigurationDependencyArtifactLabel {
+            scan_id,
+            ordinal: row.ordinal,
+            label: row.label,
+        })
+    }
+}
+
+impl From<&domain::PersistedConfigurationDependencyArtifactLabel>
+    for ConfigurationDependencyArtifactLabelRow
+{
+    fn from(label: &domain::PersistedConfigurationDependencyArtifactLabel) -> Self {
+        Self {
+            scan_id: label.scan_id.0.to_string(),
+            ordinal: label.ordinal,
+            label: label.label.clone(),
         }
     }
 }
@@ -506,6 +596,100 @@ pub async fn insert_test<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
     .execute(executor)
     .await?;
     Ok(())
+}
+
+pub async fn insert_configuration_dependency<'c, E: sqlx::Executor<'c, Database = sqlx::Sqlite>>(
+    executor: E,
+    dependency: &domain::PersistedConfigurationDependency,
+) -> Result<()> {
+    let row = ConfigurationDependencyRow::from(dependency);
+
+    sqlx::query(
+        "INSERT INTO configuration_dependencies (scan_id, configuration_id, display_name, details_json, started_labels_json, finished_labels_json) \
+         VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&row.scan_id)
+    .bind(row.configuration_id)
+    .bind(&row.display_name)
+    .bind(&row.details_json)
+    .bind(&row.started_labels_json)
+    .bind(&row.finished_labels_json)
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn list_configuration_dependencies(
+    pool: &SqlitePool,
+    scan_id: &str,
+) -> Result<Vec<domain::PersistedConfigurationDependency>> {
+    let rows = sqlx::query_as::<_, ConfigurationDependencyRow>(
+        "SELECT scan_id, configuration_id, display_name, details_json, started_labels_json, finished_labels_json \
+         FROM configuration_dependencies WHERE scan_id = ? ORDER BY configuration_id",
+    )
+    .bind(scan_id)
+    .fetch_all(pool)
+    .await?;
+
+    rows.into_iter()
+        .map(domain::PersistedConfigurationDependency::try_from)
+        .collect::<Result<Vec<_>>>()
+}
+
+pub async fn get_configuration_dependency(
+    pool: &SqlitePool,
+    scan_id: &str,
+    configuration_id: i64,
+) -> Result<Option<domain::PersistedConfigurationDependency>> {
+    let row = sqlx::query_as::<_, ConfigurationDependencyRow>(
+        "SELECT scan_id, configuration_id, display_name, details_json, started_labels_json, finished_labels_json \
+         FROM configuration_dependencies WHERE scan_id = ? AND configuration_id = ?",
+    )
+    .bind(scan_id)
+    .bind(configuration_id)
+    .fetch_optional(pool)
+    .await?;
+
+    row.map(domain::PersistedConfigurationDependency::try_from)
+        .transpose()
+}
+
+pub async fn insert_configuration_dependency_artifact_label<
+    'c,
+    E: sqlx::Executor<'c, Database = sqlx::Sqlite>,
+>(
+    executor: E,
+    label: &domain::PersistedConfigurationDependencyArtifactLabel,
+) -> Result<()> {
+    let row = ConfigurationDependencyArtifactLabelRow::from(label);
+
+    sqlx::query(
+        "INSERT INTO configuration_dependency_artifact_labels (scan_id, ordinal, label) VALUES (?, ?, ?)",
+    )
+    .bind(&row.scan_id)
+    .bind(row.ordinal)
+    .bind(&row.label)
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn list_configuration_dependency_artifact_labels(
+    pool: &SqlitePool,
+    scan_id: &str,
+) -> Result<Vec<domain::PersistedConfigurationDependencyArtifactLabel>> {
+    let rows = sqlx::query_as::<_, ConfigurationDependencyArtifactLabelRow>(
+        "SELECT scan_id, ordinal, label FROM configuration_dependency_artifact_labels WHERE scan_id = ? ORDER BY ordinal",
+    )
+    .bind(scan_id)
+    .fetch_all(pool)
+    .await?;
+
+    rows.into_iter()
+        .map(domain::PersistedConfigurationDependencyArtifactLabel::try_from)
+        .collect::<Result<Vec<_>>>()
 }
 
 pub async fn list_tests(
