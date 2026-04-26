@@ -1,23 +1,106 @@
 import {
-  Component,
   ChangeDetectionStrategy,
+  Component,
   DestroyRef,
-  OnInit,
   inject,
   input,
   signal,
 } from "@angular/core";
-import { Apollo, gql } from "apollo-angular";
+import type { OnInit } from "@angular/core";
+import { Apollo, gql, type QueryRef } from "apollo-angular";
 import { EMPTY, filter, map, switchMap, tap } from "rxjs";
 import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { CacheBreakdownComponent } from "./cache-breakdown/cache-breakdown.component";
 import { TaskTimelineComponent } from "./task-timeline/task-timeline.component";
 import { TasksTableComponent } from "./tasks-table/tasks-table.component";
 
+interface TaskEdge {
+  node: {
+    id: string;
+    taskPath: string;
+    className: string;
+    outcome: string;
+    cacheable: boolean | null;
+    durationMs: number | null;
+    cacheKey: string | null;
+    cachingDisabledReason: string | null;
+    cachingDisabledExplanation: string | null;
+    upToDateMessages: string[] | null;
+    originBuildInvocationId: string | null;
+    originExecutionTime: number | null;
+    cacheOperations: Array<{
+      id: string;
+      operationType: string;
+      succeeded: boolean;
+      archiveSize: number | null;
+      cacheKey: string | null;
+      durationMs: number | null;
+    }> | null;
+  };
+  cursor: string;
+}
+
+interface TaskDependencyGraph {
+  nodes: Array<{ id: string }>;
+  edges: Array<{ sourceId: string; targetId: string }>;
+}
+
+interface TaskScan {
+  id: string;
+  taskDependencyGraph: TaskDependencyGraph | null;
+  tasks: {
+    edges: TaskEdge[];
+    pageInfo: {
+      hasNextPage: boolean;
+      endCursor: string | null;
+    };
+  };
+}
+
+interface GetScanTasksData {
+  buildScan: TaskScan | null;
+}
+
+interface GetScanTasksVariables {
+  id: string;
+  firstTasks: number;
+  afterTasks?: string;
+}
+
+interface PartialTaskScan {
+  taskDependencyGraph?: Partial<TaskDependencyGraph> | null;
+  tasks?: {
+    edges?: TaskEdge[];
+    pageInfo?: {
+      hasNextPage?: boolean;
+      endCursor?: string | null;
+    };
+  };
+}
+
+function normalizeTaskDependencyGraph(
+  graph: Partial<TaskDependencyGraph> | null | undefined,
+): TaskDependencyGraph | null {
+  if (!graph) return null;
+  return {
+    nodes: graph.nodes ?? [],
+    edges: graph.edges ?? [],
+  };
+}
+
 const GET_SCAN_TASKS = gql`
   query GetScanTasks($id: ID!, $firstTasks: Int!, $afterTasks: String) {
     buildScan(id: $id) {
       id
+      taskDependencyGraph {
+        nodes {
+          id
+        }
+        edges {
+          sourceId
+          targetId
+        }
+      }
       tasks(first: $firstTasks, after: $afterTasks) {
         edges {
           node {
@@ -27,8 +110,6 @@ const GET_SCAN_TASKS = gql`
             outcome
             cacheable
             durationMs
-            startTimestamp
-            finishTimestamp
             cacheKey
             cachingDisabledReason
             cachingDisabledExplanation
@@ -81,7 +162,10 @@ const GET_SCAN_TASKS = gql`
           [taskCount]="taskCount()"
           [loading]="loading()"
         />
-        <app-task-timeline [taskEdges]="taskEdges()" />
+        <app-task-timeline
+          [taskEdges]="taskEdges()"
+          [taskDependencyGraph]="taskDependencyGraph()"
+        />
         <app-tasks-table [taskEdges]="taskEdges()" [taskCount]="taskCount()" />
       } @else if (!loading()) {
         <div
@@ -101,11 +185,12 @@ export class ScanTasksTabComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private scanId$ = toObservable(this.scanId);
 
-  taskEdges = signal<any[]>([]);
+  taskEdges = signal<TaskEdge[]>([]);
+  taskDependencyGraph = signal<TaskDependencyGraph | null>(null);
   loading = signal(true);
 
   private loadRemainingPages(
-    queryRef: any,
+    queryRef: QueryRef<GetScanTasksData, GetScanTasksVariables>,
     id: string,
     afterTasks: string,
   ): Promise<void> {
@@ -117,16 +202,14 @@ export class ScanTasksTabComponent implements OnInit {
           afterTasks,
         },
       })
-      .then(({ data }: any) => {
+      .then(({ data }) => {
         const scan = data?.buildScan;
         if (!scan) return;
-        this.taskEdges.update((edges) => [...edges, ...scan.tasks.edges]);
-        if (scan.tasks.pageInfo.hasNextPage) {
-          return this.loadRemainingPages(
-            queryRef,
-            id,
-            scan.tasks.pageInfo.endCursor,
-          );
+        const edges = scan.tasks?.edges ?? [];
+        const pageInfo = scan.tasks?.pageInfo;
+        this.taskEdges.update((currentEdges) => [...currentEdges, ...edges]);
+        if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+          return this.loadRemainingPages(queryRef, id, pageInfo.endCursor);
         }
         this.loading.set(false);
         return;
@@ -138,6 +221,7 @@ export class ScanTasksTabComponent implements OnInit {
       .pipe(
         switchMap((id) => {
           this.taskEdges.set([]);
+          this.taskDependencyGraph.set(null);
           if (this.taskCount() === 0) {
             this.loading.set(false);
             return EMPTY;
@@ -145,7 +229,10 @@ export class ScanTasksTabComponent implements OnInit {
 
           this.loading.set(true);
 
-          const queryRef = this.apollo.watchQuery<any>({
+          const queryRef = this.apollo.watchQuery<
+            GetScanTasksData,
+            GetScanTasksVariables
+          >({
             query: GET_SCAN_TASKS,
             variables: {
               id,
@@ -155,16 +242,21 @@ export class ScanTasksTabComponent implements OnInit {
           });
 
           return queryRef.valueChanges.pipe(
-            filter((result) => !!result.data),
-            map((result) => result.data.buildScan),
+            map((result) => result.data?.buildScan ?? null),
+            filter((scan): scan is PartialTaskScan => !!scan),
             tap((scan) => {
+              const edges = scan.tasks?.edges ?? [];
+              const pageInfo = scan.tasks?.pageInfo;
+              this.taskDependencyGraph.set(
+                normalizeTaskDependencyGraph(scan.taskDependencyGraph),
+              );
               if (this.taskEdges().length === 0) {
-                this.taskEdges.set(scan.tasks.edges);
-                if (scan.tasks.pageInfo.hasNextPage) {
+                this.taskEdges.set(edges);
+                if (pageInfo?.hasNextPage && pageInfo.endCursor) {
                   void this.loadRemainingPages(
                     queryRef,
                     id,
-                    scan.tasks.pageInfo.endCursor,
+                    pageInfo.endCursor,
                   );
                 } else {
                   this.loading.set(false);
