@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
+use sqlx::{QueryBuilder, SqlitePool, sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
@@ -494,19 +494,40 @@ pub async fn list_task_dependency_map_for_scan(
     .fetch_all(pool)
     .await?;
 
-    let mut map = BTreeMap::<uuid::Uuid, Vec<domain::TaskId>>::new();
-    for row in rows {
-        let task_id = uuid::Uuid::parse_str(&row.task_id)
-            .with_context(|| format!("invalid task_id '{}'", row.task_id))?;
-        let dependency_task_id = uuid::Uuid::parse_str(&row.dependency_task_id)
-            .with_context(|| format!("invalid dependency_task_id '{}'", row.dependency_task_id))?;
+    map_task_dependency_rows(rows)
+}
 
-        map.entry(task_id)
-            .or_default()
-            .push(domain::TaskId(dependency_task_id));
+pub async fn list_task_dependency_map_for_tasks(
+    pool: &SqlitePool,
+    scan_id: &str,
+    task_ids: &[String],
+) -> Result<BTreeMap<uuid::Uuid, Vec<domain::TaskId>>> {
+    if task_ids.is_empty() {
+        return Ok(BTreeMap::new());
     }
 
-    Ok(map)
+    let mut query_builder = QueryBuilder::<sqlx::Sqlite>::new(
+        "SELECT td.task_id, td.dependency_task_id \
+         FROM task_dependencies td \
+         JOIN tasks task ON task.id = td.task_id \
+         WHERE task.scan_id = ",
+    );
+    query_builder.push_bind(scan_id);
+    query_builder.push(" AND td.task_id IN (");
+
+    let mut separated = query_builder.separated(", ");
+    for task_id in task_ids {
+        separated.push_bind(task_id);
+    }
+    separated.push_unseparated(")");
+    query_builder.push(" ORDER BY td.task_id, td.dependency_task_id");
+
+    let rows = query_builder
+        .build_query_as::<TaskDependencyRow>()
+        .fetch_all(pool)
+        .await?;
+
+    map_task_dependency_rows(rows)
 }
 
 pub async fn count_tasks(pool: &SqlitePool, scan_id: &str) -> Result<i64> {
@@ -685,4 +706,59 @@ pub async fn list_cache_operations(
     rows.into_iter()
         .map(domain::CacheOperation::try_from)
         .collect::<Result<Vec<_>>>()
+}
+
+pub async fn list_cache_operations_for_tasks(
+    pool: &SqlitePool,
+    task_ids: &[String],
+) -> Result<BTreeMap<uuid::Uuid, Vec<domain::CacheOperation>>> {
+    if task_ids.is_empty() {
+        return Ok(BTreeMap::new());
+    }
+
+    let mut query_builder = QueryBuilder::<sqlx::Sqlite>::new(
+        "SELECT id, task_id, operation_type, succeeded, archive_size, cache_key, duration_ms \
+         FROM task_cache_operations WHERE task_id IN (",
+    );
+
+    let mut separated = query_builder.separated(", ");
+    for task_id in task_ids {
+        separated.push_bind(task_id);
+    }
+    separated.push_unseparated(")");
+    query_builder.push(" ORDER BY task_id, rowid");
+
+    let rows = query_builder
+        .build_query_as::<CacheOperationRow>()
+        .fetch_all(pool)
+        .await?;
+
+    let mut operations_by_task_id = BTreeMap::<uuid::Uuid, Vec<domain::CacheOperation>>::new();
+    for row in rows {
+        let operation = domain::CacheOperation::try_from(row)?;
+        operations_by_task_id
+            .entry(operation.task_id.0)
+            .or_default()
+            .push(operation);
+    }
+
+    Ok(operations_by_task_id)
+}
+
+fn map_task_dependency_rows(
+    rows: Vec<TaskDependencyRow>,
+) -> Result<BTreeMap<uuid::Uuid, Vec<domain::TaskId>>> {
+    let mut map = BTreeMap::<uuid::Uuid, Vec<domain::TaskId>>::new();
+    for row in rows {
+        let task_id = uuid::Uuid::parse_str(&row.task_id)
+            .with_context(|| format!("invalid task_id '{}'", row.task_id))?;
+        let dependency_task_id = uuid::Uuid::parse_str(&row.dependency_task_id)
+            .with_context(|| format!("invalid dependency_task_id '{}'", row.dependency_task_id))?;
+
+        map.entry(task_id)
+            .or_default()
+            .push(domain::TaskId(dependency_task_id));
+    }
+
+    Ok(map)
 }
