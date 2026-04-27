@@ -156,6 +156,47 @@ describe("ScanTasksTabComponent", () => {
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
   });
 
+  it("hides the dependency graph by default for very large scans", () => {
+    const largeFixture = TestBed.createComponent(ScanTasksTabComponent);
+    largeFixture.componentRef.setInput("scanId", "123");
+    largeFixture.componentRef.setInput("taskCount", 1000);
+    largeFixture.detectChanges();
+
+    const pending = controller.expectOne("GetScanTasks");
+    pending.flushData({
+      buildScan: buildTaskScan([buildTaskEdge()], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    });
+    largeFixture.detectChanges();
+
+    expect(
+      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
+    ).toBeNull();
+    expect(largeFixture.nativeElement.textContent).toContain(
+      "Task dependency graph hidden",
+    );
+
+    const buttons = Array.from(
+      (largeFixture.nativeElement as HTMLElement).querySelectorAll("button"),
+    ) as HTMLButtonElement[];
+
+    const button = buttons.find((candidate) =>
+      candidate.textContent?.includes("Render graph anyway"),
+    );
+
+    expect(button).toBeTruthy();
+    button?.click();
+    largeFixture.detectChanges();
+
+    expect(
+      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
+    ).toBeTruthy();
+
+    largeFixture.destroy();
+  });
+
   it("skips querying when the overview already reports zero tasks", () => {
     const zeroFixture = TestBed.createComponent(ScanTasksTabComponent);
     zeroFixture.componentRef.setInput("scanId", "123");
