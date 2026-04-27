@@ -51,17 +51,22 @@ describe("ScanTasksTabComponent", () => {
       imports: [ApolloTestingModule, ScanTasksTabComponent],
     });
     controller = TestBed.inject(ApolloTestingController);
-    fixture = TestBed.createComponent(ScanTasksTabComponent);
-    fixture.componentRef.setInput("scanId", "123");
-    fixture.componentRef.setInput("taskCount", 1);
-    fixture.detectChanges();
   });
 
+  function createFixture(taskCount = 1) {
+    fixture = TestBed.createComponent(ScanTasksTabComponent);
+    fixture.componentRef.setInput("scanId", "123");
+    fixture.componentRef.setInput("taskCount", taskCount);
+    fixture.detectChanges();
+    return fixture;
+  }
+
   afterEach(() => {
-    fixture.destroy();
+    fixture?.destroy();
   });
 
   it("shows a loading state before the first result and then renders the task views", () => {
+    createFixture();
     const pending = controller.expectOne("GetScanTasks");
     const queryText = pending.operation.query.loc?.source.body ?? "";
     expect(pending.operation.variables).toEqual({
@@ -94,6 +99,7 @@ describe("ScanTasksTabComponent", () => {
   });
 
   it("passes per-task dependencies through to the task timeline", () => {
+    createFixture();
     const pending = controller.expectOne("GetScanTasks");
 
     pending.flushData({
@@ -114,6 +120,7 @@ describe("ScanTasksTabComponent", () => {
   });
 
   it("continues loading additional task pages when pageInfo hasNextPage is true", async () => {
+    createFixture();
     const first = controller.expectOne("GetScanTasks");
     first.flushData({
       buildScan: buildTaskScan([buildTaskEdge()], {
@@ -156,16 +163,47 @@ describe("ScanTasksTabComponent", () => {
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
   });
 
-  it("skips querying when the overview already reports zero tasks", () => {
-    const zeroFixture = TestBed.createComponent(ScanTasksTabComponent);
-    zeroFixture.componentRef.setInput("scanId", "123");
-    zeroFixture.componentRef.setInput("taskCount", 0);
-    zeroFixture.detectChanges();
+  it("hides the dependency graph by default for very large scans", () => {
+    const largeFixture = createFixture(1000);
 
-    controller
-      .expectOne("GetScanTasks")
-      .flushData({ buildScan: buildTaskScan() });
-    fixture.detectChanges();
+    const pending = controller.expectOne("GetScanTasks");
+    pending.flushData({
+      buildScan: buildTaskScan([buildTaskEdge()], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    });
+    largeFixture.detectChanges();
+
+    expect(
+      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
+    ).toBeNull();
+    expect(largeFixture.nativeElement.textContent).toContain(
+      "Task dependency graph hidden",
+    );
+
+    const buttons = Array.from(
+      (largeFixture.nativeElement as HTMLElement).querySelectorAll("button"),
+    ) as HTMLButtonElement[];
+
+    const button = buttons.find((candidate) =>
+      candidate.textContent?.includes("Render graph anyway"),
+    );
+
+    expect(button).toBeTruthy();
+    button?.click();
+    largeFixture.detectChanges();
+
+    expect(
+      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
+    ).toBeTruthy();
+
+    largeFixture.destroy();
+  });
+
+  it("skips querying when the overview already reports zero tasks", () => {
+    const zeroFixture = createFixture(0);
+    zeroFixture.detectChanges();
 
     expect(controller.match("GetScanTasks")).toHaveLength(0);
     expect(zeroFixture.nativeElement.textContent).toContain(

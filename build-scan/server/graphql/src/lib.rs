@@ -138,13 +138,26 @@ impl BuildScan {
             .last()
             .map(|t| Cursor::new(t.id.0.to_string()).encode());
 
+        let task_ids = tasks
+            .iter()
+            .map(|task| task.id.0.to_string())
+            .collect::<Vec<_>>();
+        let mut cache_operations_by_task_id = context
+            .service
+            .list_cache_operations_for_tasks(&task_ids)
+            .await
+            .map_err(|e| FieldError::from(e.to_string()))?;
+
         let edges: Vec<TaskEdge> = tasks
             .into_iter()
             .map(|t| {
                 let cursor = Cursor::new(t.id.0.to_string()).encode();
                 TaskEdge {
                     cursor,
-                    node: Task { task: t },
+                    node: Task {
+                        prefetched_cache_operations: cache_operations_by_task_id.remove(&t.id.0),
+                        task: t,
+                    },
                 }
             })
             .collect();
@@ -234,6 +247,7 @@ impl BuildScan {
 // ---------------------------------------------------------------------------
 
 pub struct Task {
+    pub prefetched_cache_operations: Option<Vec<domain::CacheOperation>>,
     pub task: domain::Task,
 }
 
@@ -315,6 +329,14 @@ impl Task {
     }
 
     async fn cache_operations(&self, context: &Context) -> FieldResult<Vec<CacheOperation>> {
+        if let Some(prefetched_cache_operations) = &self.prefetched_cache_operations {
+            return Ok(prefetched_cache_operations
+                .iter()
+                .cloned()
+                .map(|op| CacheOperation { op })
+                .collect());
+        }
+
         let task_id = self.task.id.0.to_string();
         let ops = context
             .service
@@ -641,7 +663,12 @@ impl QueryRoot {
                     .get_task(&relay_id.raw_id)
                     .await
                     .map_err(|e| FieldError::from(e.to_string()))?;
-                Ok(task.map(|t| NodeValue::Task(Task { task: t })))
+                Ok(task.map(|t| {
+                    NodeValue::Task(Task {
+                        prefetched_cache_operations: None,
+                        task: t,
+                    })
+                }))
             }
             "Test" => {
                 let test = context

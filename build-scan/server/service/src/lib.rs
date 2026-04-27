@@ -315,8 +315,9 @@ impl BuildScanService {
         };
 
         let scan_id = task.scan_id.0.to_string();
+        let task_ids = vec![task.id.0.to_string()];
         let dependencies_by_task_id =
-            db::list_task_dependency_map_for_scan(&self.pool, &scan_id).await?;
+            db::list_task_dependency_map_for_tasks(&self.pool, &scan_id, &task_ids).await?;
 
         Ok(Some(Self::hydrate_task_dependencies(
             task,
@@ -331,8 +332,12 @@ impl BuildScanService {
         after_id: Option<&str>,
     ) -> Result<Vec<domain::Task>> {
         let tasks = db::list_tasks(&self.pool, scan_id, limit, after_id).await?;
+        let task_ids = tasks
+            .iter()
+            .map(|task| task.id.0.to_string())
+            .collect::<Vec<_>>();
         let dependencies_by_task_id =
-            db::list_task_dependency_map_for_scan(&self.pool, scan_id).await?;
+            db::list_task_dependency_map_for_tasks(&self.pool, scan_id, &task_ids).await?;
 
         Ok(tasks
             .into_iter()
@@ -448,5 +453,12 @@ impl BuildScanService {
         task_id: &str,
     ) -> Result<Vec<domain::CacheOperation>> {
         db::list_cache_operations(&self.pool, task_id).await
+    }
+
+    pub async fn list_cache_operations_for_tasks(
+        &self,
+        task_ids: &[String],
+    ) -> Result<BTreeMap<Uuid, Vec<domain::CacheOperation>>> {
+        db::list_cache_operations_for_tasks(&self.pool, task_ids).await
     }
 }

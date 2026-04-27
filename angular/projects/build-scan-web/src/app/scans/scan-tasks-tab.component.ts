@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   input,
@@ -72,6 +73,8 @@ interface PartialTaskScan {
   };
 }
 
+const LARGE_GRAPH_TASK_THRESHOLD = 500;
+
 const GET_SCAN_TASKS = gql`
   query GetScanTasks($id: ID!, $firstTasks: Int!, $afterTasks: String) {
     buildScan(id: $id) {
@@ -124,21 +127,46 @@ const GET_SCAN_TASKS = gql`
     <div class="space-y-6">
       <h2 class="text-2xl font-bold">Tasks</h2>
 
-      @if (loading() && taskEdges().length === 0) {
+      @if (loading()) {
         <div
           class="rounded-md border border-base-300 bg-base-200 p-4 text-sm opacity-70"
         >
-          Loading tasks…
+          @if (taskEdges().length === 0) {
+            Loading tasks…
+          } @else {
+            Loading remaining tasks ({{ taskEdges().length }} of
+            {{ taskCount() }})…
+          }
         </div>
-      }
-
-      @if (taskEdges().length > 0) {
+      } @else if (taskEdges().length > 0) {
         <app-cache-breakdown
           [taskEdges]="taskEdges()"
           [taskCount]="taskCount()"
           [loading]="loading()"
         />
-        <app-task-dependency-graph [taskEdges]="taskEdges()" />
+
+        @if (showDependencyGraph()) {
+          <app-task-dependency-graph [taskEdges]="taskEdges()" />
+        } @else if (hasLargeTaskGraph()) {
+          <div
+            class="rounded-md border border-base-300 bg-base-200 p-4 text-sm"
+          >
+            <div class="font-semibold">Task dependency graph hidden</div>
+            <p class="mt-1 opacity-70">
+              This scan has {{ taskCount() }} tasks. Rendering the full
+              dependency graph for very large scans can stall the browser, so
+              the graph is hidden by default.
+            </p>
+            <button
+              class="btn btn-sm mt-3"
+              type="button"
+              (click)="renderLargeGraph.set(true)"
+            >
+              Render graph anyway
+            </button>
+          </div>
+        }
+
         <app-tasks-table [taskEdges]="taskEdges()" [taskCount]="taskCount()" />
       } @else if (!loading()) {
         <div
@@ -160,6 +188,13 @@ export class ScanTasksTabComponent implements OnInit {
 
   taskEdges = signal<TaskEdge[]>([]);
   loading = signal(true);
+  renderLargeGraph = signal(false);
+  hasLargeTaskGraph = computed(
+    () => this.taskCount() > LARGE_GRAPH_TASK_THRESHOLD,
+  );
+  showDependencyGraph = computed(
+    () => !this.hasLargeTaskGraph() || this.renderLargeGraph(),
+  );
 
   private loadRemainingPages(
     queryRef: QueryRef<GetScanTasksData, GetScanTasksVariables>,
@@ -193,6 +228,7 @@ export class ScanTasksTabComponent implements OnInit {
       .pipe(
         switchMap((id) => {
           this.taskEdges.set([]);
+          this.renderLargeGraph.set(false);
           if (this.taskCount() === 0) {
             this.loading.set(false);
             return EMPTY;
