@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { TestBed, type ComponentFixture } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import {
   ApolloTestingModule,
   ApolloTestingController,
 } from "apollo-angular/testing";
 import { ScanTasksTabComponent } from "./scan-tasks-tab.component";
+import { TaskDependencyGraphComponent } from "./task-dependency-graph/task-dependency-graph.component";
 
 function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
@@ -163,23 +165,57 @@ describe("ScanTasksTabComponent", () => {
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
   });
 
-  it("hides the dependency graph by default for very large scans", () => {
+  it("renders only the critical path by default for very large scans", () => {
     const largeFixture = createFixture(1000);
 
     const pending = controller.expectOne("GetScanTasks");
     pending.flushData({
-      buildScan: buildTaskScan([buildTaskEdge()], {
-        hasNextPage: false,
-        endCursor: null,
-      }),
+      buildScan: buildTaskScan(
+        [
+          buildTaskEdge({
+            id: "ROOT",
+            taskPath: ":root",
+            durationMs: 10,
+          }),
+          buildTaskEdge({
+            id: "FAST",
+            dependencies: ["ROOT"],
+            taskPath: ":fast",
+            durationMs: 20,
+          }),
+          buildTaskEdge({
+            id: "SLOW",
+            dependencies: ["ROOT"],
+            taskPath: ":slow",
+            durationMs: 80,
+          }),
+          buildTaskEdge({
+            id: "END",
+            dependencies: ["SLOW"],
+            taskPath: ":end",
+            durationMs: 30,
+          }),
+        ],
+        { hasNextPage: false, endCursor: null },
+      ),
     });
     largeFixture.detectChanges();
 
-    expect(
-      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
-    ).toBeNull();
+    const graphDebugElement = largeFixture.debugElement.query(
+      By.directive(TaskDependencyGraphComponent),
+    );
+
+    expect(graphDebugElement).toBeTruthy();
+    const graphComponent =
+      graphDebugElement.componentInstance as TaskDependencyGraphComponent;
+    expect(graphComponent.taskEdges().map((edge) => edge.node.id)).toEqual([
+      "ROOT",
+      "SLOW",
+      "END",
+    ]);
+    expect(largeFixture.nativeElement.textContent).toContain("Critical Path");
     expect(largeFixture.nativeElement.textContent).toContain(
-      "Task dependency graph hidden",
+      "Showing the longest weighted dependency chain",
     );
 
     const buttons = Array.from(
@@ -187,16 +223,54 @@ describe("ScanTasksTabComponent", () => {
     ) as HTMLButtonElement[];
 
     const button = buttons.find((candidate) =>
-      candidate.textContent?.includes("Render graph anyway"),
+      candidate.textContent?.includes("Render full graph anyway"),
     );
 
-    expect(button).toBeTruthy();
-    button?.click();
+    expect(button).toBeUndefined();
+
+    largeFixture.destroy();
+  });
+
+  it("uses origin execution time when duration is unavailable for critical path selection", () => {
+    const largeFixture = createFixture(1000);
+
+    const pending = controller.expectOne("GetScanTasks");
+    pending.flushData({
+      buildScan: buildTaskScan(
+        [
+          buildTaskEdge({
+            id: "ROOT",
+            taskPath: ":root",
+            durationMs: 10,
+          }),
+          buildTaskEdge({
+            id: "DURATION_PATH",
+            dependencies: ["ROOT"],
+            taskPath: ":durationPath",
+            durationMs: 20,
+            originExecutionTime: 20,
+          }),
+          buildTaskEdge({
+            id: "ORIGIN_PATH",
+            dependencies: ["ROOT"],
+            taskPath: ":originPath",
+            durationMs: null,
+            originExecutionTime: 90,
+          }),
+        ],
+        { hasNextPage: false, endCursor: null },
+      ),
+    });
     largeFixture.detectChanges();
 
-    expect(
-      largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
-    ).toBeTruthy();
+    const graphComponent = largeFixture.debugElement.query(
+      By.directive(TaskDependencyGraphComponent),
+    ).componentInstance as TaskDependencyGraphComponent;
+
+    expect(graphComponent.taskEdges().map((edge) => edge.node.id)).toEqual([
+      "ROOT",
+      "ORIGIN_PATH",
+    ]);
 
     largeFixture.destroy();
   });

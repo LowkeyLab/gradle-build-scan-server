@@ -75,6 +75,156 @@ interface PartialTaskScan {
 
 const LARGE_GRAPH_TASK_THRESHOLD = 500;
 
+function taskWeight(edge: TaskEdge): number {
+  return Math.max(
+    0,
+    edge.node.durationMs ?? edge.node.originExecutionTime ?? 0,
+  );
+}
+
+function compareCriticalPathCandidates(
+  left: { score: number; length: number; edge: TaskEdge },
+  right: { score: number; length: number; edge: TaskEdge },
+): number {
+  const scoreDelta = left.score - right.score;
+  if (scoreDelta !== 0) return scoreDelta;
+
+  const lengthDelta = left.length - right.length;
+  if (lengthDelta !== 0) return lengthDelta;
+
+  const pathDelta = right.edge.node.taskPath.localeCompare(
+    left.edge.node.taskPath,
+  );
+  return pathDelta !== 0
+    ? pathDelta
+    : right.edge.node.id.localeCompare(left.edge.node.id);
+}
+
+function selectCriticalPathTaskEdges(taskEdges: TaskEdge[]): TaskEdge[] {
+  if (taskEdges.length <= 1) return taskEdges;
+
+  const edgeById = new Map(taskEdges.map((edge) => [edge.node.id, edge]));
+  const successorsById = new Map<string, string[]>();
+  const predecessorsById = new Map<string, string[]>();
+  const indegreeById = new Map<string, number>();
+
+  for (const edge of taskEdges) {
+    successorsById.set(edge.node.id, []);
+    predecessorsById.set(edge.node.id, []);
+    indegreeById.set(edge.node.id, 0);
+  }
+
+  for (const edge of taskEdges) {
+    for (const dependencyId of edge.node.dependencies ?? []) {
+      if (!edgeById.has(dependencyId) || dependencyId === edge.node.id)
+        continue;
+      successorsById.get(dependencyId)?.push(edge.node.id);
+      predecessorsById.get(edge.node.id)?.push(dependencyId);
+      indegreeById.set(edge.node.id, (indegreeById.get(edge.node.id) ?? 0) + 1);
+    }
+  }
+
+  const ready = taskEdges
+    .filter((edge) => (indegreeById.get(edge.node.id) ?? 0) === 0)
+    .sort((left, right) =>
+      left.node.taskPath.localeCompare(right.node.taskPath),
+    );
+  const topoOrder: TaskEdge[] = [];
+
+  while (ready.length > 0) {
+    const edge = ready.shift();
+    if (!edge) continue;
+    topoOrder.push(edge);
+
+    for (const successorId of successorsById.get(edge.node.id) ?? []) {
+      const nextIndegree = (indegreeById.get(successorId) ?? 0) - 1;
+      indegreeById.set(successorId, nextIndegree);
+      if (nextIndegree === 0) {
+        const successor = edgeById.get(successorId);
+        if (successor) {
+          ready.push(successor);
+          ready.sort((left, right) =>
+            left.node.taskPath.localeCompare(right.node.taskPath),
+          );
+        }
+      }
+    }
+  }
+
+  if (topoOrder.length !== taskEdges.length) {
+    const topWeightedEdge = [...taskEdges].sort((left, right) => {
+      const weightDelta = taskWeight(right) - taskWeight(left);
+      return weightDelta !== 0
+        ? weightDelta
+        : left.node.taskPath.localeCompare(right.node.taskPath);
+    })[0];
+    return topWeightedEdge ? [topWeightedEdge] : [];
+  }
+
+  const bestScoreById = new Map<string, number>();
+  const bestLengthById = new Map<string, number>();
+  const previousIdById = new Map<string, string | null>();
+
+  for (const edge of topoOrder) {
+    let previousId: string | null = null;
+    let previousScore = 0;
+    let previousLength = 0;
+
+    for (const predecessorId of predecessorsById.get(edge.node.id) ?? []) {
+      const predecessor = edgeById.get(predecessorId);
+      if (!predecessor) continue;
+      const candidate = {
+        score: bestScoreById.get(predecessorId) ?? 0,
+        length: bestLengthById.get(predecessorId) ?? 0,
+        edge: predecessor,
+      };
+      const current = {
+        score: previousScore,
+        length: previousLength,
+        edge: previousId
+          ? (edgeById.get(previousId) ?? predecessor)
+          : predecessor,
+      };
+      if (
+        !previousId ||
+        compareCriticalPathCandidates(candidate, current) > 0
+      ) {
+        previousId = predecessorId;
+        previousScore = candidate.score;
+        previousLength = candidate.length;
+      }
+    }
+
+    bestScoreById.set(edge.node.id, previousScore + taskWeight(edge));
+    bestLengthById.set(edge.node.id, previousLength + 1);
+    previousIdById.set(edge.node.id, previousId);
+  }
+
+  const terminalEdge = topoOrder.reduce<TaskEdge | null>((best, edge) => {
+    if (!best) return edge;
+    const candidate = {
+      score: bestScoreById.get(edge.node.id) ?? 0,
+      length: bestLengthById.get(edge.node.id) ?? 0,
+      edge,
+    };
+    const current = {
+      score: bestScoreById.get(best.node.id) ?? 0,
+      length: bestLengthById.get(best.node.id) ?? 0,
+      edge: best,
+    };
+    return compareCriticalPathCandidates(candidate, current) > 0 ? edge : best;
+  }, null);
+
+  const pathIds = new Set<string>();
+  let currentId = terminalEdge?.node.id ?? null;
+  while (currentId) {
+    pathIds.add(currentId);
+    currentId = previousIdById.get(currentId) ?? null;
+  }
+
+  return taskEdges.filter((edge) => pathIds.has(edge.node.id));
+}
+
 const GET_SCAN_TASKS = gql`
   query GetScanTasks($id: ID!, $firstTasks: Int!, $afterTasks: String) {
     buildScan(id: $id) {
@@ -146,24 +296,23 @@ const GET_SCAN_TASKS = gql`
         />
 
         @if (showDependencyGraph()) {
-          <app-task-dependency-graph [taskEdges]="taskEdges()" />
-        } @else if (hasLargeTaskGraph()) {
+          <app-task-dependency-graph
+            [taskEdges]="displayedGraphTaskEdges()"
+            [title]="dependencyGraphTitle()"
+            [description]="dependencyGraphDescription()"
+          />
+        }
+
+        @if (hasLargeTaskGraph()) {
           <div
             class="rounded-md border border-base-300 bg-base-200 p-4 text-sm"
           >
-            <div class="font-semibold">Task dependency graph hidden</div>
+            <div class="font-semibold">Showing critical path only</div>
             <p class="mt-1 opacity-70">
-              This scan has {{ taskCount() }} tasks. Rendering the full
-              dependency graph for very large scans can stall the browser, so
-              the graph is hidden by default.
+              This scan has {{ taskCount() }} tasks. The full dependency graph
+              can stall the browser, so the graph above shows the critical path
+              by default.
             </p>
-            <button
-              class="btn btn-sm mt-3"
-              type="button"
-              (click)="renderLargeGraph.set(true)"
-            >
-              Render graph anyway
-            </button>
           </div>
         }
 
@@ -188,12 +337,26 @@ export class ScanTasksTabComponent implements OnInit {
 
   taskEdges = signal<TaskEdge[]>([]);
   loading = signal(true);
-  renderLargeGraph = signal(false);
   hasLargeTaskGraph = computed(
     () => this.taskCount() > LARGE_GRAPH_TASK_THRESHOLD,
   );
   showDependencyGraph = computed(
-    () => !this.hasLargeTaskGraph() || this.renderLargeGraph(),
+    () => !this.loading() && this.taskEdges().length > 0,
+  );
+  displayedGraphTaskEdges = computed(() =>
+    this.hasLargeTaskGraph()
+      ? selectCriticalPathTaskEdges(this.taskEdges())
+      : this.taskEdges(),
+  );
+  dependencyGraphTitle = computed(() =>
+    this.hasLargeTaskGraph()
+      ? "Critical Path"
+      : "Task Dependencies",
+  );
+  dependencyGraphDescription = computed(() =>
+    this.hasLargeTaskGraph()
+      ? "Showing the longest weighted dependency chain."
+      : "Static graph of task prerequisites.",
   );
 
   private loadRemainingPages(
@@ -228,7 +391,6 @@ export class ScanTasksTabComponent implements OnInit {
       .pipe(
         switchMap((id) => {
           this.taskEdges.set([]);
-          this.renderLargeGraph.set(false);
           if (this.taskCount() === 0) {
             this.loading.set(false);
             return EMPTY;
