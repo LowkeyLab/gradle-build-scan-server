@@ -264,6 +264,45 @@ function edgeKey(edge: TaskDependencyEdge): string {
   return `${edge.sourceId}:${edge.targetId}`;
 }
 
+function hasPath(
+  sourceId: string,
+  targetId: string,
+  edges: readonly TaskDependencyEdge[],
+  ignoredEdge: TaskDependencyEdge,
+): boolean {
+  const successorsById = new Map<string, string[]>();
+  for (const edge of edges) {
+    if (
+      edge.sourceId === ignoredEdge.sourceId &&
+      edge.targetId === ignoredEdge.targetId
+    ) {
+      continue;
+    }
+    const successors = successorsById.get(edge.sourceId) ?? [];
+    successors.push(edge.targetId);
+    successorsById.set(edge.sourceId, successors);
+  }
+
+  const visited = new Set<string>();
+  const pending = [sourceId];
+  while (pending.length > 0) {
+    const currentId = pending.pop();
+    if (!currentId || visited.has(currentId)) continue;
+    if (currentId === targetId) return true;
+    visited.add(currentId);
+    pending.push(...(successorsById.get(currentId) ?? []));
+  }
+  return false;
+}
+
+function dropCyclicEdges(
+  edges: readonly TaskDependencyEdge[],
+): TaskDependencyEdge[] {
+  return edges.filter(
+    (edge) => !hasPath(edge.targetId, edge.sourceId, edges, edge),
+  );
+}
+
 @Component({
   selector: "app-task-dependency-graph",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -272,9 +311,9 @@ function edgeKey(edge: TaskDependencyEdge): string {
       <div class="card-body p-4">
         <div class="mb-3 flex items-start justify-between gap-4">
           <div>
-            <h4 class="font-semibold">Task Dependencies</h4>
+            <h4 class="font-semibold">{{ title() }}</h4>
             <p class="text-xs opacity-60">
-              Static graph of task prerequisites.
+              {{ description() }}
             </p>
           </div>
           @if (layout().nodes.length > 0) {
@@ -408,6 +447,8 @@ function edgeKey(edge: TaskDependencyEdge): string {
 })
 export class TaskDependencyGraphComponent {
   taskEdges = input.required<TaskEdge[]>();
+  title = input("Task Dependencies");
+  description = input("Static graph of task prerequisites.");
   legendNodeItems = LEGEND_NODE_ITEMS;
   readonly edgeKey = edgeKey;
 
@@ -462,27 +503,29 @@ export class TaskDependencyGraphComponent {
 
     const nodeIds = new Set(nodes.map((node) => node.id));
     const seenEdges = new Set<string>();
-    const edges = [...tasks.values()]
-      .flatMap((task) =>
-        (task.dependencies ?? []).map((sourceId) => ({
-          sourceId,
-          targetId: task.id,
-        })),
-      )
-      .filter(
-        (edge): edge is TaskDependencyEdge =>
-          !!edge.sourceId &&
-          !!edge.targetId &&
-          nodeIds.has(edge.sourceId) &&
-          nodeIds.has(edge.targetId) &&
-          edge.sourceId !== edge.targetId,
-      )
-      .filter((edge) => {
-        const key = `${edge.sourceId}:${edge.targetId}`;
-        if (seenEdges.has(key)) return false;
-        seenEdges.add(key);
-        return true;
-      });
+    const edges = dropCyclicEdges(
+      [...tasks.values()]
+        .flatMap((task) =>
+          (task.dependencies ?? []).map((sourceId) => ({
+            sourceId,
+            targetId: task.id,
+          })),
+        )
+        .filter(
+          (edge): edge is TaskDependencyEdge =>
+            !!edge.sourceId &&
+            !!edge.targetId &&
+            nodeIds.has(edge.sourceId) &&
+            nodeIds.has(edge.targetId) &&
+            edge.sourceId !== edge.targetId,
+        )
+        .filter((edge) => {
+          const key = `${edge.sourceId}:${edge.targetId}`;
+          if (seenEdges.has(key)) return false;
+          seenEdges.add(key);
+          return true;
+        }),
+    );
 
     return { nodes, edges };
   });

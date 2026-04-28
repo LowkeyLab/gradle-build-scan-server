@@ -34,6 +34,21 @@ describe("TaskDependencyGraphComponent", () => {
     fixture.detectChanges();
   }
 
+  it("renders custom title and description copy", () => {
+    fixture.componentRef.setInput("taskEdges", [buildTaskEdge()]);
+    fixture.componentRef.setInput("title", "Critical Path");
+    fixture.componentRef.setInput(
+      "description",
+      "Showing the longest weighted dependency chain.",
+    );
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain("Critical Path");
+    expect(fixture.nativeElement.textContent).toContain(
+      "Showing the longest weighted dependency chain.",
+    );
+  });
+
   describe("graph layout", () => {
     it("builds labeled nodes and directed edges from per-task dependencies", () => {
       render([
@@ -84,6 +99,29 @@ describe("TaskDependencyGraphComponent", () => {
         expect.objectContaining({ id: "T2", label: ":processResources" }),
       ]);
       expect(graph.edges).toEqual([]);
+    });
+
+    it("drops cyclic dependency edges before rendering the graph layout", () => {
+      render([
+        buildTaskEdge({
+          id: "T1",
+          dependencies: ["T2"],
+          taskPath: ":compileJava",
+        }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+        }),
+      ]);
+
+      const graph = component.graph();
+      expect(graph.nodes.map((node) => node.id)).toEqual(["T1", "T2"]);
+      expect(graph.edges).toEqual([]);
+      expect(component.layout().nodes.map((node) => node.id)).toEqual([
+        "T1",
+        "T2",
+      ]);
     });
 
     it("orders nodes within a Sugiyama layer to reduce dependency crossings", () => {
