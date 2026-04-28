@@ -17,6 +17,16 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function buildTaskChain(taskCount: number) {
+  return Array.from({ length: taskCount }, (_, index) =>
+    buildTaskEdge({
+      id: `T${index}`,
+      dependencies: index === 0 ? [] : [`T${index - 1}`],
+      taskPath: `:module${Math.floor(index / 100)}:task${index}`,
+    }),
+  );
+}
+
 describe("TaskDependencyGraphComponent", () => {
   let fixture: ComponentFixture<TaskDependencyGraphComponent>;
   let component: TaskDependencyGraphComponent;
@@ -317,6 +327,28 @@ describe("TaskDependencyGraphComponent", () => {
           '[data-testid="task-dependency-legend"]',
         ),
       ).toBeFalsy();
+    });
+
+    it("uses a canvas renderer instead of SVG DOM nodes for very large graphs", () => {
+      render(buildTaskChain(501));
+
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-dependency-canvas"]',
+        ),
+      ).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-dependency-graph"]',
+        ),
+      ).toBeFalsy();
+      expect(
+        fixture.nativeElement.querySelectorAll(
+          '[data-testid="dependency-node"]',
+        ).length,
+      ).toBe(0);
+      expect(fixture.nativeElement.textContent).toContain("501 nodes");
+      expect(fixture.nativeElement.textContent).toContain("500 edges");
     });
 
     it("renders long-span edges with explicit routing attributes", () => {

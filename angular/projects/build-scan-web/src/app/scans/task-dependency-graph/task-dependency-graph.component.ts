@@ -108,6 +108,12 @@ const NODE_GAP = [COLUMN_GAP, ROW_GAP] as const;
 const POSITION_PRECISION = 1000;
 const ZOOM_SCALE_EXTENT = [0.6, 2.5] as const;
 const ZOOM_BOUNDS_PADDING = 96;
+const CANVAS_RENDER_THRESHOLD = 500;
+const CANVAS_NODE_WIDTH = 14;
+const CANVAS_NODE_HEIGHT = 8;
+const CANVAS_COLUMN_GAP = 18;
+const CANVAS_ROW_GAP = 18;
+const CANVAS_PADDING = 32;
 
 const SUCCESS_STYLE = {
   fillColor: "oklch(72% 0.17 150 / 0.18)",
@@ -264,6 +270,77 @@ function edgeKey(edge: TaskDependencyEdge): string {
   return `${edge.sourceId}:${edge.targetId}`;
 }
 
+function buildCanvasOverviewLayout(graph: {
+  nodes: TaskDependencyNode[];
+  edges: TaskDependencyEdge[];
+}): TaskDependencyLayout {
+  const columns = Math.max(1, Math.ceil(Math.sqrt(graph.nodes.length * 1.6)));
+  const positionedNodes = graph.nodes.map((node, index) => {
+    const layer = Math.floor(index / columns);
+    const column = index % columns;
+    return {
+      ...node,
+      layer,
+      column,
+      x: CANVAS_PADDING + column * CANVAS_COLUMN_GAP,
+      y: CANVAS_PADDING + layer * CANVAS_ROW_GAP,
+      width: CANVAS_NODE_WIDTH,
+      height: CANVAS_NODE_HEIGHT,
+      ...(OUTCOME_STYLES[node.outcome] ?? FALLBACK_STYLE),
+    };
+  });
+
+  const positionedById = new Map(
+    positionedNodes.map((node) => [node.id, node]),
+  );
+  const edges = graph.edges
+    .map<RenderedTaskDependencyEdge | null>((edge) => {
+      const source = positionedById.get(edge.sourceId);
+      const target = positionedById.get(edge.targetId);
+      if (!source || !target) return null;
+      const points = [
+        {
+          x: source.x + source.width / 2,
+          y: source.y + source.height / 2,
+        },
+        {
+          x: target.x + target.width / 2,
+          y: target.y + target.height / 2,
+        },
+      ];
+      const span = Math.max(Math.abs(target.layer - source.layer), 1);
+      return {
+        ...edge,
+        points,
+        span,
+        path: "",
+        strokeColor: target.strokeColor,
+        strokeWidth: 1,
+        strokeOpacity: 0.3,
+        strokeDasharray: null,
+      };
+    })
+    .filter((edge): edge is RenderedTaskDependencyEdge => !!edge);
+
+  const rows = Math.max(1, Math.ceil(graph.nodes.length / columns));
+  const width =
+    CANVAS_PADDING * 2 +
+    CANVAS_NODE_WIDTH +
+    Math.max(0, columns - 1) * CANVAS_COLUMN_GAP;
+  const height =
+    CANVAS_PADDING * 2 +
+    CANVAS_NODE_HEIGHT +
+    Math.max(0, rows - 1) * CANVAS_ROW_GAP;
+
+  return {
+    nodes: positionedNodes,
+    edges,
+    width,
+    height,
+    zoomKey: `canvas:${graph.nodes.length}:${graph.edges.length}:${width}x${height}`,
+  };
+}
+
 @Component({
   selector: "app-task-dependency-graph",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -274,7 +351,11 @@ function edgeKey(edge: TaskDependencyEdge): string {
           <div>
             <h4 class="font-semibold">Task Dependencies</h4>
             <p class="text-xs opacity-60">
-              Static graph of task prerequisites.
+              @if (usesCanvasRenderer()) {
+                Canvas overview of task prerequisites.
+              } @else {
+                Static graph of task prerequisites.
+              }
             </p>
           </div>
           @if (layout().nodes.length > 0) {
@@ -312,92 +393,103 @@ function edgeKey(edge: TaskDependencyEdge): string {
           <div
             class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
           >
-            <svg
-              #graphSvg
-              data-testid="task-dependency-graph"
-              [attr.viewBox]="'0 0 ' + layout().width + ' ' + layout().height"
-              [attr.width]="layout().width"
-              [attr.height]="layout().height"
-              preserveAspectRatio="xMidYMin meet"
-              class="block h-auto w-full cursor-grab touch-none select-none text-base-content active:cursor-grabbing"
-              style="touch-action: none"
-              (click)="clearSelectedNodeFromBackground($event)"
-            >
-              <g #graphViewport data-testid="task-dependency-viewport">
-                @for (edge of layout().edges; track edgeKey(edge)) {
-                  <g
-                    [attr.data-edge-id]="edgeKey(edge)"
-                    [attr.data-highlight-state]="edgeHighlightState(edge)"
-                  >
-                    <path
-                      [attr.d]="edge.path"
-                      fill="none"
-                      stroke="currentColor"
-                      [attr.stroke-width]="edge.strokeWidth + 3"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      vector-effect="non-scaling-stroke"
-                      [attr.opacity]="edgeBackdropOpacity(edge)"
-                    ></path>
-                    <path
-                      data-testid="dependency-edge"
-                      [attr.d]="edge.path"
-                      fill="none"
-                      [attr.color]="edge.strokeColor"
-                      stroke="currentColor"
-                      [attr.stroke-width]="edge.strokeWidth"
-                      [attr.stroke-opacity]="edgeStrokeOpacity(edge)"
-                      [attr.stroke-dasharray]="edge.strokeDasharray"
+            @if (usesCanvasRenderer()) {
+              <canvas
+                #graphCanvas
+                data-testid="task-dependency-canvas"
+                [attr.width]="layout().width"
+                [attr.height]="layout().height"
+                class="block h-auto w-full text-base-content"
+                aria-label="Large task dependency graph rendered as a canvas overview"
+              ></canvas>
+            } @else {
+              <svg
+                #graphSvg
+                data-testid="task-dependency-graph"
+                [attr.viewBox]="'0 0 ' + layout().width + ' ' + layout().height"
+                [attr.width]="layout().width"
+                [attr.height]="layout().height"
+                preserveAspectRatio="xMidYMin meet"
+                class="block h-auto w-full cursor-grab touch-none select-none text-base-content active:cursor-grabbing"
+                style="touch-action: none"
+                (click)="clearSelectedNodeFromBackground($event)"
+              >
+                <g #graphViewport data-testid="task-dependency-viewport">
+                  @for (edge of layout().edges; track edgeKey(edge)) {
+                    <g
                       [attr.data-edge-id]="edgeKey(edge)"
-                      [attr.data-edge-span]="edge.span"
                       [attr.data-highlight-state]="edgeHighlightState(edge)"
-                      [attr.data-point-count]="edge.points.length"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      vector-effect="non-scaling-stroke"
-                    ></path>
-                  </g>
-                }
-
-                @for (node of layout().nodes; track node.id) {
-                  <g
-                    data-testid="dependency-node"
-                    [attr.data-node-id]="node.id"
-                    [attr.data-highlight-state]="nodeHighlightState(node.id)"
-                    [attr.transform]="
-                      'translate(' + node.x + ' ' + node.y + ')'
-                    "
-                    [attr.opacity]="nodeOpacity(node.id)"
-                    class="text-base-content transition-opacity"
-                    (mouseenter)="setHoveredNode(node.id)"
-                    (mouseleave)="clearHoveredNode(node.id)"
-                    (click)="selectNode(node.id); $event.stopPropagation()"
-                  >
-                    <title>{{ node.label }}</title>
-                    <rect
-                      x="0"
-                      y="0"
-                      [attr.width]="node.width"
-                      [attr.height]="node.height"
-                      rx="12"
-                      [attr.fill]="node.fillColor"
-                      [attr.stroke]="node.strokeColor"
-                      stroke-width="2"
-                    ></rect>
-                    <text
-                      data-testid="dependency-node-label"
-                      x="16"
-                      y="29"
-                      fill="currentColor"
-                      font-size="14"
-                      font-weight="600"
                     >
-                      {{ node.displayLabel }}
-                    </text>
-                  </g>
-                }
-              </g>
-            </svg>
+                      <path
+                        [attr.d]="edge.path"
+                        fill="none"
+                        stroke="currentColor"
+                        [attr.stroke-width]="edge.strokeWidth + 3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        vector-effect="non-scaling-stroke"
+                        [attr.opacity]="edgeBackdropOpacity(edge)"
+                      ></path>
+                      <path
+                        data-testid="dependency-edge"
+                        [attr.d]="edge.path"
+                        fill="none"
+                        [attr.color]="edge.strokeColor"
+                        stroke="currentColor"
+                        [attr.stroke-width]="edge.strokeWidth"
+                        [attr.stroke-opacity]="edgeStrokeOpacity(edge)"
+                        [attr.stroke-dasharray]="edge.strokeDasharray"
+                        [attr.data-edge-id]="edgeKey(edge)"
+                        [attr.data-edge-span]="edge.span"
+                        [attr.data-highlight-state]="edgeHighlightState(edge)"
+                        [attr.data-point-count]="edge.points.length"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        vector-effect="non-scaling-stroke"
+                      ></path>
+                    </g>
+                  }
+
+                  @for (node of layout().nodes; track node.id) {
+                    <g
+                      data-testid="dependency-node"
+                      [attr.data-node-id]="node.id"
+                      [attr.data-highlight-state]="nodeHighlightState(node.id)"
+                      [attr.transform]="
+                        'translate(' + node.x + ' ' + node.y + ')'
+                      "
+                      [attr.opacity]="nodeOpacity(node.id)"
+                      class="text-base-content transition-opacity"
+                      (mouseenter)="setHoveredNode(node.id)"
+                      (mouseleave)="clearHoveredNode(node.id)"
+                      (click)="selectNode(node.id); $event.stopPropagation()"
+                    >
+                      <title>{{ node.label }}</title>
+                      <rect
+                        x="0"
+                        y="0"
+                        [attr.width]="node.width"
+                        [attr.height]="node.height"
+                        rx="12"
+                        [attr.fill]="node.fillColor"
+                        [attr.stroke]="node.strokeColor"
+                        stroke-width="2"
+                      ></rect>
+                      <text
+                        data-testid="dependency-node-label"
+                        x="16"
+                        y="29"
+                        fill="currentColor"
+                        font-size="14"
+                        font-weight="600"
+                      >
+                        {{ node.displayLabel }}
+                      </text>
+                    </g>
+                  }
+                </g>
+              </svg>
+            }
           </div>
         } @else {
           <p class="text-sm opacity-60">No task dependency graph available.</p>
@@ -413,6 +505,7 @@ export class TaskDependencyGraphComponent {
 
   private graphSvg = viewChild<ElementRef<SVGSVGElement>>("graphSvg");
   private graphViewport = viewChild<ElementRef<SVGGElement>>("graphViewport");
+  private graphCanvas = viewChild<ElementRef<HTMLCanvasElement>>("graphCanvas");
   private zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null;
   private zoomSvgElement: SVGSVGElement | null = null;
   private lastZoomKey: string | null = null;
@@ -434,8 +527,18 @@ export class TaskDependencyGraphComponent {
 
       const svgRef = this.graphSvg();
       const viewportRef = this.graphViewport();
+      const canvasRef = this.graphCanvas();
       const layout = this.layout();
-      if (!svgRef || !viewportRef || layout.nodes.length === 0) return;
+      if (layout.nodes.length === 0) return;
+
+      if (this.usesCanvasRenderer()) {
+        if (canvasRef) {
+          this.drawCanvasGraph(canvasRef.nativeElement, layout);
+        }
+        return;
+      }
+
+      if (!svgRef || !viewportRef) return;
 
       this.syncViewportZoom(
         svgRef.nativeElement,
@@ -487,10 +590,18 @@ export class TaskDependencyGraphComponent {
     return { nodes, edges };
   });
 
+  usesCanvasRenderer = computed(
+    () => this.graph().nodes.length > CANVAS_RENDER_THRESHOLD,
+  );
+
   layout = computed<TaskDependencyLayout>(() => {
     const graph = this.graph();
     if (graph.nodes.length === 0) {
       return { nodes: [], edges: [], width: 0, height: 0, zoomKey: "empty" };
+    }
+
+    if (graph.nodes.length > CANVAS_RENDER_THRESHOLD) {
+      return buildCanvasOverviewLayout(graph);
     }
 
     const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
@@ -746,6 +857,46 @@ export class TaskDependencyGraphComponent {
       default:
         return edge.strokeOpacity;
     }
+  }
+
+  private drawCanvasGraph(
+    canvasElement: HTMLCanvasElement,
+    layout: TaskDependencyLayout,
+  ): void {
+    let context: CanvasRenderingContext2D | null = null;
+    try {
+      context = canvasElement.getContext("2d");
+    } catch {
+      return;
+    }
+    if (!context) return;
+
+    context.clearRect(0, 0, layout.width, layout.height);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = 0.8;
+
+    for (const edge of layout.edges) {
+      const [source, target] = edge.points;
+      if (!source || !target) continue;
+      context.globalAlpha = this.edgeStrokeOpacity(edge);
+      context.strokeStyle = edge.strokeColor;
+      context.beginPath();
+      context.moveTo(source.x, source.y);
+      context.lineTo(target.x, target.y);
+      context.stroke();
+    }
+
+    context.globalAlpha = 1;
+    for (const node of layout.nodes) {
+      context.globalAlpha = this.nodeOpacity(node.id);
+      context.fillStyle = node.fillColor;
+      context.strokeStyle = node.strokeColor;
+      context.lineWidth = 1.2;
+      context.fillRect(node.x, node.y, node.width, node.height);
+      context.strokeRect(node.x, node.y, node.width, node.height);
+    }
+    context.globalAlpha = 1;
   }
 
   private syncViewportZoom(
