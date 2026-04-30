@@ -3,27 +3,24 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  inject,
   input,
   signal,
   type ElementRef,
   viewChild,
 } from "@angular/core";
 import {
-  coordCenter,
-  decrossTwoLayer,
-  graphConnect,
-  layeringSimplex,
-  type Operator,
-  sugiyama,
-  tweakDirection,
-} from "d3-dag";
-import {
-  select,
-  zoom,
-  zoomIdentity,
-  type D3ZoomEvent,
-  type ZoomBehavior,
-} from "d3";
+  CanvasEvent,
+  ExtensionCategory,
+  Graph,
+  NodeEvent,
+  register,
+  type GraphData,
+  type GraphOptions,
+  type IElementEvent,
+} from "@antv/g6";
+import type { Threads } from "@antv/layout-wasm/dist/index.min.js";
 
 interface TaskEdge {
   node: {
@@ -41,38 +38,9 @@ interface TaskDependencyNode {
   outcome: string;
 }
 
-interface RenderedTaskDependencyNode extends TaskDependencyNode {
-  layer: number;
-  column: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  fillColor: string;
-  strokeColor: string;
-}
-
 interface TaskDependencyEdge {
   sourceId: string;
   targetId: string;
-}
-
-interface RenderedTaskDependencyEdge extends TaskDependencyEdge {
-  path: string;
-  points: Point[];
-  span: number;
-  strokeColor: string;
-  strokeWidth: number;
-  strokeOpacity: number;
-  strokeDasharray: string | null;
-}
-
-interface TaskDependencyLayout {
-  nodes: RenderedTaskDependencyNode[];
-  edges: RenderedTaskDependencyEdge[];
-  width: number;
-  height: number;
-  zoomKey: string;
 }
 
 interface TaskDependencyHighlightState {
@@ -82,32 +50,37 @@ interface TaskDependencyHighlightState {
   highlightedEdgeKeys: ReadonlySet<string>;
 }
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface DagConnectEdge extends TaskDependencyEdge {
-  syntheticSingle?: boolean;
-}
-
 interface LegendNodeItem {
   label: string;
   fillColor: string;
   strokeColor: string;
 }
 
+interface G6TaskGraphData {
+  data: GraphData;
+  key: string;
+  nodeIds: string[];
+  edgeIds: string[];
+}
+
+interface DagreWasmLayoutOptions extends Record<string, unknown> {
+  type: string;
+  rankdir: "LR";
+  align: "DL";
+  nodesep: number;
+  ranksep: number;
+  controlPoints: true;
+  threads: Threads;
+}
+
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 52;
-const COLUMN_GAP = 88;
-const ROW_GAP = 28;
-const HORIZONTAL_PADDING = 28;
-const VERTICAL_PADDING = 28;
-const NODE_SIZE = [NODE_WIDTH, NODE_HEIGHT] as const;
-const NODE_GAP = [COLUMN_GAP, ROW_GAP] as const;
-const POSITION_PRECISION = 1000;
-const ZOOM_SCALE_EXTENT = [0.6, 2.5] as const;
-const ZOOM_BOUNDS_PADDING = 96;
+const NODE_RADIUS = 12;
+const NODE_SIZE: [number, number] = [NODE_WIDTH, NODE_HEIGHT];
+const NODE_VERTICAL_GAP = 56;
+const NODE_RANK_GAP = 96;
+const FIT_VIEW_PADDING = 32;
+const G6_DAGRE_LAYOUT = "dagre-wasm";
 
 const SUCCESS_STYLE = {
   fillColor: "oklch(72% 0.17 150 / 0.18)",
@@ -159,109 +132,98 @@ const LEGEND_NODE_ITEMS: LegendNodeItem[] = [
   { label: "Failed", ...FAILED_STYLE },
 ];
 
-const DAG_LAYOUT = sugiyama()
-  .nodeSize(NODE_SIZE)
-  .gap(NODE_GAP)
-  .layering(layeringSimplex())
-  .decross(decrossTwoLayer())
-  .coord(coordCenter())
-  .tweaks([tweakDirection("TB")]) as unknown as Operator<
-  TaskDependencyNode,
-  DagConnectEdge
+type LayoutWasmDistModule =
+  typeof import("@antv/layout-wasm/dist/index.min.js");
+type LayoutWasmModule = Pick<
+  LayoutWasmDistModule,
+  "AntVDagreLayout" | "supportsThreads" | "initThreads"
 >;
+type LayoutWasmImport = LayoutWasmModule & { default?: LayoutWasmModule };
+
+let wasmLayoutModulePromise: Promise<LayoutWasmModule> | null = null;
+let wasmLayoutRegistered = false;
+let wasmLayoutThreadsPromise: Promise<Threads> | null = null;
+
+const registerLayout = register as unknown as (
+  category: ExtensionCategory,
+  type: string,
+  layout: LayoutWasmModule["AntVDagreLayout"],
+) => void;
+
+function registerWasmLayout(layout: LayoutWasmModule["AntVDagreLayout"]): void {
+  if (wasmLayoutRegistered) return;
+  registerLayout(ExtensionCategory.LAYOUT, G6_DAGRE_LAYOUT, layout);
+  wasmLayoutRegistered = true;
+}
+
+function normalizeWasmModule(module: LayoutWasmImport): LayoutWasmModule {
+  return module.default ?? module;
+}
+
+async function getWasmLayoutModule(): Promise<LayoutWasmModule> {
+  wasmLayoutModulePromise ??=
+    import("@antv/layout-wasm/dist/index.min.js").then((module) => {
+      const wasmModule = normalizeWasmModule(module);
+      registerWasmLayout(wasmModule.AntVDagreLayout);
+      return wasmModule;
+    });
+  return wasmLayoutModulePromise;
+}
 
 function truncateTaskLabel(label: string): string {
   if (label.length <= 28) return label;
   return `${label.slice(0, 25)}…`;
 }
 
-function compareLabels(
-  left: { label: string; id: string },
-  right: { label: string; id: string },
-): number {
-  const byLabel = left.label.localeCompare(right.label);
-  return byLabel !== 0 ? byLabel : left.id.localeCompare(right.id);
-}
-
-function formatCoord(value: number): string {
-  return `${Math.round(value * 10) / 10}`;
-}
-
-function buildOrthogonalPath(points: readonly Point[]): string {
-  if (points.length === 0) return "";
-  const start = points[0];
-  if (!start) return "";
-  if (points.length === 1) {
-    return `M ${formatCoord(start.x)} ${formatCoord(start.y)}`;
-  }
-
-  const commands: string[] = [
-    `M ${formatCoord(start.x)} ${formatCoord(start.y)}`,
-  ];
-
-  for (let index = 1; index < points.length; index += 1) {
-    const previous = points[index - 1];
-    const current = points[index];
-    if (!previous || !current) continue;
-    const midY = previous.y + (current.y - previous.y) / 2;
-
-    commands.push(`L ${formatCoord(previous.x)} ${formatCoord(midY)}`);
-    commands.push(`L ${formatCoord(current.x)} ${formatCoord(midY)}`);
-    commands.push(`L ${formatCoord(current.x)} ${formatCoord(current.y)}`);
-  }
-
-  return commands.join(" ");
-}
-
-function anchorEdgePoints(
-  points: readonly Point[],
-  source: RenderedTaskDependencyNode,
-  target: RenderedTaskDependencyNode,
-): Point[] {
-  const sourceAnchor = {
-    x: source.x + source.width / 2,
-    y: source.y + source.height,
-  };
-  const targetAnchor = {
-    x: target.x + target.width / 2,
-    y: target.y,
-  };
-
-  if (points.length === 0) {
-    return [sourceAnchor, targetAnchor];
-  }
-
-  if (points.length === 1) {
-    return [sourceAnchor, targetAnchor];
-  }
-
-  return [sourceAnchor, ...points.slice(1, -1), targetAnchor];
-}
-
-function positionKey(value: number): string {
-  return `${Math.round(value * POSITION_PRECISION) / POSITION_PRECISION}`;
-}
-
-function buildZoomKey(layout: {
-  nodes: RenderedTaskDependencyNode[];
-  edges: RenderedTaskDependencyEdge[];
-  width: number;
-  height: number;
-}): string {
-  const nodeKey = layout.nodes
-    .map(
-      (node) =>
-        `${node.id}:${node.layer}:${node.column}:${formatCoord(node.x)}:${formatCoord(node.y)}`,
-    )
-    .join("|");
-  const edgeKey = layout.edges
-    .map((edge) => `${edge.sourceId}:${edge.targetId}:${edge.span}`)
-    .join("|");
-  return `${layout.width}x${layout.height}|${nodeKey}|${edgeKey}`;
-}
-
 function edgeKey(edge: TaskDependencyEdge): string {
   return `${edge.sourceId}:${edge.targetId}`;
+}
+
+function getOutcomeStyle(outcome: string): {
+  fillColor: string;
+  strokeColor: string;
+} {
+  return OUTCOME_STYLES[outcome] ?? FALLBACK_STYLE;
+}
+
+function getWasmLayoutThreads(): Promise<Threads> {
+  if (typeof Worker === "undefined") {
+    return Promise.reject(new Error("WASM layout workers are unavailable."));
+  }
+
+  wasmLayoutThreadsPromise ??= getWasmLayoutModule().then((module) =>
+    module.supportsThreads().then((supported) => module.initThreads(supported)),
+  );
+  return wasmLayoutThreadsPromise;
+}
+
+function buildLayoutOptions(threads: Threads): DagreWasmLayoutOptions {
+  return {
+    type: G6_DAGRE_LAYOUT,
+    rankdir: "LR",
+    align: "DL",
+    nodesep: NODE_VERTICAL_GAP,
+    ranksep: NODE_RANK_GAP,
+    controlPoints: true,
+    threads,
+  };
+}
+
+function buildGraphDataKey(graph: {
+  nodes: TaskDependencyNode[];
+  edges: TaskDependencyEdge[];
+}): string {
+  const nodeKey = graph.nodes
+    .map((node) => `${node.id}:${node.label}:${node.outcome}`)
+    .join("|");
+  const edgeKey = graph.edges
+    .map((edge) => `${edge.sourceId}:${edge.targetId}`)
+    .join("|");
+  return `${nodeKey}::${edgeKey}`;
+}
+
+function getNodeIdFromEvent(event: IElementEvent): string | null {
+  return event.target?.id ?? null;
 }
 
 @Component({
@@ -277,15 +239,15 @@ function edgeKey(edge: TaskDependencyEdge): string {
               Static graph of task prerequisites.
             </p>
           </div>
-          @if (layout().nodes.length > 0) {
+          @if (graph().nodes.length > 0) {
             <div class="text-xs opacity-60">
-              {{ layout().nodes.length }} nodes ·
-              {{ layout().edges.length }} edges
+              {{ graph().nodes.length }} nodes ·
+              {{ graph().edges.length }} edges
             </div>
           }
         </div>
 
-        @if (layout().nodes.length > 0) {
+        @if (graph().nodes.length > 0) {
           <div
             data-testid="task-dependency-legend"
             class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-box border border-base-300/70 bg-base-100/50 px-3 py-2 text-[11px] opacity-80"
@@ -312,92 +274,11 @@ function edgeKey(edge: TaskDependencyEdge): string {
           <div
             class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
           >
-            <svg
-              #graphSvg
+            <div
+              #graphContainer
               data-testid="task-dependency-graph"
-              [attr.viewBox]="'0 0 ' + layout().width + ' ' + layout().height"
-              [attr.width]="layout().width"
-              [attr.height]="layout().height"
-              preserveAspectRatio="xMidYMin meet"
-              class="block h-auto w-full cursor-grab touch-none select-none text-base-content active:cursor-grabbing"
-              style="touch-action: none"
-              (click)="clearSelectedNodeFromBackground($event)"
-            >
-              <g #graphViewport data-testid="task-dependency-viewport">
-                @for (edge of layout().edges; track edgeKey(edge)) {
-                  <g
-                    [attr.data-edge-id]="edgeKey(edge)"
-                    [attr.data-highlight-state]="edgeHighlightState(edge)"
-                  >
-                    <path
-                      [attr.d]="edge.path"
-                      fill="none"
-                      stroke="currentColor"
-                      [attr.stroke-width]="edge.strokeWidth + 3"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      vector-effect="non-scaling-stroke"
-                      [attr.opacity]="edgeBackdropOpacity(edge)"
-                    ></path>
-                    <path
-                      data-testid="dependency-edge"
-                      [attr.d]="edge.path"
-                      fill="none"
-                      [attr.color]="edge.strokeColor"
-                      stroke="currentColor"
-                      [attr.stroke-width]="edge.strokeWidth"
-                      [attr.stroke-opacity]="edgeStrokeOpacity(edge)"
-                      [attr.stroke-dasharray]="edge.strokeDasharray"
-                      [attr.data-edge-id]="edgeKey(edge)"
-                      [attr.data-edge-span]="edge.span"
-                      [attr.data-highlight-state]="edgeHighlightState(edge)"
-                      [attr.data-point-count]="edge.points.length"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      vector-effect="non-scaling-stroke"
-                    ></path>
-                  </g>
-                }
-
-                @for (node of layout().nodes; track node.id) {
-                  <g
-                    data-testid="dependency-node"
-                    [attr.data-node-id]="node.id"
-                    [attr.data-highlight-state]="nodeHighlightState(node.id)"
-                    [attr.transform]="
-                      'translate(' + node.x + ' ' + node.y + ')'
-                    "
-                    [attr.opacity]="nodeOpacity(node.id)"
-                    class="text-base-content transition-opacity"
-                    (mouseenter)="setHoveredNode(node.id)"
-                    (mouseleave)="clearHoveredNode(node.id)"
-                    (click)="selectNode(node.id); $event.stopPropagation()"
-                  >
-                    <title>{{ node.label }}</title>
-                    <rect
-                      x="0"
-                      y="0"
-                      [attr.width]="node.width"
-                      [attr.height]="node.height"
-                      rx="12"
-                      [attr.fill]="node.fillColor"
-                      [attr.stroke]="node.strokeColor"
-                      stroke-width="2"
-                    ></rect>
-                    <text
-                      data-testid="dependency-node-label"
-                      x="16"
-                      y="29"
-                      fill="currentColor"
-                      font-size="14"
-                      font-weight="600"
-                    >
-                      {{ node.displayLabel }}
-                    </text>
-                  </g>
-                }
-              </g>
-            </svg>
+              class="task-dependency-g6 h-96 min-h-80 w-full touch-none select-none text-base-content"
+            ></div>
           </div>
         } @else {
           <p class="text-sm opacity-60">No task dependency graph available.</p>
@@ -411,37 +292,58 @@ export class TaskDependencyGraphComponent {
   legendNodeItems = LEGEND_NODE_ITEMS;
   readonly edgeKey = edgeKey;
 
-  private graphSvg = viewChild<ElementRef<SVGSVGElement>>("graphSvg");
-  private graphViewport = viewChild<ElementRef<SVGGElement>>("graphViewport");
-  private zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null;
-  private zoomSvgElement: SVGSVGElement | null = null;
-  private lastZoomKey: string | null = null;
+  private graphContainer = viewChild<ElementRef<HTMLElement>>("graphContainer");
+  private destroyRef = inject(DestroyRef);
+  private g6Graph: Graph | null = null;
+  private g6ContainerElement: HTMLElement | null = null;
+  private lastRenderedGraphKey: string | null = null;
+  private pendingGraphKey: string | null = null;
+  private renderRequestId = 0;
   private hoveredNodeId = signal<string | null>(null);
   private selectedNodeId = signal<string | null>(null);
-  private selectedNodeIdInLayout = computed(() => {
+  private selectedNodeIdInGraph = computed(() => {
     const selectedNodeId = this.selectedNodeId();
     if (!selectedNodeId) return null;
-    return this.layout().nodes.some((node) => node.id === selectedNodeId)
+    return this.graph().nodes.some((node) => node.id === selectedNodeId)
       ? selectedNodeId
       : null;
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.destroyGraph();
+    });
+
     afterRenderEffect(() => {
-      if (this.selectedNodeId() && !this.selectedNodeIdInLayout()) {
+      if (this.selectedNodeId() && !this.selectedNodeIdInGraph()) {
         this.selectedNodeId.set(null);
       }
 
-      const svgRef = this.graphSvg();
-      const viewportRef = this.graphViewport();
-      const layout = this.layout();
-      if (!svgRef || !viewportRef || layout.nodes.length === 0) return;
+      const containerRef = this.graphContainer();
+      const graphData = this.g6GraphData();
+      if (!containerRef || graphData.nodeIds.length === 0) {
+        this.destroyGraph();
+        return;
+      }
 
-      this.syncViewportZoom(
-        svgRef.nativeElement,
-        viewportRef.nativeElement,
-        layout,
-      );
+      const container = containerRef.nativeElement;
+      if (
+        this.g6Graph &&
+        this.g6ContainerElement === container &&
+        this.lastRenderedGraphKey === graphData.key
+      ) {
+        return;
+      }
+      if (this.pendingGraphKey === graphData.key) return;
+
+      this.pendingGraphKey = graphData.key;
+      void this.renderG6Graph(container, graphData);
+    });
+
+    afterRenderEffect(() => {
+      this.highlightState();
+      this.g6GraphData();
+      this.syncG6ElementStates();
     });
   }
 
@@ -487,164 +389,69 @@ export class TaskDependencyGraphComponent {
     return { nodes, edges };
   });
 
-  layout = computed<TaskDependencyLayout>(() => {
+  private g6GraphData = computed<G6TaskGraphData>(() => {
     const graph = this.graph();
-    if (graph.nodes.length === 0) {
-      return { nodes: [], edges: [], width: 0, height: 0, zoomKey: "empty" };
-    }
-
-    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
-    const connectedNodeIds = new Set<string>();
-    for (const edge of graph.edges) {
-      connectedNodeIds.add(edge.sourceId);
-      connectedNodeIds.add(edge.targetId);
-    }
-
-    const connectEdges: DagConnectEdge[] = [
-      ...graph.edges,
-      ...graph.nodes
-        .filter((node) => !connectedNodeIds.has(node.id))
-        .map((node) => ({
-          sourceId: node.id,
-          targetId: node.id,
-          syntheticSingle: true,
-        })),
-    ];
-
-    const dag = graphConnect()
-      .sourceId((edge: DagConnectEdge) => edge.sourceId)
-      .targetId((edge: DagConnectEdge) => edge.targetId)
-      .nodeDatum((id: string) => {
-        const node = nodesById.get(id);
-        if (!node) {
-          throw new Error(`Missing task dependency node for id ${id}`);
-        }
-        return node;
-      })
-      .single(true)(connectEdges);
-
-    const { width: layoutWidth, height: layoutHeight } = DAG_LAYOUT(dag);
-    const rawNodes = [...dag.nodes()];
-    const layerKeys = [...new Set(rawNodes.map((node) => positionKey(node.y)))];
-    const sortedLayerKeys = layerKeys.sort(
-      (left, right) => Number(left) - Number(right),
-    );
-    const layerByKey = new Map(
-      sortedLayerKeys.map((key, index) => [key, index]),
-    );
-
-    const positionedNodes = rawNodes.map((node) => {
-      const data = node.data;
-      const layer = layerByKey.get(positionKey(node.y)) ?? 0;
-      const centerX = node.x + HORIZONTAL_PADDING;
-      const centerY = node.y + VERTICAL_PADDING;
-
+    const nodes = graph.nodes.map((node) => {
+      const style = getOutcomeStyle(node.outcome);
       return {
-        ...data,
-        layer,
-        column: 0,
-        x: centerX - NODE_WIDTH / 2,
-        y: centerY - NODE_HEIGHT / 2,
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        ...(OUTCOME_STYLES[data.outcome] ?? FALLBACK_STYLE),
+        id: node.id,
+        data: {
+          label: node.label,
+          displayLabel: node.displayLabel,
+          outcome: node.outcome,
+        },
+        style: {
+          size: NODE_SIZE,
+          radius: NODE_RADIUS,
+          fill: style.fillColor,
+          stroke: style.strokeColor,
+          lineWidth: 2,
+          labelText: node.displayLabel,
+          labelFill: "currentColor",
+          labelFontSize: 14,
+          labelFontWeight: 600,
+        },
       };
     });
 
-    const nodesByLayer = new Map<number, RenderedTaskDependencyNode[]>();
-    for (const node of positionedNodes) {
-      const bucket = nodesByLayer.get(node.layer) ?? [];
-      bucket.push(node);
-      nodesByLayer.set(node.layer, bucket);
-    }
-    for (const nodes of nodesByLayer.values()) {
-      nodes
-        .sort((left, right) => {
-          const positionDelta = left.x - right.x;
-          return positionDelta !== 0
-            ? positionDelta
-            : compareLabels(left, right);
-        })
-        .forEach((node, column) => {
-          node.column = column;
-        });
-    }
-
-    positionedNodes.sort((left, right) => {
-      const layerDelta = left.layer - right.layer;
-      if (layerDelta !== 0) return layerDelta;
-      const columnDelta = left.column - right.column;
-      return columnDelta !== 0 ? columnDelta : compareLabels(left, right);
+    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+    const edges = graph.edges.map((edge) => {
+      const targetNode = nodesById.get(edge.targetId);
+      const targetStyle = targetNode
+        ? getOutcomeStyle(targetNode.outcome)
+        : FALLBACK_STYLE;
+      return {
+        id: edgeKey(edge),
+        source: edge.sourceId,
+        target: edge.targetId,
+        data: {
+          sourceId: edge.sourceId,
+          targetId: edge.targetId,
+        },
+        style: {
+          stroke: targetStyle.strokeColor,
+          lineWidth: 2.4,
+          opacity: 0.92,
+        },
+      };
     });
 
-    const positionedById = new Map(
-      positionedNodes.map((node) => [node.id, node]),
-    );
-    const edges = [...dag.links()]
-      .filter((link) => link.data.sourceId !== link.data.targetId)
-      .map<RenderedTaskDependencyEdge | null>((link) => {
-        const source = positionedById.get(link.source.data.id);
-        const target = positionedById.get(link.target.data.id);
-        if (!source || !target) return null;
-
-        const span = Math.max(target.layer - source.layer, 1);
-        const routedPoints = link.points.map(([x, y]) => ({
-          x: x + HORIZONTAL_PADDING,
-          y: y + VERTICAL_PADDING,
-        }));
-        const points = anchorEdgePoints(routedPoints, source, target);
-        const strokeColor = target.strokeColor;
-
-        return {
-          sourceId: source.id,
-          targetId: target.id,
-          points,
-          span,
-          path: buildOrthogonalPath(points),
-          strokeColor,
-          strokeWidth: span > 1 ? 2.1 : 2.4,
-          strokeOpacity: span > 1 ? 0.82 : 0.92,
-          strokeDasharray: null as string | null,
-        };
-      })
-      .filter((edge): edge is RenderedTaskDependencyEdge => !!edge)
-      .sort((left, right) => {
-        const spanDelta = left.span - right.span;
-        if (spanDelta !== 0) return spanDelta;
-        return `${left.sourceId}:${left.targetId}`.localeCompare(
-          `${right.sourceId}:${right.targetId}`,
-        );
-      });
-
-    const width = Math.max(
-      Math.ceil(layoutWidth + HORIZONTAL_PADDING * 2),
-      NODE_WIDTH + HORIZONTAL_PADDING * 2,
-    );
-    const height = Math.max(
-      Math.ceil(layoutHeight + VERTICAL_PADDING * 2),
-      NODE_HEIGHT + VERTICAL_PADDING * 2,
-    );
-
     return {
-      nodes: positionedNodes,
-      edges,
-      width,
-      height,
-      zoomKey: buildZoomKey({ nodes: positionedNodes, edges, width, height }),
+      data: { nodes, edges },
+      key: buildGraphDataKey(graph),
+      nodeIds: graph.nodes.map((node) => node.id),
+      edgeIds: graph.edges.map((edge) => edgeKey(edge)),
     };
   });
 
   highlightState = computed<TaskDependencyHighlightState | null>(() => {
-    const selectedNodeId = this.selectedNodeIdInLayout();
+    const selectedNodeId = this.selectedNodeIdInGraph();
     const hoveredNodeId = this.hoveredNodeId();
     const activeNodeId = selectedNodeId ?? hoveredNodeId;
     if (!activeNodeId) return null;
 
-    const incomingEdgesByTarget = new Map<
-      string,
-      RenderedTaskDependencyEdge[]
-    >();
-    for (const edge of this.layout().edges) {
+    const incomingEdgesByTarget = new Map<string, TaskDependencyEdge[]>();
+    for (const edge of this.graph().edges) {
       const bucket = incomingEdgesByTarget.get(edge.targetId) ?? [];
       bucket.push(edge);
       incomingEdgesByTarget.set(edge.targetId, bucket);
@@ -675,12 +482,12 @@ export class TaskDependencyGraphComponent {
   });
 
   setHoveredNode(nodeId: string): void {
-    if (this.selectedNodeIdInLayout()) return;
+    if (this.selectedNodeIdInGraph()) return;
     this.hoveredNodeId.set(nodeId);
   }
 
   clearHoveredNode(nodeId?: string): void {
-    if (this.selectedNodeIdInLayout()) return;
+    if (this.selectedNodeIdInGraph()) return;
     if (nodeId && this.hoveredNodeId() !== nodeId) return;
     this.hoveredNodeId.set(null);
   }
@@ -697,11 +504,6 @@ export class TaskDependencyGraphComponent {
   clearSelectedNode(): void {
     this.selectedNodeId.set(null);
     this.hoveredNodeId.set(null);
-  }
-
-  clearSelectedNodeFromBackground(event: MouseEvent): void {
-    if (event.target !== event.currentTarget) return;
-    this.clearSelectedNode();
   }
 
   nodeHighlightState(nodeId: string): "idle" | "highlighted" | "dimmed" {
@@ -722,72 +524,150 @@ export class TaskDependencyGraphComponent {
       : "dimmed";
   }
 
-  nodeOpacity(nodeId: string): number {
-    return this.nodeHighlightState(nodeId) === "dimmed" ? 0.28 : 1;
+  private async renderG6Graph(
+    container: HTMLElement,
+    graphData: G6TaskGraphData,
+  ): Promise<void> {
+    const requestId = ++this.renderRequestId;
+    let threads: Threads;
+    try {
+      threads = await getWasmLayoutThreads();
+    } catch {
+      if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
+      return;
+    }
+    if (requestId !== this.renderRequestId) {
+      if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
+      return;
+    }
+
+    const layout = buildLayoutOptions(threads);
+    if (!this.g6Graph || this.g6ContainerElement !== container) {
+      this.destroyGraph();
+      this.g6ContainerElement = container;
+      this.g6Graph = new Graph(
+        this.buildGraphOptions(container, graphData, layout),
+      );
+      this.bindGraphEvents(this.g6Graph);
+    } else {
+      this.g6Graph.setData(graphData.data);
+      this.g6Graph.setLayout(layout);
+    }
+
+    const graph = this.g6Graph;
+    await graph.render();
+    if (requestId !== this.renderRequestId || this.g6Graph !== graph) return;
+
+    this.lastRenderedGraphKey = graphData.key;
+    if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
+    await graph.fitView();
+    this.syncG6ElementStates();
   }
 
-  edgeBackdropOpacity(edge: TaskDependencyEdge): number {
-    switch (this.edgeHighlightState(edge)) {
-      case "highlighted":
-        return 0.2;
-      case "dimmed":
-        return 0.04;
-      default:
-        return 0.16;
-    }
+  private buildGraphOptions(
+    container: HTMLElement,
+    graphData: G6TaskGraphData,
+    layout: DagreWasmLayoutOptions,
+  ): GraphOptions {
+    return {
+      container,
+      data: graphData.data,
+      layout,
+      autoFit: "view",
+      padding: FIT_VIEW_PADDING,
+      zoomRange: [0.5, 2.5],
+      animation: false,
+      behaviors: ["drag-canvas", "zoom-canvas"],
+      node: {
+        type: "rect",
+        state: {
+          highlighted: {
+            lineWidth: 3,
+            shadowBlur: 8,
+            shadowColor: "currentColor",
+          },
+          selected: {
+            lineWidth: 4,
+          },
+          dimmed: {
+            opacity: 0.28,
+            labelOpacity: 0.36,
+          },
+        },
+      },
+      edge: {
+        type: "polyline",
+        style: {
+          endArrow: false,
+        },
+        state: {
+          highlighted: {
+            lineWidth: 3,
+            opacity: 1,
+          },
+          dimmed: {
+            opacity: 0.12,
+          },
+        },
+      },
+    };
   }
 
-  edgeStrokeOpacity(edge: RenderedTaskDependencyEdge): number {
-    switch (this.edgeHighlightState(edge)) {
-      case "highlighted":
-        return Math.min(edge.strokeOpacity + 0.08, 1);
-      case "dimmed":
-        return 0.12;
-      default:
-        return edge.strokeOpacity;
-    }
+  private bindGraphEvents(graph: Graph): void {
+    graph.on(NodeEvent.POINTER_ENTER, (event: IElementEvent) => {
+      const nodeId = getNodeIdFromEvent(event);
+      if (nodeId) this.setHoveredNode(nodeId);
+    });
+    graph.on(NodeEvent.POINTER_LEAVE, (event: IElementEvent) => {
+      const nodeId = getNodeIdFromEvent(event);
+      if (nodeId) this.clearHoveredNode(nodeId);
+    });
+    graph.on(NodeEvent.CLICK, (event: IElementEvent) => {
+      const nodeId = getNodeIdFromEvent(event);
+      if (nodeId) this.selectNode(nodeId);
+    });
+    graph.on(CanvasEvent.CLICK, () => {
+      this.clearSelectedNode();
+    });
   }
 
-  private syncViewportZoom(
-    svgElement: SVGSVGElement,
-    viewportElement: SVGGElement,
-    layout: TaskDependencyLayout,
-  ): void {
-    const svgSelection = select(svgElement);
-    const viewportSelection = select(viewportElement);
-    const needsNewBinding =
-      this.zoomBehavior === null || this.zoomSvgElement !== svgElement;
+  private syncG6ElementStates(): void {
+    if (!this.g6Graph) return;
 
-    if (needsNewBinding) {
-      this.zoomBehavior = zoom<SVGSVGElement, unknown>()
-        .scaleExtent(ZOOM_SCALE_EXTENT)
-        .on("zoom", (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
-          viewportSelection.attr("transform", event.transform.toString());
-        });
-      this.zoomSvgElement = svgElement;
+    const graphData = this.g6GraphData();
+    const highlightState = this.highlightState();
+    const states: Record<string, string[]> = {};
+
+    for (const nodeId of graphData.nodeIds) {
+      const state = this.nodeHighlightState(nodeId);
+      if (state === "highlighted") {
+        states[nodeId] =
+          highlightState?.mode === "selected" &&
+          highlightState.activeNodeId === nodeId
+            ? ["highlighted", "selected"]
+            : ["highlighted"];
+      } else if (state === "dimmed") {
+        states[nodeId] = ["dimmed"];
+      } else {
+        states[nodeId] = [];
+      }
     }
 
-    const zoomBehavior = this.zoomBehavior;
-    if (!zoomBehavior) return;
-
-    zoomBehavior
-      .extent([
-        [0, 0],
-        [layout.width, layout.height],
-      ])
-      .translateExtent([
-        [-ZOOM_BOUNDS_PADDING, -ZOOM_BOUNDS_PADDING],
-        [
-          layout.width + ZOOM_BOUNDS_PADDING,
-          layout.height + ZOOM_BOUNDS_PADDING,
-        ],
-      ]);
-
-    svgSelection.call(zoomBehavior).on("dblclick.zoom", null);
-
-    if (needsNewBinding || this.lastZoomKey !== layout.zoomKey) {
-      svgSelection.call(zoomBehavior.transform, zoomIdentity);
-      this.lastZoomKey = layout.zoomKey;
+    for (const edge of this.graph().edges) {
+      const state = this.edgeHighlightState(edge);
+      states[edgeKey(edge)] = state === "idle" ? [] : [state];
     }
+
+    void this.g6Graph.setElementState(states);
+  }
+
+  private destroyGraph(): void {
+    this.renderRequestId += 1;
+    this.lastRenderedGraphKey = null;
+    this.pendingGraphKey = null;
+    this.g6ContainerElement = null;
+    if (!this.g6Graph) return;
+    this.g6Graph.destroy();
+    this.g6Graph = null;
   }
 }

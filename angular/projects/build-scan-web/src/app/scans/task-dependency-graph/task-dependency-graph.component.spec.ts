@@ -1,6 +1,136 @@
 import { type ComponentFixture, TestBed } from "@angular/core/testing";
-import { select, zoomIdentity, type ZoomBehavior } from "d3";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+type ElementStateMap = Record<string, string[]>;
+
+const g6Mock = vi.hoisted(() => {
+  type HoistedGraphEvent = {
+    target: { id: string };
+    targetType: "node" | "edge" | "canvas";
+  };
+  type HoistedGraphEventHandler = (event: HoistedGraphEvent) => void;
+  type HoistedGraphData = {
+    nodes: Array<{
+      id: string;
+      data?: Record<string, unknown>;
+      style?: Record<string, unknown>;
+    }>;
+    edges: Array<{
+      id: string;
+      source: string;
+      target: string;
+      data?: Record<string, unknown>;
+      style?: Record<string, unknown>;
+    }>;
+  };
+  type HoistedGraphOptions = {
+    container: HTMLElement;
+    data: HoistedGraphData;
+    layout: Record<string, unknown>;
+    autoFit?: string;
+    node?: Record<string, unknown>;
+    edge?: Record<string, unknown>;
+    behaviors?: string[];
+  };
+  type HoistedElementStateMap = Record<string, string[]>;
+
+  class MockGraph {
+    static instances: MockGraph[] = [];
+
+    options: HoistedGraphOptions;
+    data: HoistedGraphData;
+    handlers = new Map<string, HoistedGraphEventHandler>();
+    elementStates: HoistedElementStateMap = {};
+
+    render = vi.fn((): Promise<void> => Promise.resolve());
+    fitView = vi.fn((_options?: unknown): Promise<void> => Promise.resolve());
+    destroy = vi.fn((): void => undefined);
+    setData = vi.fn((data: HoistedGraphData): void => {
+      this.data = data;
+    });
+    setLayout = vi.fn((layout: Record<string, unknown>): void => {
+      this.options = { ...this.options, layout };
+    });
+    setElementState = vi.fn((states: HoistedElementStateMap): Promise<void> => {
+      this.elementStates = states;
+      return Promise.resolve();
+    });
+    on = vi.fn(
+      (eventName: string, handler: HoistedGraphEventHandler): MockGraph => {
+        this.handlers.set(eventName, handler);
+        return this;
+      },
+    );
+
+    constructor(options: HoistedGraphOptions) {
+      this.options = options;
+      this.data = options.data;
+      MockGraph.instances.push(this);
+    }
+
+    emitNode(eventName: string, nodeId: string): void {
+      this.handlers.get(eventName)?.({
+        target: { id: nodeId },
+        targetType: "node",
+      });
+    }
+
+    emitCanvasClick(): void {
+      this.handlers.get("canvas:click")?.({
+        target: { id: "canvas" },
+        targetType: "canvas",
+      });
+    }
+  }
+
+  return {
+    MockGraph,
+    register: vi.fn(),
+    ExtensionCategory: { LAYOUT: "layout" },
+    NodeEvent: {
+      POINTER_ENTER: "node:pointerenter",
+      POINTER_LEAVE: "node:pointerleave",
+      CLICK: "node:click",
+    },
+    CanvasEvent: { CLICK: "canvas:click" },
+    resetInstances: () => {
+      MockGraph.instances = [];
+    },
+  };
+});
+
+const wasmMock = vi.hoisted(() => {
+  class AntVDagreLayout {}
+  return {
+    AntVDagreLayout,
+    supportsThreads: vi.fn((): Promise<boolean> => Promise.resolve(true)),
+    initThreads: vi.fn(
+      (_supported: boolean): Promise<symbol> =>
+        Promise.resolve(Symbol.for("layout-wasm-threads")),
+    ),
+    threadToken: Symbol.for("layout-wasm-threads"),
+  };
+});
+
+vi.mock("@antv/g6", () => ({
+  Graph: g6Mock.MockGraph,
+  register: g6Mock.register,
+  ExtensionCategory: g6Mock.ExtensionCategory,
+  NodeEvent: g6Mock.NodeEvent,
+  CanvasEvent: g6Mock.CanvasEvent,
+}));
+
+vi.mock("@antv/layout-wasm/dist/index.min.js", () => ({
+  AntVDagreLayout: wasmMock.AntVDagreLayout,
+  default: {
+    AntVDagreLayout: wasmMock.AntVDagreLayout,
+    supportsThreads: wasmMock.supportsThreads,
+    initThreads: wasmMock.initThreads,
+  },
+  supportsThreads: wasmMock.supportsThreads,
+  initThreads: wasmMock.initThreads,
+}));
+
 import { TaskDependencyGraphComponent } from "./task-dependency-graph.component";
 
 function buildTaskEdge(overrides: Record<string, unknown> = {}) {
@@ -17,11 +147,28 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   };
 }
 
+async function settleAsyncWork(
+  fixture: ComponentFixture<unknown>,
+): Promise<void> {
+  await fixture.whenStable();
+  await Promise.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  await fixture.whenStable();
+  await Promise.resolve();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  await fixture.whenStable();
+}
+
 describe("TaskDependencyGraphComponent", () => {
   let fixture: ComponentFixture<TaskDependencyGraphComponent>;
   let component: TaskDependencyGraphComponent;
 
   beforeEach(() => {
+    g6Mock.resetInstances();
+    wasmMock.supportsThreads.mockClear();
+    wasmMock.initThreads.mockClear();
+    vi.stubGlobal("Worker", class MockWorker {});
+
     TestBed.configureTestingModule({
       imports: [TaskDependencyGraphComponent],
     });
@@ -29,14 +176,36 @@ describe("TaskDependencyGraphComponent", () => {
     component = fixture.componentInstance;
   });
 
-  function render(edges: Array<ReturnType<typeof buildTaskEdge>>) {
+  afterEach(() => {
+    fixture.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  async function render(edges: Array<ReturnType<typeof buildTaskEdge>>) {
     fixture.componentRef.setInput("taskEdges", edges);
     fixture.detectChanges();
+    await settleAsyncWork(fixture);
+    fixture.detectChanges();
+    await settleAsyncWork(fixture);
   }
 
-  describe("graph layout", () => {
-    it("builds labeled nodes and directed edges from per-task dependencies", () => {
-      render([
+  function graphInstance(): InstanceType<typeof g6Mock.MockGraph> {
+    const instance =
+      g6Mock.MockGraph.instances[g6Mock.MockGraph.instances.length - 1];
+    if (!instance) {
+      throw new Error("Expected a G6 graph instance to be created");
+    }
+    return instance;
+  }
+
+  describe("graph data construction", () => {
+    it("builds sorted labeled nodes and deduplicated dependency edges", async () => {
+      await render([
+        buildTaskEdge({
+          id: "T3",
+          dependencies: ["T1", "T1", "MISSING", "T3"],
+          taskPath: ":test",
+        }),
         buildTaskEdge({
           id: "T1",
           taskPath: ":compileJava",
@@ -45,11 +214,7 @@ describe("TaskDependencyGraphComponent", () => {
           id: "T2",
           dependencies: ["T1"],
           taskPath: ":processResources",
-        }),
-        buildTaskEdge({
-          id: "T3",
-          dependencies: ["T1"],
-          taskPath: ":test",
+          outcome: "FromCache",
         }),
       ]);
 
@@ -59,21 +224,23 @@ describe("TaskDependencyGraphComponent", () => {
         ":processResources",
         ":test",
       ]);
+      expect(graph.nodes.map((node) => node.displayLabel)).toEqual([
+        ":compileJava",
+        ":processResources",
+        ":test",
+      ]);
       expect(graph.edges).toEqual([
-        expect.objectContaining({ sourceId: "T1", targetId: "T2" }),
-        expect.objectContaining({ sourceId: "T1", targetId: "T3" }),
+        { sourceId: "T1", targetId: "T3" },
+        { sourceId: "T1", targetId: "T2" },
       ]);
     });
 
-    it("ignores graph entries that do not map to loaded task labels", () => {
-      render([
-        buildTaskEdge({
-          id: "T1",
-          taskPath: ":compileJava",
-        }),
+    it("keeps isolated nodes while filtering missing dependencies and self edges", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({
           id: "T2",
-          dependencies: ["MISSING"],
+          dependencies: ["MISSING", "T2"],
           taskPath: ":processResources",
         }),
       ]);
@@ -86,100 +253,8 @@ describe("TaskDependencyGraphComponent", () => {
       expect(graph.edges).toEqual([]);
     });
 
-    it("orders nodes within a Sugiyama layer to reduce dependency crossings", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":yank" }),
-        buildTaskEdge({ id: "T4", dependencies: ["T1"], taskPath: ":zeta" }),
-      ]);
-
-      const secondLayerLabels = component
-        .layout()
-        .nodes.filter((node) => node.layer === 1)
-        .sort((left, right) => left.column - right.column)
-        .map((node) => node.label);
-
-      expect(secondLayerLabels).toEqual([":yank", ":zeta"]);
-    });
-
-    it("renders routed d3-dag link points for sibling edges in a top-to-bottom flow", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({
-          id: "T2",
-          dependencies: ["T1"],
-          taskPath: ":processResources",
-        }),
-        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
-      ]);
-
-      const edges = component.layout().edges;
-      expect(edges.every((edge) => edge.points.length >= 2)).toBe(true);
-      expect(
-        new Set(
-          edges.map((edge) => edge.points[edge.points.length - 1]?.x ?? -1),
-        ).size,
-      ).toBe(2);
-      expect(
-        edges.every(
-          (edge) =>
-            (edge.points[0]?.y ?? 0) <
-            (edge.points[edge.points.length - 1]?.y ?? 0),
-        ),
-      ).toBe(true);
-      expect(edges.every((edge) => edge.path.startsWith("M "))).toBe(true);
-      expect(edges.every((edge) => edge.strokeWidth > 2)).toBe(true);
-      expect(
-        edges.every((edge) =>
-          /L [^ ]+ [^ ]+ L [^ ]+ [^ ]+ L [^ ]+ [^ ]+/.test(edge.path),
-        ),
-      ).toBe(true);
-      const layout = component.layout();
-      const sourceNode = layout.nodes.find((node) => node.id === "T1");
-      expect(sourceNode).toBeTruthy();
-      if (!sourceNode) {
-        throw new Error("source node T1 not found");
-      }
-      expect(
-        edges.every(
-          (edge) =>
-            edge.points[0]?.x === sourceNode.x + sourceNode.width / 2 &&
-            edge.points[0]?.y === sourceNode.y + sourceNode.height,
-        ),
-      ).toBe(true);
-      expect(
-        edges.every((edge) => {
-          const targetNode = layout.nodes.find(
-            (node) => node.id === edge.targetId,
-          );
-          if (!targetNode) {
-            throw new Error(`target node ${edge.targetId} not found`);
-          }
-          return (
-            edge.points[edge.points.length - 1]?.x ===
-              targetNode.x + targetNode.width / 2 &&
-            edge.points[edge.points.length - 1]?.y === targetNode.y
-          );
-        }),
-      ).toBe(true);
-    });
-
-    it("keeps isolated nodes by seeding graphConnect with single-node placeholders", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
-      ]);
-
-      const layout = component.layout();
-      expect(layout.nodes.map((node) => node.id)).toEqual(["T1", "T2"]);
-      expect(layout.edges).toEqual([]);
-      expect(layout.width).toBeGreaterThan(0);
-      expect(layout.height).toBeGreaterThan(0);
-    });
-
-    it("derives recursive upstream highlight state for hovered nodes", () => {
-      render([
+    it("derives recursive upstream highlight state from dependencies", async () => {
+      await render([
         buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
         buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
@@ -191,7 +266,6 @@ describe("TaskDependencyGraphComponent", () => {
       component.setHoveredNode("T4");
 
       const highlightState = component.highlightState();
-      expect(highlightState).toBeTruthy();
       expect(highlightState?.activeNodeId).toBe("T4");
       expect(highlightState?.mode).toBe("hover");
       expect(
@@ -208,9 +282,142 @@ describe("TaskDependencyGraphComponent", () => {
       component.clearHoveredNode();
       expect(component.highlightState()).toBeNull();
     });
+  });
 
-    it("keeps click selection active until another node or blank space is clicked", () => {
-      render([
+  describe("G6 rendering", () => {
+    it("registers the WASM dagre layout and initializes layout threads once", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
+      ]);
+
+      expect(g6Mock.register).toHaveBeenCalledWith(
+        "layout",
+        "dagre-wasm",
+        wasmMock.AntVDagreLayout,
+      );
+      expect(wasmMock.supportsThreads.mock.calls.length).toBeLessThanOrEqual(1);
+      expect(wasmMock.initThreads.mock.calls.length).toBeLessThanOrEqual(1);
+      if (wasmMock.initThreads.mock.calls.length > 0) {
+        expect(wasmMock.initThreads).toHaveBeenCalledWith(true);
+      }
+
+      const layout = graphInstance().options.layout;
+      expect(layout).toMatchObject({
+        type: "dagre-wasm",
+        rankdir: "LR",
+        align: "DL",
+        controlPoints: true,
+        threads: wasmMock.threadToken,
+      });
+      expect(layout["nodesep"]).toBeGreaterThan(0);
+      expect(layout["ranksep"]).toBeGreaterThan(0);
+
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":check" }),
+      ]);
+
+      expect(wasmMock.supportsThreads.mock.calls.length).toBeLessThanOrEqual(1);
+      expect(wasmMock.initThreads.mock.calls.length).toBeLessThanOrEqual(1);
+    });
+
+    it("maps task graph data into G6 rect nodes and polyline edges", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":processResources",
+          outcome: "FromCache",
+        }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
+      ]);
+
+      const instance = graphInstance();
+      expect(instance.options.autoFit).toBe("view");
+      expect(instance.options.node).toMatchObject({ type: "rect" });
+      expect(instance.options.edge).toMatchObject({ type: "polyline" });
+      expect(instance.options.behaviors).toEqual([
+        "drag-canvas",
+        "zoom-canvas",
+      ]);
+      expect(instance.data.nodes).toEqual([
+        expect.objectContaining({
+          id: "T1",
+          data: expect.objectContaining({
+            label: ":compileJava",
+            displayLabel: ":compileJava",
+            outcome: "Success",
+          }),
+        }),
+        expect.objectContaining({
+          id: "T2",
+          data: expect.objectContaining({
+            label: ":processResources",
+            displayLabel: ":processResources",
+            outcome: "FromCache",
+          }),
+        }),
+        expect.objectContaining({
+          id: "T3",
+          data: expect.objectContaining({ label: ":test" }),
+        }),
+      ]);
+      expect(instance.data.edges).toEqual([
+        expect.objectContaining({ id: "T1:T2", source: "T1", target: "T2" }),
+        expect.objectContaining({ id: "T1:T3", source: "T1", target: "T3" }),
+      ]);
+    });
+
+    it("updates existing G6 data and refits the viewport when inputs change", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
+      ]);
+      const instance = graphInstance();
+
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":check" }),
+      ]);
+
+      expect(g6Mock.MockGraph.instances).toHaveLength(1);
+      expect(instance.setData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodes: expect.arrayContaining([
+            expect.objectContaining({ id: "T3" }),
+          ]),
+          edges: expect.arrayContaining([
+            expect.objectContaining({
+              id: "T2:T3",
+              source: "T2",
+              target: "T3",
+            }),
+          ]),
+        }),
+      );
+      expect(instance.setLayout).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "dagre-wasm", rankdir: "LR" }),
+      );
+    });
+
+    it("destroys the G6 graph when the component is destroyed", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
+      ]);
+      const instance = graphInstance();
+
+      fixture.destroy();
+
+      expect(instance.destroy).toHaveBeenCalledTimes(1);
+    });
+
+    it("pushes upstream hover and click highlighting into G6 element states", async () => {
+      await render([
         buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
         buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
@@ -218,93 +425,95 @@ describe("TaskDependencyGraphComponent", () => {
         buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
         buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
       ]);
+      const instance = graphInstance();
 
-      component.selectNode("T4");
-      component.setHoveredNode("T6");
+      instance.emitNode("node:pointerenter", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
 
-      let highlightState = component.highlightState();
-      expect(highlightState?.activeNodeId).toBe("T4");
-      expect(highlightState?.mode).toBe("selected");
-      expect(
-        [...(highlightState?.highlightedEdgeKeys ?? new Set<string>())].sort(),
-      ).toEqual(["T1:T2", "T2:T3", "T3:T4"]);
+      expect(instance.elementStates).toMatchObject({
+        T1: ["highlighted"],
+        T2: ["highlighted"],
+        T3: ["highlighted"],
+        T4: ["highlighted"],
+        T6: ["dimmed"],
+        "T1:T2": ["highlighted"],
+        "T2:T3": ["highlighted"],
+        "T3:T4": ["highlighted"],
+        "T5:T6": ["dimmed"],
+      } satisfies ElementStateMap);
 
-      component.selectNode("T6");
-      highlightState = component.highlightState();
-      expect(highlightState?.activeNodeId).toBe("T6");
-      expect(highlightState?.mode).toBe("selected");
-      expect(
-        [...(highlightState?.highlightedEdgeKeys ?? new Set<string>())].sort(),
-      ).toEqual(["T5:T6"]);
+      instance.emitNode("node:pointerleave", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(instance.elementStates["T6"]).toEqual([]);
 
-      component.clearSelectedNode();
+      instance.emitNode("node:click", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(instance.elementStates["T4"]).toEqual(["highlighted", "selected"]);
+
+      instance.emitNode("node:pointerenter", "T6");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.activeNodeId).toBe("T4");
+      expect(instance.elementStates["T6"]).toEqual(["dimmed"]);
+
+      instance.emitCanvasClick();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
       expect(component.highlightState()).toBeNull();
+      expect(instance.elementStates["T4"]).toEqual([]);
+      expect(instance.elementStates["T6"]).toEqual([]);
     });
   });
 
   describe("template rendering", () => {
-    it("renders a dependency graph card instead of the old timeline", () => {
-      render([
-        buildTaskEdge({
-          id: "T1",
-          taskPath: ":compileJava",
-        }),
+    it("keeps the graph card, counts, legend, and G6 container", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({
           id: "T2",
           dependencies: ["T1"],
           taskPath: ":processResources",
         }),
-        buildTaskEdge({
-          id: "T3",
-          dependencies: ["T1"],
-          taskPath: ":test",
-        }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
       ]);
 
-      const card = fixture.nativeElement.querySelector(".card.bg-base-200");
+      const card = fixture.nativeElement.querySelector(
+        ".card.bg-base-200",
+      ) as HTMLElement;
       expect(card).toBeTruthy();
-      const heading = card.querySelector("h4");
-      expect(heading.textContent.trim()).toBe("Task Dependencies");
+      expect(card.querySelector("h4")?.textContent?.trim()).toBe(
+        "Task Dependencies",
+      );
+      expect(card.textContent).toContain("3 nodes · 2 edges");
       expect(card.textContent).not.toContain("Timeline");
-      expect(
-        fixture.nativeElement.querySelector(
-          '[data-testid="task-dependency-graph"]',
-        ),
-      ).toBeTruthy();
-      expect(
-        fixture.nativeElement.querySelector(
-          '[data-testid="task-dependency-viewport"]',
-        ),
-      ).toBeTruthy();
-      expect(
-        fixture.nativeElement.querySelectorAll(
-          '[data-testid="dependency-node"]',
-        ).length,
-      ).toBe(3);
-      expect(
-        fixture.nativeElement.querySelectorAll(
-          '[data-testid="dependency-edge"]',
-        ).length,
-      ).toBe(2);
+      expect(card.querySelector("svg")).toBeNull();
+
+      const container = fixture.nativeElement.querySelector(
+        '[data-testid="task-dependency-graph"]',
+      ) as HTMLElement;
+      expect(container).toBeTruthy();
+      expect(container.className).toContain("task-dependency-g6");
+
       const legend = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-legend"]',
-      );
+      ) as HTMLElement;
       expect(legend).toBeTruthy();
       expect(legend.textContent).toContain("Legend");
       expect(legend.textContent).toContain("Success");
       expect(legend.textContent).toContain("From Cache");
       expect(legend.textContent).toContain("Task dependency");
-      expect(legend.textContent).not.toContain("Cross-layer dependency");
-      expect(legend.textContent).not.toContain("Direct dependency");
-      expect(card.textContent).toContain(":compileJava");
-      expect(card.textContent).toContain(":processResources");
-      expect(card.textContent).toContain(":test");
     });
 
-    it("renders an empty-state message when the dependency graph payload is empty", () => {
-      render([]);
+    it("renders an empty-state message without creating a G6 graph", async () => {
+      await render([]);
 
-      const card = fixture.nativeElement.querySelector(".card.bg-base-200");
+      const card = fixture.nativeElement.querySelector(
+        ".card.bg-base-200",
+      ) as HTMLElement;
       expect(card).toBeTruthy();
       expect(card.textContent).toContain("No task dependency graph available.");
       expect(
@@ -317,308 +526,7 @@ describe("TaskDependencyGraphComponent", () => {
           '[data-testid="task-dependency-legend"]',
         ),
       ).toBeFalsy();
-    });
-
-    it("renders long-span edges with explicit routing attributes", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({
-          id: "T2",
-          dependencies: ["T1"],
-          taskPath: ":processResources",
-        }),
-        buildTaskEdge({
-          id: "T3",
-          dependencies: ["T1", "T2"],
-          taskPath: ":test",
-        }),
-      ]);
-
-      const longSpanEdge = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-edge"][data-edge-span="2"]',
-      );
-
-      expect(longSpanEdge).toBeTruthy();
-      expect(longSpanEdge.getAttribute("stroke-dasharray")).toBeNull();
-      expect(
-        Number(longSpanEdge.getAttribute("data-point-count")),
-      ).toBeGreaterThan(2);
-      expect(longSpanEdge.getAttribute("marker-end")).toBeNull();
-      expect(
-        fixture.nativeElement.querySelector("#task-dependency-arrow"),
-      ).toBeNull();
-    });
-
-    it("resets the viewport zoom when the graph layout changes", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({
-          id: "T2",
-          dependencies: ["T1"],
-          taskPath: ":processResources",
-        }),
-        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
-      ]);
-
-      const svg = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-graph"]',
-      ) as SVGSVGElement;
-      const viewport = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-viewport"]',
-      ) as SVGGElement;
-      const zoomBehavior = (
-        component as unknown as {
-          zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
-        }
-      ).zoomBehavior;
-
-      select(svg).call(
-        zoomBehavior.transform,
-        zoomIdentity.translate(24, 36).scale(1.75),
-      );
-
-      expect(viewport.getAttribute("transform")).toBe(
-        "translate(24,36) scale(1.75)",
-      );
-
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({
-          id: "T2",
-          dependencies: ["T1"],
-          taskPath: ":processResources",
-        }),
-        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
-        buildTaskEdge({ id: "T4", dependencies: ["T2"], taskPath: ":check" }),
-      ]);
-
-      const rerenderedSvg = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-graph"]',
-      ) as SVGSVGElement & {
-        __zoom?: { k: number; x: number; y: number };
-      };
-      const rerenderedViewport = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-viewport"]',
-      ) as SVGGElement;
-
-      expect(rerenderedViewport.getAttribute("transform")).toBe(
-        "translate(0,0) scale(1)",
-      );
-      expect(rerenderedSvg.__zoom).toMatchObject({ k: 1, x: 0, y: 0 });
-    });
-
-    it("adds hover styling hooks that highlight upstream chains and dim unrelated graph elements", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
-        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
-        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
-      ]);
-
-      const hoveredNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T4"]',
-      ) as SVGGElement;
-      expect(hoveredNode?.getAttribute("data-highlight-state")).toBe("idle");
-
-      hoveredNode.dispatchEvent(new MouseEvent("mouseenter"));
-      fixture.detectChanges();
-
-      const highlightedNodeIds = [
-        ...fixture.nativeElement.querySelectorAll(
-          '[data-testid="dependency-node"][data-highlight-state="highlighted"]',
-        ),
-      ]
-        .map((node) => node.getAttribute("data-node-id"))
-        .sort();
-      expect(highlightedNodeIds).toEqual(["T1", "T2", "T3", "T4"]);
-
-      const highlightedEdgeIds = [
-        ...fixture.nativeElement.querySelectorAll(
-          '[data-testid="dependency-edge"][data-highlight-state="highlighted"]',
-        ),
-      ]
-        .map((edge) => edge.getAttribute("data-edge-id"))
-        .sort();
-      expect(highlightedEdgeIds).toEqual(["T1:T2", "T2:T3", "T3:T4"]);
-
-      const dimmedNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T6"]',
-      ) as SVGGElement;
-      const dimmedEdge = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-edge"][data-edge-id="T5:T6"]',
-      ) as SVGPathElement;
-      expect(dimmedNode.getAttribute("data-highlight-state")).toBe("dimmed");
-      expect(dimmedNode.getAttribute("opacity")).toBe("0.28");
-      expect(dimmedEdge.getAttribute("data-highlight-state")).toBe("dimmed");
-      expect(dimmedEdge.getAttribute("stroke-opacity")).toBe("0.12");
-
-      hoveredNode.dispatchEvent(new MouseEvent("mouseleave"));
-      fixture.detectChanges();
-
-      expect(hoveredNode.getAttribute("data-highlight-state")).toBe("idle");
-      expect(dimmedNode.getAttribute("data-highlight-state")).toBe("idle");
-      expect(dimmedEdge.getAttribute("data-highlight-state")).toBe("idle");
-    });
-
-    it("persists click-based highlighting and suppresses hover until the selection is cleared", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
-        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
-        buildTaskEdge({ id: "T5", taskPath: ":epsilon" }),
-        buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
-      ]);
-
-      const graph = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-graph"]',
-      ) as SVGSVGElement;
-      const selectedNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T4"]',
-      ) as SVGGElement;
-      const otherNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T6"]',
-      ) as SVGGElement;
-
-      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe(
-        "highlighted",
-      );
-      expect(otherNode.getAttribute("data-highlight-state")).toBe("dimmed");
-
-      otherNode.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe(
-        "highlighted",
-      );
-      expect(otherNode.getAttribute("data-highlight-state")).toBe("dimmed");
-
-      otherNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-      expect(otherNode.getAttribute("data-highlight-state")).toBe(
-        "highlighted",
-      );
-
-      graph.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe("idle");
-      expect(otherNode.getAttribute("data-highlight-state")).toBe("idle");
-    });
-
-    it("clears a persisted selection when the selected node disappears after a graph rerender", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
-      ]);
-
-      const initiallySelectedNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T3"]',
-      ) as SVGGElement;
-
-      initiallySelectedNode.dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
-      fixture.detectChanges();
-
-      expect(component.highlightState()?.activeNodeId).toBe("T3");
-
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-      ]);
-      fixture.detectChanges();
-
-      expect(
-        (
-          component as unknown as { selectedNodeId: () => string | null }
-        ).selectedNodeId(),
-      ).toBeNull();
-      expect(component.highlightState()).toBeNull();
-
-      const remainingNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T2"]',
-      ) as SVGGElement;
-
-      remainingNode.dispatchEvent(
-        new MouseEvent("mouseenter", { bubbles: true }),
-      );
-      fixture.detectChanges();
-
-      expect(component.highlightState()?.activeNodeId).toBe("T2");
-      expect(component.highlightState()?.mode).toBe("hover");
-    });
-
-    it("preserves click selection on edge clicks and clears it only on blank svg space", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
-        buildTaskEdge({ id: "T4", dependencies: ["T3"], taskPath: ":delta" }),
-      ]);
-
-      const graph = fixture.nativeElement.querySelector(
-        '[data-testid="task-dependency-graph"]',
-      ) as SVGSVGElement;
-      const selectedNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T4"]',
-      ) as SVGGElement;
-      const edge = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-edge"][data-edge-id="T3:T4"]',
-      ) as SVGPathElement;
-
-      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(component.highlightState()?.activeNodeId).toBe("T4");
-      expect(component.highlightState()?.mode).toBe("selected");
-
-      edge.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(component.highlightState()?.activeNodeId).toBe("T4");
-      expect(component.highlightState()?.mode).toBe("selected");
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe(
-        "highlighted",
-      );
-
-      graph.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(component.highlightState()).toBeNull();
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe("idle");
-    });
-
-    it("clears the persisted highlight when the selected node is clicked again", () => {
-      render([
-        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
-      ]);
-
-      const selectedNode = fixture.nativeElement.querySelector(
-        '[data-testid="dependency-node"][data-node-id="T3"]',
-      ) as SVGGElement;
-
-      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(component.highlightState()?.activeNodeId).toBe("T3");
-      expect(component.highlightState()?.mode).toBe("selected");
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe(
-        "highlighted",
-      );
-
-      selectedNode.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      fixture.detectChanges();
-
-      expect(component.highlightState()).toBeNull();
-      expect(selectedNode.getAttribute("data-highlight-state")).toBe("idle");
+      expect(g6Mock.MockGraph.instances).toHaveLength(0);
     });
   });
 });
