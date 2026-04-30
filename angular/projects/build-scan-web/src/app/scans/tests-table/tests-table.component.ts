@@ -45,12 +45,34 @@ import {
           <tbody>
             @for (edge of testEdges(); track edge.node.id) {
               <tr
-                [class.cursor-pointer]="edge.node.outcome === 'Failed' && edge.node.failureMessage"
-                [attr.tabindex]="edge.node.outcome === 'Failed' && edge.node.failureMessage ? '0' : null"
-                [attr.aria-expanded]="edge.node.outcome === 'Failed' && edge.node.failureMessage ? expandedIds().has(edge.node.id) : null"
-                (click)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
-                (keydown.enter)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
-                (keydown.space)="edge.node.outcome === 'Failed' && edge.node.failureMessage ? toggleExpanded(edge.node.id) : null"
+                [class.cursor-pointer]="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                "
+                [attr.tabindex]="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                    ? '0'
+                    : null
+                "
+                [attr.aria-expanded]="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                    ? expandedIds().has(edge.node.id)
+                    : null
+                "
+                (click)="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                    ? toggleExpanded(edge.node.id)
+                    : null
+                "
+                (keydown.enter)="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                    ? toggleExpanded(edge.node.id)
+                    : null
+                "
+                (keydown.space)="
+                  edge.node.outcome === 'Failed' && edge.node.failureMessage
+                    ? toggleExpanded(edge.node.id)
+                    : null
+                "
               >
                 <td class="font-mono text-sm">{{ edge.node.className }}</td>
                 <td class="font-mono text-sm">
@@ -67,13 +89,19 @@ import {
                   </span>
                 </td>
                 <td class="text-sm tabular-nums">
-                  {{ edge.node.durationMs != null ? formatDuration(edge.node.durationMs) : "—" }}
+                  {{
+                    edge.node.durationMs != null
+                      ? formatDuration(edge.node.durationMs)
+                      : "—"
+                  }}
                 </td>
                 <td class="text-xs opacity-60">
                   {{ edge.node.executorName || "—" }}
                 </td>
               </tr>
-              @if (expandedIds().has(edge.node.id) && edge.node.failureMessage) {
+              @if (
+                expandedIds().has(edge.node.id) && edge.node.failureMessage
+              ) {
                 <tr>
                   <td colspan="5" class="bg-base-200 p-4">
                     @if (edge.node.failureMessage) {
@@ -85,7 +113,8 @@ import {
                     @if (edge.node.failureStacktrace) {
                       <pre
                         class="text-xs overflow-x-auto max-h-64 overflow-y-auto bg-base-300 p-3 rounded"
-                      >{{ edge.node.failureStacktrace }}</pre>
+                        >{{ edge.node.failureStacktrace }}</pre
+                      >
                     }
                   </td>
                 </tr>

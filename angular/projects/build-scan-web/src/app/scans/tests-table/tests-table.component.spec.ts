@@ -123,7 +123,8 @@ describe("TestsTableComponent", () => {
           outcome: "Failed",
           durationMs: 50,
           failureMessage: "expected true but was false",
-          failureStacktrace: "at com.example.BarTest.testOther(BarTest.java:10)",
+          failureStacktrace:
+            "at com.example.BarTest.testOther(BarTest.java:10)",
         },
         cursor: "tc2",
       },
