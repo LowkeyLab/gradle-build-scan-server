@@ -1,11 +1,37 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { TestBed, ComponentFixture } from "@angular/core/testing";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { TestBed, type ComponentFixture } from "@angular/core/testing";
 import {
   ApolloTestingModule,
   ApolloTestingController,
 } from "apollo-angular/testing";
 import { provideRouter } from "@angular/router";
 import { ScanDetailComponent } from "./scan-detail.component";
+
+vi.mock("@antv/g6", () => ({
+  CanvasEvent: { CLICK: "canvas:click" },
+  Graph: class MockGraph {
+    destroy = vi.fn((): void => undefined);
+    setData = vi.fn((_data: unknown): void => undefined);
+
+    render(): Promise<void> {
+      return Promise.resolve();
+    }
+    fitView(): Promise<void> {
+      return Promise.resolve();
+    }
+    setElementState(_states: unknown): Promise<void> {
+      return Promise.resolve();
+    }
+    on(): MockGraph {
+      return this;
+    }
+  },
+  NodeEvent: {
+    CLICK: "node:click",
+    POINTER_ENTER: "node:pointerenter",
+    POINTER_LEAVE: "node:pointerleave",
+  },
+}));
 
 function buildOverviewScan(overrides: Record<string, unknown> = {}) {
   return {

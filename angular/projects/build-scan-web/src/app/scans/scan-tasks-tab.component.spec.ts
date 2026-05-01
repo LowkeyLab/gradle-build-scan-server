@@ -1,10 +1,36 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { TestBed, type ComponentFixture } from "@angular/core/testing";
 import {
   ApolloTestingModule,
   ApolloTestingController,
 } from "apollo-angular/testing";
 import { ScanTasksTabComponent } from "./scan-tasks-tab.component";
+
+vi.mock("@antv/g6", () => ({
+  CanvasEvent: { CLICK: "canvas:click" },
+  Graph: class MockGraph {
+    destroy = vi.fn((): void => undefined);
+    setData = vi.fn((_data: unknown): void => undefined);
+
+    render(): Promise<void> {
+      return Promise.resolve();
+    }
+    fitView(): Promise<void> {
+      return Promise.resolve();
+    }
+    setElementState(_states: unknown): Promise<void> {
+      return Promise.resolve();
+    }
+    on(): MockGraph {
+      return this;
+    }
+  },
+  NodeEvent: {
+    CLICK: "node:click",
+    POINTER_ENTER: "node:pointerenter",
+    POINTER_LEAVE: "node:pointerleave",
+  },
+}));
 
 function buildTaskEdge(overrides: Record<string, unknown> = {}) {
   return {
@@ -15,6 +41,8 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
       className: "JavaCompile",
       outcome: "Success",
       cacheable: true,
+      startTimestamp: 1000,
+      finishTimestamp: 1120,
       durationMs: 120,
       cacheKey: "abc123",
       cachingDisabledReason: null,
@@ -75,8 +103,8 @@ describe("ScanTasksTabComponent", () => {
     });
     expect(queryText).toContain("dependencies");
     expect(queryText).not.toContain("taskDependencyGraph");
-    expect(queryText).not.toContain("startTimestamp");
-    expect(queryText).not.toContain("finishTimestamp");
+    expect(queryText).toContain("startTimestamp");
+    expect(queryText).toContain("finishTimestamp");
     expect(fixture.nativeElement.textContent).toContain("Loading tasks…");
 
     pending.flushData({
