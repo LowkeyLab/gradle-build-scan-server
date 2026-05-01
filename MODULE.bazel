@@ -1,7 +1,7 @@
 # Currently bazel-lib is only load()ed when platforms is used.
-bazel_dep(name = "bazel_lib", version = "3.2.2")
+bazel_dep(name = "bazel_lib", version = "3.3.1")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")  # force a recent version that works with v3
-bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "apple_support", version = "2.5.4")
 bazel_dep(name = "aspect_rules_lint", version = "2.5.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
@@ -39,7 +39,7 @@ git_override(
 # rules_rs v0.0.56+ bundles its own internal rules_rust; provision @rules_rust
 # from it so BUILD files and crate toolchain types share the same module.
 bazel_dep(name = "rules_rs", version = "0.0.59")
-bazel_dep(name = "llvm", version = "0.7.5")
+bazel_dep(name = "llvm", version = "0.7.7")
 
 rules_rust = use_extension("@rules_rs//rs/experimental:rules_rust.bzl", "rules_rust")
 use_repo(rules_rust, "rules_rust")
