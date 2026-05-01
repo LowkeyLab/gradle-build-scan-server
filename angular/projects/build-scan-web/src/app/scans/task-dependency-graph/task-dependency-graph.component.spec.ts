@@ -2,6 +2,10 @@ import { type ComponentFixture, TestBed } from "@angular/core/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type ElementStateMap = Record<string, string[]>;
+type RenderedNodeStyle = Record<string, unknown> & {
+  fill?: unknown;
+  size?: unknown;
+};
 
 const g6Mock = vi.hoisted(() => {
   type HoistedGraphEvent = {
@@ -198,6 +202,43 @@ describe("TaskDependencyGraphComponent", () => {
     return instance;
   }
 
+  function renderedNode(
+    instance: InstanceType<typeof g6Mock.MockGraph>,
+    nodeId: string,
+  ) {
+    const node = instance.data.nodes.find(
+      (candidate) => candidate.id === nodeId,
+    );
+    if (!node) {
+      throw new Error(`Expected node ${nodeId} to be rendered`);
+    }
+    return node;
+  }
+
+  function expectOpaqueFill(fill: unknown): void {
+    if (typeof fill !== "string") {
+      throw new Error("Expected fill to be a CSS color string");
+    }
+    expect(fill).toMatch(/^oklch\([^/]+\)$/);
+  }
+
+  function renderedNodeStyle(
+    node: ReturnType<typeof renderedNode>,
+  ): RenderedNodeStyle {
+    if (!node.style) {
+      throw new Error("Expected rendered node to include a style object");
+    }
+    return node.style;
+  }
+
+  function nodeSize(node: ReturnType<typeof renderedNode>): number {
+    const size = renderedNodeStyle(node).size;
+    if (typeof size !== "number") {
+      throw new Error("Expected rendered circle node size to be a number");
+    }
+    return size;
+  }
+
   describe("graph data construction", () => {
     it("builds sorted labeled nodes and deduplicated dependency edges", async () => {
       await render([
@@ -300,7 +341,7 @@ describe("TaskDependencyGraphComponent", () => {
         align: "DL",
         nodesep: 56,
         ranksep: 96,
-        controlPoints: true,
+        controlPoints: false,
       });
     });
 
@@ -320,7 +361,7 @@ describe("TaskDependencyGraphComponent", () => {
       ]);
     });
 
-    it("maps task graph data into G6 rect nodes and polyline edges", async () => {
+    it("maps task graph data into opaque G6 circle nodes and orthogonal polyline edges", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({
@@ -329,42 +370,85 @@ describe("TaskDependencyGraphComponent", () => {
           taskPath: ":processResources",
           outcome: "FromCache",
         }),
-        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
+        buildTaskEdge({ id: "T3", taskPath: ":test" }),
+        buildTaskEdge({
+          id: "T4",
+          dependencies: ["T1", "T2", "T3"],
+          taskPath: ":verify",
+          outcome: "Failed",
+        }),
       ]);
 
       const instance = graphInstance();
       expect(instance.options.autoFit).toBe("view");
-      expect(instance.options.node).toMatchObject({ type: "rect" });
-      expect(instance.options.edge).toMatchObject({ type: "polyline" });
+      expect(instance.options.node).toMatchObject({ type: "circle" });
+      expect(instance.options.edge).toMatchObject({
+        type: "polyline",
+        style: {
+          endArrow: false,
+          router: { type: "orth" },
+        },
+      });
       expect(instance.options.behaviors).toEqual([
         "drag-canvas",
         "zoom-canvas",
       ]);
-      expect(instance.data.nodes).toEqual([
-        expect.objectContaining({
-          id: "T1",
-          data: expect.objectContaining({
-            label: ":compileJava",
-            displayLabel: ":compileJava",
-            outcome: "Success",
+      expect(instance.data.nodes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "T1",
+            data: expect.objectContaining({
+              label: ":compileJava",
+              displayLabel: ":compileJava",
+              outcome: "Success",
+              incomingDependencyCount: 0,
+            }),
           }),
-        }),
-        expect.objectContaining({
-          id: "T2",
-          data: expect.objectContaining({
-            label: ":processResources",
-            displayLabel: ":processResources",
-            outcome: "FromCache",
+          expect.objectContaining({
+            id: "T2",
+            data: expect.objectContaining({
+              label: ":processResources",
+              displayLabel: ":processResources",
+              outcome: "FromCache",
+              incomingDependencyCount: 1,
+            }),
           }),
-        }),
-        expect.objectContaining({
-          id: "T3",
-          data: expect.objectContaining({ label: ":test" }),
-        }),
-      ]);
+          expect.objectContaining({
+            id: "T3",
+            data: expect.objectContaining({
+              label: ":test",
+              incomingDependencyCount: 0,
+            }),
+          }),
+          expect.objectContaining({
+            id: "T4",
+            data: expect.objectContaining({
+              label: ":verify",
+              incomingDependencyCount: 3,
+            }),
+          }),
+        ]),
+      );
+      expect(instance.data.nodes).toHaveLength(4);
+      for (const node of instance.data.nodes) {
+        const style = renderedNodeStyle(node);
+        expect(style).not.toHaveProperty("radius");
+        expectOpaqueFill(style.fill);
+      }
+
+      const sourceNode = renderedNode(instance, "T1");
+      const oneIncomingNode = renderedNode(instance, "T2");
+      const threeIncomingNode = renderedNode(instance, "T4");
+      expect(nodeSize(sourceNode)).toBe(72);
+      expect(nodeSize(oneIncomingNode)).toBeGreaterThan(nodeSize(sourceNode));
+      expect(nodeSize(threeIncomingNode)).toBeGreaterThan(
+        nodeSize(oneIncomingNode),
+      );
       expect(instance.data.edges).toEqual([
         expect.objectContaining({ id: "T1:T2", source: "T1", target: "T2" }),
-        expect.objectContaining({ id: "T1:T3", source: "T1", target: "T3" }),
+        expect.objectContaining({ id: "T1:T4", source: "T1", target: "T4" }),
+        expect.objectContaining({ id: "T2:T4", source: "T2", target: "T4" }),
+        expect.objectContaining({ id: "T3:T4", source: "T3", target: "T4" }),
       ]);
     });
 
@@ -402,7 +486,7 @@ describe("TaskDependencyGraphComponent", () => {
         align: "DL",
         nodesep: 56,
         ranksep: 96,
-        controlPoints: true,
+        controlPoints: false,
       });
     });
 
@@ -508,6 +592,9 @@ describe("TaskDependencyGraphComponent", () => {
       expect(legend.textContent).toContain("Success");
       expect(legend.textContent).toContain("From Cache");
       expect(legend.textContent).toContain("Task dependency");
+      for (const item of component.legendNodeItems) {
+        expectOpaqueFill(item.fillColor);
+      }
     });
 
     it("renders an empty-state message without creating a G6 graph", async () => {

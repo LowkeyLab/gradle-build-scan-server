@@ -71,10 +71,9 @@ interface TaskGraphLayoutOptions extends Record<string, unknown> {
   controlPoints: boolean;
 }
 
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 52;
-const NODE_RADIUS = 12;
-const NODE_SIZE: [number, number] = [NODE_WIDTH, NODE_HEIGHT];
+const NODE_BASE_SIZE = 72;
+const NODE_INCOMING_EDGE_SIZE_STEP = 14;
+const NODE_MAX_SIZE = 128;
 const NODE_VERTICAL_GAP = 56;
 const NODE_RANK_GAP = 96;
 const FIT_VIEW_PADDING = 32;
@@ -85,32 +84,32 @@ const TASK_GRAPH_LAYOUT: TaskGraphLayoutOptions = {
   align: "DL",
   nodesep: NODE_VERTICAL_GAP,
   ranksep: NODE_RANK_GAP,
-  controlPoints: true,
+  controlPoints: false,
 };
 
 const SUCCESS_STYLE = {
-  fillColor: "oklch(72% 0.17 150 / 0.18)",
-  strokeColor: "oklch(72% 0.17 150)",
+  fillColor: "oklch(86% 0.12 150)",
+  strokeColor: "oklch(54% 0.16 150)",
 };
 
 const UP_TO_DATE_STYLE = {
-  fillColor: "oklch(72% 0.17 150 / 0.12)",
-  strokeColor: "oklch(72% 0.17 150 / 0.7)",
+  fillColor: "oklch(90% 0.08 150)",
+  strokeColor: "oklch(50% 0.1 150)",
 };
 
 const FROM_CACHE_STYLE = {
-  fillColor: "oklch(72% 0.15 230 / 0.18)",
-  strokeColor: "oklch(72% 0.15 230)",
+  fillColor: "oklch(86% 0.12 230)",
+  strokeColor: "oklch(55% 0.15 230)",
 };
 
 const FAILED_STYLE = {
-  fillColor: "oklch(62% 0.2 25 / 0.18)",
-  strokeColor: "oklch(62% 0.2 25)",
+  fillColor: "oklch(85% 0.12 25)",
+  strokeColor: "oklch(56% 0.2 25)",
 };
 
 const SKIPPED_STYLE = {
-  fillColor: "oklch(75% 0.15 75 / 0.18)",
-  strokeColor: "oklch(75% 0.15 75)",
+  fillColor: "oklch(88% 0.12 75)",
+  strokeColor: "oklch(55% 0.15 75)",
 };
 
 const OUTCOME_STYLES: Record<
@@ -125,7 +124,7 @@ const OUTCOME_STYLES: Record<
 };
 
 const FALLBACK_STYLE = {
-  fillColor: "oklch(55% 0.04 260 / 0.12)",
+  fillColor: "oklch(87% 0.04 260)",
   strokeColor: "oklch(55% 0.04 260)",
 };
 
@@ -147,6 +146,26 @@ function edgeKey(edge: TaskDependencyEdge): string {
   return `${edge.sourceId}:${edge.targetId}`;
 }
 
+function buildIncomingDependencyCounts(
+  edges: TaskDependencyEdge[],
+): Map<string, number> {
+  const incomingCounts = new Map<string, number>();
+  for (const edge of edges) {
+    incomingCounts.set(
+      edge.targetId,
+      (incomingCounts.get(edge.targetId) ?? 0) + 1,
+    );
+  }
+  return incomingCounts;
+}
+
+function getNodeSize(incomingEdgeCount: number): number {
+  return Math.min(
+    NODE_MAX_SIZE,
+    NODE_BASE_SIZE + NODE_INCOMING_EDGE_SIZE_STEP * incomingEdgeCount,
+  );
+}
+
 function getOutcomeStyle(outcome: string): {
   fillColor: string;
   strokeColor: string;
@@ -158,10 +177,11 @@ function buildGraphDataKey(graph: {
   nodes: TaskDependencyNode[];
   edges: TaskDependencyEdge[];
 }): string {
+  const incomingCounts = buildIncomingDependencyCounts(graph.edges);
   const nodeKey = graph.nodes
     .map(
       (node) =>
-        `${node.id}:${node.label}:${node.outcome}:${node.durationMs ?? ""}`,
+        `${node.id}:${node.label}:${node.outcome}:${node.durationMs ?? ""}:${incomingCounts.get(node.id) ?? 0}`,
     )
     .join("|");
   const edgeKey = graph.edges
@@ -206,7 +226,7 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             @for (item of legendNodeItems; track item.label) {
               <div class="flex items-center gap-2">
                 <span
-                  class="inline-block h-3.5 w-3.5 rounded-[4px] border-2"
+                  class="inline-block h-3.5 w-3.5 rounded-full border-2"
                   [style.background-color]="item.fillColor"
                   [style.border-color]="item.strokeColor"
                 ></span>
@@ -247,6 +267,7 @@ export class TaskDependencyGraphComponent {
   private lastRenderedGraphKey: string | null = null;
   private pendingGraphKey: string | null = null;
   private renderRequestId = 0;
+  private hasSyncedActiveElementStates = false;
   private hoveredNodeId = signal<string | null>(null);
   private selectedNodeId = signal<string | null>(null);
   private selectedNodeIdInGraph = computed(() => {
@@ -340,18 +361,20 @@ export class TaskDependencyGraphComponent {
 
   private g6GraphData = computed<G6TaskGraphData>(() => {
     const graph = this.graph();
+    const incomingCounts = buildIncomingDependencyCounts(graph.edges);
     const nodes = graph.nodes.map((node) => {
       const style = getOutcomeStyle(node.outcome);
+      const incomingDependencyCount = incomingCounts.get(node.id) ?? 0;
       return {
         id: node.id,
         data: {
           label: node.label,
           displayLabel: node.displayLabel,
           outcome: node.outcome,
+          incomingDependencyCount,
         },
         style: {
-          size: NODE_SIZE,
-          radius: NODE_RADIUS,
+          size: getNodeSize(incomingDependencyCount),
           fill: style.fillColor,
           stroke: style.strokeColor,
           lineWidth: 2,
@@ -512,7 +535,7 @@ export class TaskDependencyGraphComponent {
       animation: false,
       behaviors: ["drag-canvas", "zoom-canvas"],
       node: {
-        type: "rect",
+        type: "circle",
         state: {
           highlighted: {
             lineWidth: 3,
@@ -532,6 +555,7 @@ export class TaskDependencyGraphComponent {
         type: "polyline",
         style: {
           endArrow: false,
+          router: { type: "orth" },
         },
         state: {
           highlighted: {
@@ -569,6 +593,21 @@ export class TaskDependencyGraphComponent {
 
     const graphData = this.g6GraphData();
     const highlightState = this.highlightState();
+    if (!highlightState) {
+      if (!this.hasSyncedActiveElementStates) return;
+      this.hasSyncedActiveElementStates = false;
+      const clearedStates: Record<string, string[]> = {};
+      for (const nodeId of graphData.nodeIds) {
+        clearedStates[nodeId] = [];
+      }
+      for (const edgeId of graphData.edgeIds) {
+        clearedStates[edgeId] = [];
+      }
+      void this.g6Graph.setElementState(clearedStates);
+      return;
+    }
+    this.hasSyncedActiveElementStates = true;
+
     const states: Record<string, string[]> = {};
 
     for (const nodeId of graphData.nodeIds) {
@@ -599,6 +638,7 @@ export class TaskDependencyGraphComponent {
     this.lastRenderedGraphKey = null;
     this.pendingGraphKey = null;
     this.g6ContainerElement = null;
+    this.hasSyncedActiveElementStates = false;
     if (!this.g6Graph) return;
     this.g6Graph.destroy();
     this.g6Graph = null;
