@@ -202,6 +202,13 @@ describe("TaskDependencyGraphComponent", () => {
     return instance;
   }
 
+  function elementState(
+    instance: InstanceType<typeof g6Mock.MockGraph>,
+    elementId: string,
+  ): string[] | undefined {
+    return instance.elementStates[elementId];
+  }
+
   function renderedNode(
     instance: InstanceType<typeof g6Mock.MockGraph>,
     nodeId: string,
@@ -294,7 +301,7 @@ describe("TaskDependencyGraphComponent", () => {
       expect(graph.edges).toEqual([]);
     });
 
-    it("derives recursive upstream highlight state from dependencies", async () => {
+    it("derives recursive upstream highlight state from selected dependencies", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
@@ -304,11 +311,11 @@ describe("TaskDependencyGraphComponent", () => {
         buildTaskEdge({ id: "T6", dependencies: ["T5"], taskPath: ":zeta" }),
       ]);
 
-      component.setHoveredNode("T4");
+      component.selectNode("T4");
 
       const highlightState = component.highlightState();
       expect(highlightState?.activeNodeId).toBe("T4");
-      expect(highlightState?.mode).toBe("hover");
+      expect(highlightState?.mode).toBe("selected");
       expect(
         [...(highlightState?.highlightedNodeIds ?? new Set<string>())].sort(),
       ).toEqual(["T1", "T2", "T3", "T4"]);
@@ -320,7 +327,7 @@ describe("TaskDependencyGraphComponent", () => {
         component.edgeHighlightState({ sourceId: "T5", targetId: "T6" }),
       ).toBe("dimmed");
 
-      component.clearHoveredNode();
+      component.selectNode("T4");
       expect(component.highlightState()).toBeNull();
     });
   });
@@ -341,7 +348,6 @@ describe("TaskDependencyGraphComponent", () => {
         align: "DL",
         nodesep: 56,
         ranksep: 96,
-        controlPoints: false,
       });
     });
 
@@ -361,7 +367,7 @@ describe("TaskDependencyGraphComponent", () => {
       ]);
     });
 
-    it("maps task graph data into opaque G6 circle nodes and orthogonal polyline edges", async () => {
+    it("maps task graph data into opaque G6 circle nodes and cubic horizontal edges", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({
@@ -383,10 +389,9 @@ describe("TaskDependencyGraphComponent", () => {
       expect(instance.options.autoFit).toBe("view");
       expect(instance.options.node).toMatchObject({ type: "circle" });
       expect(instance.options.edge).toMatchObject({
-        type: "polyline",
+        type: "cubic-horizontal",
         style: {
           endArrow: false,
-          router: { type: "orth" },
         },
       });
       expect(instance.options.behaviors).toEqual([
@@ -434,6 +439,7 @@ describe("TaskDependencyGraphComponent", () => {
         const style = renderedNodeStyle(node);
         expect(style).not.toHaveProperty("radius");
         expectOpaqueFill(style.fill);
+        expect(style).toHaveProperty("labelFontSize", 16);
       }
 
       const sourceNode = renderedNode(instance, "T1");
@@ -486,7 +492,6 @@ describe("TaskDependencyGraphComponent", () => {
         align: "DL",
         nodesep: 56,
         ranksep: 96,
-        controlPoints: false,
       });
     });
 
@@ -502,7 +507,7 @@ describe("TaskDependencyGraphComponent", () => {
       expect(instance.destroy).toHaveBeenCalledTimes(1);
     });
 
-    it("pushes upstream hover and click highlighting into G6 element states", async () => {
+    it("pushes click-only upstream highlighting into G6 element states", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
@@ -513,15 +518,30 @@ describe("TaskDependencyGraphComponent", () => {
       ]);
       const instance = graphInstance();
 
+      expect(instance.handlers.has("node:pointerenter")).toBe(false);
+      expect(instance.handlers.has("node:pointerleave")).toBe(false);
+
       instance.emitNode("node:pointerenter", "T4");
       fixture.detectChanges();
       await settleAsyncWork(fixture);
+      expect(component.highlightState()).toBeNull();
+      expect(instance.elementStates).toEqual({});
 
+      instance.emitNode("node:pointerleave", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()).toBeNull();
+      expect(instance.elementStates).toEqual({});
+
+      instance.emitNode("node:click", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.mode).toBe("selected");
       expect(instance.elementStates).toMatchObject({
         T1: ["highlighted"],
         T2: ["highlighted"],
         T3: ["highlighted"],
-        T4: ["highlighted"],
+        T4: ["highlighted", "selected"],
         T6: ["dimmed"],
         "T1:T2": ["highlighted"],
         "T2:T3": ["highlighted"],
@@ -529,29 +549,30 @@ describe("TaskDependencyGraphComponent", () => {
         "T5:T6": ["dimmed"],
       } satisfies ElementStateMap);
 
-      instance.emitNode("node:pointerleave", "T4");
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(instance.elementStates["T6"]).toEqual([]);
-
-      instance.emitNode("node:click", "T4");
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("selected");
-      expect(instance.elementStates["T4"]).toEqual(["highlighted", "selected"]);
-
       instance.emitNode("node:pointerenter", "T6");
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       expect(component.highlightState()?.activeNodeId).toBe("T4");
-      expect(instance.elementStates["T6"]).toEqual(["dimmed"]);
+      expect(elementState(instance, "T6")).toEqual(["dimmed"]);
+
+      instance.emitNode("node:click", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()).toBeNull();
+      expect(elementState(instance, "T4")).toEqual([]);
+      expect(elementState(instance, "T6")).toEqual([]);
+
+      instance.emitNode("node:click", "T4");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.activeNodeId).toBe("T4");
 
       instance.emitCanvasClick();
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       expect(component.highlightState()).toBeNull();
-      expect(instance.elementStates["T4"]).toEqual([]);
-      expect(instance.elementStates["T6"]).toEqual([]);
+      expect(elementState(instance, "T4")).toEqual([]);
+      expect(elementState(instance, "T6")).toEqual([]);
     });
   });
 
@@ -583,6 +604,8 @@ describe("TaskDependencyGraphComponent", () => {
       ) as HTMLElement;
       expect(container).toBeTruthy();
       expect(container.className).toContain("task-dependency-g6");
+      expect(container.className).toContain("h-[36rem]");
+      expect(container.className).toContain("min-h-[32rem]");
 
       const legend = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-legend"]',

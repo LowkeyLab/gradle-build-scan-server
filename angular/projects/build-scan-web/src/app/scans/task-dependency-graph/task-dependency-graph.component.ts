@@ -4,19 +4,19 @@ import {
   Component,
   computed,
   DestroyRef,
+  type ElementRef,
   inject,
   input,
   signal,
-  type ElementRef,
   viewChild,
 } from "@angular/core";
 import {
   CanvasEvent,
   Graph,
-  NodeEvent,
   type GraphData,
   type GraphOptions,
   type IElementEvent,
+  NodeEvent,
 } from "@antv/g6";
 
 interface TaskEdge {
@@ -44,7 +44,7 @@ interface TaskDependencyEdge {
 
 interface TaskDependencyHighlightState {
   activeNodeId: string;
-  mode: "hover" | "selected";
+  mode: "selected";
   highlightedNodeIds: ReadonlySet<string>;
   highlightedEdgeKeys: ReadonlySet<string>;
 }
@@ -68,7 +68,6 @@ interface TaskGraphLayoutOptions extends Record<string, unknown> {
   align: "DL";
   nodesep: number;
   ranksep: number;
-  controlPoints: boolean;
 }
 
 const NODE_BASE_SIZE = 72;
@@ -84,7 +83,6 @@ const TASK_GRAPH_LAYOUT: TaskGraphLayoutOptions = {
   align: "DL",
   nodesep: NODE_VERTICAL_GAP,
   ranksep: NODE_RANK_GAP,
-  controlPoints: false,
 };
 
 const SUCCESS_STYLE = {
@@ -245,7 +243,7 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             <div
               #graphContainer
               data-testid="task-dependency-graph"
-              class="task-dependency-g6 h-96 min-h-80 w-full touch-none select-none text-base-content"
+              class="task-dependency-g6 h-[36rem] min-h-[32rem] w-full touch-none select-none text-base-content"
             ></div>
           </div>
         } @else {
@@ -268,7 +266,6 @@ export class TaskDependencyGraphComponent {
   private pendingGraphKey: string | null = null;
   private renderRequestId = 0;
   private hasSyncedActiveElementStates = false;
-  private hoveredNodeId = signal<string | null>(null);
   private selectedNodeId = signal<string | null>(null);
   private selectedNodeIdInGraph = computed(() => {
     const selectedNodeId = this.selectedNodeId();
@@ -380,7 +377,7 @@ export class TaskDependencyGraphComponent {
           lineWidth: 2,
           labelText: node.displayLabel,
           labelFill: "currentColor",
-          labelFontSize: 14,
+          labelFontSize: 16,
           labelFontWeight: 600,
         },
       };
@@ -417,9 +414,7 @@ export class TaskDependencyGraphComponent {
   });
 
   highlightState = computed<TaskDependencyHighlightState | null>(() => {
-    const selectedNodeId = this.selectedNodeIdInGraph();
-    const hoveredNodeId = this.hoveredNodeId();
-    const activeNodeId = selectedNodeId ?? hoveredNodeId;
+    const activeNodeId = this.selectedNodeIdInGraph();
     if (!activeNodeId) return null;
 
     const incomingEdgesByTarget = new Map<string, TaskDependencyEdge[]>();
@@ -447,22 +442,11 @@ export class TaskDependencyGraphComponent {
 
     return {
       activeNodeId,
-      mode: selectedNodeId ? "selected" : "hover",
+      mode: "selected",
       highlightedNodeIds,
       highlightedEdgeKeys,
     };
   });
-
-  setHoveredNode(nodeId: string): void {
-    if (this.selectedNodeIdInGraph()) return;
-    this.hoveredNodeId.set(nodeId);
-  }
-
-  clearHoveredNode(nodeId?: string): void {
-    if (this.selectedNodeIdInGraph()) return;
-    if (nodeId && this.hoveredNodeId() !== nodeId) return;
-    this.hoveredNodeId.set(null);
-  }
 
   selectNode(nodeId: string): void {
     if (this.selectedNodeId() === nodeId) {
@@ -470,12 +454,10 @@ export class TaskDependencyGraphComponent {
       return;
     }
     this.selectedNodeId.set(nodeId);
-    this.hoveredNodeId.set(null);
   }
 
   clearSelectedNode(): void {
     this.selectedNodeId.set(null);
-    this.hoveredNodeId.set(null);
   }
 
   nodeHighlightState(nodeId: string): "idle" | "highlighted" | "dimmed" {
@@ -552,10 +534,9 @@ export class TaskDependencyGraphComponent {
         },
       },
       edge: {
-        type: "polyline",
+        type: "cubic-horizontal",
         style: {
           endArrow: false,
-          router: { type: "orth" },
         },
         state: {
           highlighted: {
@@ -571,14 +552,6 @@ export class TaskDependencyGraphComponent {
   }
 
   private bindGraphEvents(graph: Graph): void {
-    graph.on(NodeEvent.POINTER_ENTER, (event: IElementEvent) => {
-      const nodeId = getNodeIdFromEvent(event);
-      if (nodeId) this.setHoveredNode(nodeId);
-    });
-    graph.on(NodeEvent.POINTER_LEAVE, (event: IElementEvent) => {
-      const nodeId = getNodeIdFromEvent(event);
-      if (nodeId) this.clearHoveredNode(nodeId);
-    });
     graph.on(NodeEvent.CLICK, (event: IElementEvent) => {
       const nodeId = getNodeIdFromEvent(event);
       if (nodeId) this.selectNode(nodeId);
