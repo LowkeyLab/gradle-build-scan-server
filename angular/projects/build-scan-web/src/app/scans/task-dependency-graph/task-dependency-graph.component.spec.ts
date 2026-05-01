@@ -26,7 +26,7 @@ const g6Mock = vi.hoisted(() => {
   type HoistedGraphOptions = {
     container: HTMLElement;
     data: HoistedGraphData;
-    layout: Record<string, unknown>;
+    layout?: Record<string, unknown>;
     autoFit?: string;
     node?: Record<string, unknown>;
     edge?: Record<string, unknown>;
@@ -141,6 +141,8 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
       taskPath: ":compileJava",
       outcome: "Success",
       durationMs: 120,
+      startTimestamp: null,
+      finishTimestamp: null,
       ...overrides,
     },
     cursor: "c1",
@@ -285,33 +287,16 @@ describe("TaskDependencyGraphComponent", () => {
   });
 
   describe("G6 rendering", () => {
-    it("registers the WASM dagre layout and initializes layout threads once", async () => {
+    it("renders without an automatic layout so explicit task positions are preserved", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
       ]);
 
-      expect(g6Mock.register).toHaveBeenCalledWith(
-        "layout",
-        "dagre-wasm",
-        wasmMock.AntVDagreLayout,
-      );
-      expect(wasmMock.supportsThreads.mock.calls.length).toBeLessThanOrEqual(1);
-      expect(wasmMock.initThreads.mock.calls.length).toBeLessThanOrEqual(1);
-      if (wasmMock.initThreads.mock.calls.length > 0) {
-        expect(wasmMock.initThreads).toHaveBeenCalledWith(true);
-      }
-
-      const layout = graphInstance().options.layout;
-      expect(layout).toMatchObject({
-        type: "dagre-wasm",
-        rankdir: "LR",
-        align: "DL",
-        controlPoints: true,
-        threads: wasmMock.threadToken,
-      });
-      expect(layout["nodesep"]).toBeGreaterThan(0);
-      expect(layout["ranksep"]).toBeGreaterThan(0);
+      expect(g6Mock.register).not.toHaveBeenCalled();
+      expect(wasmMock.supportsThreads).not.toHaveBeenCalled();
+      expect(wasmMock.initThreads).not.toHaveBeenCalled();
+      expect(graphInstance().options.layout).toBeUndefined();
 
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
@@ -319,8 +304,44 @@ describe("TaskDependencyGraphComponent", () => {
         buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":check" }),
       ]);
 
-      expect(wasmMock.supportsThreads.mock.calls.length).toBeLessThanOrEqual(1);
-      expect(wasmMock.initThreads.mock.calls.length).toBeLessThanOrEqual(1);
+      expect(graphInstance().setLayout).not.toHaveBeenCalled();
+    });
+
+    it("maps task x coordinates to execution timestamps and packs overlaps into lanes", async () => {
+      await render([
+        buildTaskEdge({
+          id: "T1",
+          taskPath: ":compileJava",
+          startTimestamp: 1000,
+          finishTimestamp: 2000,
+          durationMs: 1000,
+        }),
+        buildTaskEdge({
+          id: "T2",
+          taskPath: ":processResources",
+          startTimestamp: 1200,
+          finishTimestamp: 1400,
+          durationMs: 200,
+        }),
+        buildTaskEdge({
+          id: "T3",
+          dependencies: ["T1"],
+          taskPath: ":test",
+          startTimestamp: 2000,
+          finishTimestamp: 2300,
+          durationMs: 300,
+        }),
+      ]);
+
+      const nodesById = new Map(
+        graphInstance().data.nodes.map((node) => [node.id, node]),
+      );
+      expect(nodesById.get("T1")?.style).toMatchObject({ x: 0, y: 0 });
+      expect(nodesById.get("T2")?.style).toMatchObject({ x: 280, y: 108 });
+      expect(nodesById.get("T3")?.style).toMatchObject({ x: 1400, y: 0 });
+      expect(graphInstance().data.edges).toEqual([
+        expect.objectContaining({ id: "T1:T3", source: "T1", target: "T3" }),
+      ]);
     });
 
     it("maps task graph data into G6 rect nodes and polyline edges", async () => {
@@ -399,9 +420,7 @@ describe("TaskDependencyGraphComponent", () => {
           ]),
         }),
       );
-      expect(instance.setLayout).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "dagre-wasm", rankdir: "LR" }),
-      );
+      expect(instance.setLayout).not.toHaveBeenCalled();
     });
 
     it("destroys the G6 graph when the component is destroyed", async () => {

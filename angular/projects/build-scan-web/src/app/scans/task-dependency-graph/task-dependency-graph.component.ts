@@ -12,15 +12,12 @@ import {
 } from "@angular/core";
 import {
   CanvasEvent,
-  ExtensionCategory,
   Graph,
   NodeEvent,
-  register,
   type GraphData,
   type GraphOptions,
   type IElementEvent,
 } from "@antv/g6";
-import type { Threads } from "@antv/layout-wasm/dist/index.min.js";
 
 interface TaskEdge {
   node: {
@@ -28,6 +25,9 @@ interface TaskEdge {
     dependencies: string[];
     taskPath: string;
     outcome: string;
+    durationMs: number | null;
+    startTimestamp: number | null;
+    finishTimestamp: number | null;
   };
 }
 
@@ -36,6 +36,11 @@ interface TaskDependencyNode {
   label: string;
   displayLabel: string;
   outcome: string;
+  startTimestamp: number | null;
+  finishTimestamp: number | null;
+  durationMs: number | null;
+  x: number;
+  y: number;
 }
 
 interface TaskDependencyEdge {
@@ -63,24 +68,14 @@ interface G6TaskGraphData {
   edgeIds: string[];
 }
 
-interface DagreWasmLayoutOptions extends Record<string, unknown> {
-  type: string;
-  rankdir: "LR";
-  align: "DL";
-  nodesep: number;
-  ranksep: number;
-  controlPoints: true;
-  threads: Threads;
-}
-
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 52;
 const NODE_RADIUS = 12;
 const NODE_SIZE: [number, number] = [NODE_WIDTH, NODE_HEIGHT];
 const NODE_VERTICAL_GAP = 56;
 const NODE_RANK_GAP = 96;
+const TIMELINE_WIDTH = 1400;
 const FIT_VIEW_PADDING = 32;
-const G6_DAGRE_LAYOUT = "dagre-wasm";
 
 const SUCCESS_STYLE = {
   fillColor: "oklch(72% 0.17 150 / 0.18)",
@@ -132,44 +127,6 @@ const LEGEND_NODE_ITEMS: LegendNodeItem[] = [
   { label: "Failed", ...FAILED_STYLE },
 ];
 
-type LayoutWasmDistModule =
-  typeof import("@antv/layout-wasm/dist/index.min.js");
-type LayoutWasmModule = Pick<
-  LayoutWasmDistModule,
-  "AntVDagreLayout" | "supportsThreads" | "initThreads"
->;
-type LayoutWasmImport = LayoutWasmModule & { default?: LayoutWasmModule };
-
-let wasmLayoutModulePromise: Promise<LayoutWasmModule> | null = null;
-let wasmLayoutRegistered = false;
-let wasmLayoutThreadsPromise: Promise<Threads> | null = null;
-
-const registerLayout = register as unknown as (
-  category: ExtensionCategory,
-  type: string,
-  layout: LayoutWasmModule["AntVDagreLayout"],
-) => void;
-
-function registerWasmLayout(layout: LayoutWasmModule["AntVDagreLayout"]): void {
-  if (wasmLayoutRegistered) return;
-  registerLayout(ExtensionCategory.LAYOUT, G6_DAGRE_LAYOUT, layout);
-  wasmLayoutRegistered = true;
-}
-
-function normalizeWasmModule(module: LayoutWasmImport): LayoutWasmModule {
-  return module.default ?? module;
-}
-
-async function getWasmLayoutModule(): Promise<LayoutWasmModule> {
-  wasmLayoutModulePromise ??=
-    import("@antv/layout-wasm/dist/index.min.js").then((module) => {
-      const wasmModule = normalizeWasmModule(module);
-      registerWasmLayout(wasmModule.AntVDagreLayout);
-      return wasmModule;
-    });
-  return wasmLayoutModulePromise;
-}
-
 function truncateTaskLabel(label: string): string {
   if (label.length <= 28) return label;
   return `${label.slice(0, 25)}…`;
@@ -186,40 +143,102 @@ function getOutcomeStyle(outcome: string): {
   return OUTCOME_STYLES[outcome] ?? FALLBACK_STYLE;
 }
 
-function getWasmLayoutThreads(): Promise<Threads> {
-  if (typeof Worker === "undefined") {
-    return Promise.reject(new Error("WASM layout workers are unavailable."));
-  }
-
-  wasmLayoutThreadsPromise ??= getWasmLayoutModule().then((module) =>
-    module.supportsThreads().then((supported) => module.initThreads(supported)),
-  );
-  return wasmLayoutThreadsPromise;
-}
-
-function buildLayoutOptions(threads: Threads): DagreWasmLayoutOptions {
-  return {
-    type: G6_DAGRE_LAYOUT,
-    rankdir: "LR",
-    align: "DL",
-    nodesep: NODE_VERTICAL_GAP,
-    ranksep: NODE_RANK_GAP,
-    controlPoints: true,
-    threads,
-  };
-}
-
 function buildGraphDataKey(graph: {
   nodes: TaskDependencyNode[];
   edges: TaskDependencyEdge[];
 }): string {
   const nodeKey = graph.nodes
-    .map((node) => `${node.id}:${node.label}:${node.outcome}`)
+    .map(
+      (node) =>
+        `${node.id}:${node.label}:${node.outcome}:${node.startTimestamp ?? ""}:${node.finishTimestamp ?? ""}:${node.durationMs ?? ""}:${node.x}:${node.y}`,
+    )
     .join("|");
   const edgeKey = graph.edges
     .map((edge) => `${edge.sourceId}:${edge.targetId}`)
     .join("|");
   return `${nodeKey}::${edgeKey}`;
+}
+
+function taskStartMs(task: TaskEdge["node"]): number | null {
+  if (task.startTimestamp != null) return task.startTimestamp;
+  if (task.finishTimestamp != null && task.durationMs != null) {
+    return task.finishTimestamp - task.durationMs;
+  }
+  return null;
+}
+
+function taskFinishMs(task: TaskEdge["node"]): number | null {
+  if (task.finishTimestamp != null) return task.finishTimestamp;
+  const start = taskStartMs(task);
+  if (start != null && task.durationMs != null) return start + task.durationMs;
+  return start;
+}
+
+function positionTaskNodes(tasks: TaskEdge["node"][]): TaskDependencyNode[] {
+  const timedTasks = tasks
+    .map((task) => ({
+      task,
+      startMs: taskStartMs(task),
+      finishMs: taskFinishMs(task),
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        task: TaskEdge["node"];
+        startMs: number;
+        finishMs: number | null;
+      } => entry.startMs != null,
+    );
+
+  const startTimes = timedTasks.map((entry) => entry.startMs);
+  const minStartMs = startTimes.length > 0 ? Math.min(...startTimes) : 0;
+  const maxStartMs = startTimes.length > 0 ? Math.max(...startTimes) : 0;
+  const timeSpanMs = Math.max(maxStartMs - minStartMs, 1);
+  const pxPerMs = TIMELINE_WIDTH / timeSpanMs;
+  const laneEndTimes: number[] = [];
+
+  return tasks
+    .sort((a, b) => {
+      const startA = taskStartMs(a);
+      const startB = taskStartMs(b);
+      if (startA != null && startB != null && startA !== startB) {
+        return startA - startB;
+      }
+      if (startA != null && startB == null) return -1;
+      if (startA == null && startB != null) return 1;
+      return a.taskPath.localeCompare(b.taskPath);
+    })
+    .map((task, index) => {
+      const startMs = taskStartMs(task);
+      const finishMs = taskFinishMs(task);
+      const x =
+        startMs == null
+          ? TIMELINE_WIDTH + (index + 1) * NODE_RANK_GAP
+          : Math.round((startMs - minStartMs) * pxPerMs);
+      const safeFinishMs = finishMs ?? startMs ?? Number.POSITIVE_INFINITY;
+      let laneIndex = laneEndTimes.findIndex(
+        (endMs) => endMs <= (startMs ?? 0),
+      );
+      if (laneIndex === -1) {
+        laneIndex = laneEndTimes.length;
+        laneEndTimes.push(safeFinishMs);
+      } else {
+        laneEndTimes[laneIndex] = safeFinishMs;
+      }
+
+      return {
+        id: task.id,
+        label: task.taskPath,
+        displayLabel: truncateTaskLabel(task.taskPath),
+        outcome: task.outcome,
+        startTimestamp: task.startTimestamp,
+        finishTimestamp: task.finishTimestamp,
+        durationMs: task.durationMs,
+        x,
+        y: laneIndex * (NODE_HEIGHT + NODE_VERTICAL_GAP),
+      };
+    });
 }
 
 function getNodeIdFromEvent(event: IElementEvent): string | null {
@@ -236,7 +255,7 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
           <div>
             <h4 class="font-semibold">Task Dependencies</h4>
             <p class="text-xs opacity-60">
-              Static graph of task prerequisites.
+              Tasks are positioned horizontally by execution time.
             </p>
           </div>
           @if (graph().nodes.length > 0) {
@@ -353,14 +372,7 @@ export class TaskDependencyGraphComponent {
       tasks.set(edge.node.id, edge.node);
     }
 
-    const nodes = [...tasks.values()]
-      .sort((a, b) => a.taskPath.localeCompare(b.taskPath))
-      .map((task) => ({
-        id: task.id,
-        label: task.taskPath,
-        displayLabel: truncateTaskLabel(task.taskPath),
-        outcome: task.outcome,
-      }));
+    const nodes = positionTaskNodes([...tasks.values()]);
 
     const nodeIds = new Set(nodes.map((node) => node.id));
     const seenEdges = new Set<string>();
@@ -401,6 +413,8 @@ export class TaskDependencyGraphComponent {
           outcome: node.outcome,
         },
         style: {
+          x: node.x,
+          y: node.y,
           size: NODE_SIZE,
           radius: NODE_RADIUS,
           fill: style.fillColor,
@@ -529,29 +543,13 @@ export class TaskDependencyGraphComponent {
     graphData: G6TaskGraphData,
   ): Promise<void> {
     const requestId = ++this.renderRequestId;
-    let threads: Threads;
-    try {
-      threads = await getWasmLayoutThreads();
-    } catch {
-      if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
-      return;
-    }
-    if (requestId !== this.renderRequestId) {
-      if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
-      return;
-    }
-
-    const layout = buildLayoutOptions(threads);
     if (!this.g6Graph || this.g6ContainerElement !== container) {
       this.destroyGraph();
       this.g6ContainerElement = container;
-      this.g6Graph = new Graph(
-        this.buildGraphOptions(container, graphData, layout),
-      );
+      this.g6Graph = new Graph(this.buildGraphOptions(container, graphData));
       this.bindGraphEvents(this.g6Graph);
     } else {
       this.g6Graph.setData(graphData.data);
-      this.g6Graph.setLayout(layout);
     }
 
     const graph = this.g6Graph;
@@ -567,12 +565,10 @@ export class TaskDependencyGraphComponent {
   private buildGraphOptions(
     container: HTMLElement,
     graphData: G6TaskGraphData,
-    layout: DagreWasmLayoutOptions,
   ): GraphOptions {
     return {
       container,
       data: graphData.data,
-      layout,
       autoFit: "view",
       padding: FIT_VIEW_PADDING,
       zoomRange: [0.5, 2.5],
