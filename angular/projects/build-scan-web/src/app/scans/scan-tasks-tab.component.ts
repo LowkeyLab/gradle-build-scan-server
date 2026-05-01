@@ -23,8 +23,6 @@ interface TaskEdge {
     className: string;
     outcome: string;
     cacheable: boolean | null;
-    startTimestamp: number | null;
-    finishTimestamp: number | null;
     durationMs: number | null;
     cacheKey: string | null;
     cachingDisabledReason: string | null;
@@ -90,8 +88,6 @@ const GET_SCAN_TASKS = gql`
             className
             outcome
             cacheable
-            startTimestamp
-            finishTimestamp
             durationMs
             cacheKey
             cachingDisabledReason

@@ -12,6 +12,7 @@ vi.mock("@antv/g6", () => ({
   Graph: class MockGraph {
     destroy = vi.fn((): void => undefined);
     setData = vi.fn((_data: unknown): void => undefined);
+    setLayout = vi.fn((_layout: unknown): void => undefined);
 
     render(): Promise<void> {
       return Promise.resolve();
@@ -68,8 +69,6 @@ function buildTaskScan(overrides: Record<string, unknown> = {}) {
             outcome: "Success",
             cacheable: true,
             durationMs: 120,
-            startTimestamp: 1000,
-            finishTimestamp: 1120,
             cacheKey: "abc123",
             cachingDisabledReason: null,
             cachingDisabledExplanation: null,
