@@ -26,8 +26,6 @@ interface TaskEdge {
     taskPath: string;
     outcome: string;
     durationMs: number | null;
-    startTimestamp: number | null;
-    finishTimestamp: number | null;
   };
 }
 
@@ -36,11 +34,7 @@ interface TaskDependencyNode {
   label: string;
   displayLabel: string;
   outcome: string;
-  startTimestamp: number | null;
-  finishTimestamp: number | null;
   durationMs: number | null;
-  x: number;
-  y: number;
 }
 
 interface TaskDependencyEdge {
@@ -68,14 +62,31 @@ interface G6TaskGraphData {
   edgeIds: string[];
 }
 
+interface TaskGraphLayoutOptions extends Record<string, unknown> {
+  type: "antv-dagre";
+  rankdir: "LR";
+  align: "DL";
+  nodesep: number;
+  ranksep: number;
+  controlPoints: boolean;
+}
+
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 52;
 const NODE_RADIUS = 12;
 const NODE_SIZE: [number, number] = [NODE_WIDTH, NODE_HEIGHT];
 const NODE_VERTICAL_GAP = 56;
 const NODE_RANK_GAP = 96;
-const TIMELINE_WIDTH = 1400;
 const FIT_VIEW_PADDING = 32;
+
+const TASK_GRAPH_LAYOUT: TaskGraphLayoutOptions = {
+  type: "antv-dagre",
+  rankdir: "LR",
+  align: "DL",
+  nodesep: NODE_VERTICAL_GAP,
+  ranksep: NODE_RANK_GAP,
+  controlPoints: true,
+};
 
 const SUCCESS_STYLE = {
   fillColor: "oklch(72% 0.17 150 / 0.18)",
@@ -150,95 +161,13 @@ function buildGraphDataKey(graph: {
   const nodeKey = graph.nodes
     .map(
       (node) =>
-        `${node.id}:${node.label}:${node.outcome}:${node.startTimestamp ?? ""}:${node.finishTimestamp ?? ""}:${node.durationMs ?? ""}:${node.x}:${node.y}`,
+        `${node.id}:${node.label}:${node.outcome}:${node.durationMs ?? ""}`,
     )
     .join("|");
   const edgeKey = graph.edges
     .map((edge) => `${edge.sourceId}:${edge.targetId}`)
     .join("|");
   return `${nodeKey}::${edgeKey}`;
-}
-
-function taskStartMs(task: TaskEdge["node"]): number | null {
-  if (task.startTimestamp != null) return task.startTimestamp;
-  if (task.finishTimestamp != null && task.durationMs != null) {
-    return task.finishTimestamp - task.durationMs;
-  }
-  return null;
-}
-
-function taskFinishMs(task: TaskEdge["node"]): number | null {
-  if (task.finishTimestamp != null) return task.finishTimestamp;
-  const start = taskStartMs(task);
-  if (start != null && task.durationMs != null) return start + task.durationMs;
-  return start;
-}
-
-function positionTaskNodes(tasks: TaskEdge["node"][]): TaskDependencyNode[] {
-  const timedTasks = tasks
-    .map((task) => ({
-      task,
-      startMs: taskStartMs(task),
-      finishMs: taskFinishMs(task),
-    }))
-    .filter(
-      (
-        entry,
-      ): entry is {
-        task: TaskEdge["node"];
-        startMs: number;
-        finishMs: number | null;
-      } => entry.startMs != null,
-    );
-
-  const startTimes = timedTasks.map((entry) => entry.startMs);
-  const minStartMs = startTimes.length > 0 ? Math.min(...startTimes) : 0;
-  const maxStartMs = startTimes.length > 0 ? Math.max(...startTimes) : 0;
-  const timeSpanMs = Math.max(maxStartMs - minStartMs, 1);
-  const pxPerMs = TIMELINE_WIDTH / timeSpanMs;
-  const laneEndTimes: number[] = [];
-
-  return tasks
-    .sort((a, b) => {
-      const startA = taskStartMs(a);
-      const startB = taskStartMs(b);
-      if (startA != null && startB != null && startA !== startB) {
-        return startA - startB;
-      }
-      if (startA != null && startB == null) return -1;
-      if (startA == null && startB != null) return 1;
-      return a.taskPath.localeCompare(b.taskPath);
-    })
-    .map((task, index) => {
-      const startMs = taskStartMs(task);
-      const finishMs = taskFinishMs(task);
-      const x =
-        startMs == null
-          ? TIMELINE_WIDTH + (index + 1) * NODE_RANK_GAP
-          : Math.round((startMs - minStartMs) * pxPerMs);
-      const safeFinishMs = finishMs ?? startMs ?? Number.POSITIVE_INFINITY;
-      let laneIndex = laneEndTimes.findIndex(
-        (endMs) => endMs <= (startMs ?? 0),
-      );
-      if (laneIndex === -1) {
-        laneIndex = laneEndTimes.length;
-        laneEndTimes.push(safeFinishMs);
-      } else {
-        laneEndTimes[laneIndex] = safeFinishMs;
-      }
-
-      return {
-        id: task.id,
-        label: task.taskPath,
-        displayLabel: truncateTaskLabel(task.taskPath),
-        outcome: task.outcome,
-        startTimestamp: task.startTimestamp,
-        finishTimestamp: task.finishTimestamp,
-        durationMs: task.durationMs,
-        x,
-        y: laneIndex * (NODE_HEIGHT + NODE_VERTICAL_GAP),
-      };
-    });
 }
 
 function getNodeIdFromEvent(event: IElementEvent): string | null {
@@ -255,7 +184,7 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
           <div>
             <h4 class="font-semibold">Task Dependencies</h4>
             <p class="text-xs opacity-60">
-              Tasks are positioned horizontally by execution time.
+              Tasks are arranged as a layered dependency graph.
             </p>
           </div>
           @if (graph().nodes.length > 0) {
@@ -372,7 +301,15 @@ export class TaskDependencyGraphComponent {
       tasks.set(edge.node.id, edge.node);
     }
 
-    const nodes = positionTaskNodes([...tasks.values()]);
+    const nodes = [...tasks.values()]
+      .sort((a, b) => a.taskPath.localeCompare(b.taskPath))
+      .map((task) => ({
+        id: task.id,
+        label: task.taskPath,
+        displayLabel: truncateTaskLabel(task.taskPath),
+        outcome: task.outcome,
+        durationMs: task.durationMs,
+      }));
 
     const nodeIds = new Set(nodes.map((node) => node.id));
     const seenEdges = new Set<string>();
@@ -413,8 +350,6 @@ export class TaskDependencyGraphComponent {
           outcome: node.outcome,
         },
         style: {
-          x: node.x,
-          y: node.y,
           size: NODE_SIZE,
           radius: NODE_RADIUS,
           fill: style.fillColor,
@@ -550,6 +485,7 @@ export class TaskDependencyGraphComponent {
       this.bindGraphEvents(this.g6Graph);
     } else {
       this.g6Graph.setData(graphData.data);
+      this.g6Graph.setLayout(TASK_GRAPH_LAYOUT);
     }
 
     const graph = this.g6Graph;
@@ -569,6 +505,7 @@ export class TaskDependencyGraphComponent {
     return {
       container,
       data: graphData.data,
+      layout: TASK_GRAPH_LAYOUT,
       autoFit: "view",
       padding: FIT_VIEW_PADDING,
       zoomRange: [0.5, 2.5],

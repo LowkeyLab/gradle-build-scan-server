@@ -141,8 +141,6 @@ function buildTaskEdge(overrides: Record<string, unknown> = {}) {
       taskPath: ":compileJava",
       outcome: "Success",
       durationMs: 120,
-      startTimestamp: null,
-      finishTimestamp: null,
       ...overrides,
     },
     cursor: "c1",
@@ -287,7 +285,7 @@ describe("TaskDependencyGraphComponent", () => {
   });
 
   describe("G6 rendering", () => {
-    it("renders without an automatic layout so explicit task positions are preserved", async () => {
+    it("renders with an antv-dagre layered layout", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
         buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
@@ -296,49 +294,27 @@ describe("TaskDependencyGraphComponent", () => {
       expect(g6Mock.register).not.toHaveBeenCalled();
       expect(wasmMock.supportsThreads).not.toHaveBeenCalled();
       expect(wasmMock.initThreads).not.toHaveBeenCalled();
-      expect(graphInstance().options.layout).toBeUndefined();
-
-      await render([
-        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
-        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":test" }),
-        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":check" }),
-      ]);
-
-      expect(graphInstance().setLayout).not.toHaveBeenCalled();
+      expect(graphInstance().options.layout).toEqual({
+        type: "antv-dagre",
+        rankdir: "LR",
+        align: "DL",
+        nodesep: 56,
+        ranksep: 96,
+        controlPoints: true,
+      });
     });
 
-    it("maps task x coordinates to execution timestamps and packs overlaps into lanes", async () => {
+    it("lets the layout position nodes instead of passing explicit coordinates", async () => {
       await render([
-        buildTaskEdge({
-          id: "T1",
-          taskPath: ":compileJava",
-          startTimestamp: 1000,
-          finishTimestamp: 2000,
-          durationMs: 1000,
-        }),
-        buildTaskEdge({
-          id: "T2",
-          taskPath: ":processResources",
-          startTimestamp: 1200,
-          finishTimestamp: 1400,
-          durationMs: 200,
-        }),
-        buildTaskEdge({
-          id: "T3",
-          dependencies: ["T1"],
-          taskPath: ":test",
-          startTimestamp: 2000,
-          finishTimestamp: 2300,
-          durationMs: 300,
-        }),
+        buildTaskEdge({ id: "T1", taskPath: ":compileJava" }),
+        buildTaskEdge({ id: "T2", taskPath: ":processResources" }),
+        buildTaskEdge({ id: "T3", dependencies: ["T1"], taskPath: ":test" }),
       ]);
 
-      const nodesById = new Map(
-        graphInstance().data.nodes.map((node) => [node.id, node]),
-      );
-      expect(nodesById.get("T1")?.style).toMatchObject({ x: 0, y: 0 });
-      expect(nodesById.get("T2")?.style).toMatchObject({ x: 280, y: 108 });
-      expect(nodesById.get("T3")?.style).toMatchObject({ x: 1400, y: 0 });
+      for (const node of graphInstance().data.nodes) {
+        expect(node.style).not.toHaveProperty("x");
+        expect(node.style).not.toHaveProperty("y");
+      }
       expect(graphInstance().data.edges).toEqual([
         expect.objectContaining({ id: "T1:T3", source: "T1", target: "T3" }),
       ]);
@@ -420,7 +396,14 @@ describe("TaskDependencyGraphComponent", () => {
           ]),
         }),
       );
-      expect(instance.setLayout).not.toHaveBeenCalled();
+      expect(instance.setLayout).toHaveBeenCalledWith({
+        type: "antv-dagre",
+        rankdir: "LR",
+        align: "DL",
+        nodesep: 56,
+        ranksep: 96,
+        controlPoints: true,
+      });
     });
 
     it("destroys the G6 graph when the component is destroyed", async () => {
