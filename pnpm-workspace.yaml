@@ -69,7 +69,7 @@ catalog:
   '@antv/hierarchy': ^0.7.1
   '@antv/layout': ^2.0.0
   '@antv/layout-wasm': ^1.4.2
-  '@antv/scale': ^0.4.16
+  '@antv/scale': ^0.5.0
   '@antv/util': ^3.3.11
   '@antv/vendor': ^1.0.3
   '@babel/runtime': ^7.25.6

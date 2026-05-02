@@ -103,8 +103,8 @@ catalogs:
       specifier: ^1.4.2
       version: 1.4.2
     '@antv/scale':
-      specifier: ^0.4.16
-      version: 0.4.16
+      specifier: ^0.5.0
+      version: 0.5.2
     '@antv/util':
       specifier: ^3.3.11
       version: 3.3.11
@@ -502,7 +502,7 @@ importers:
         version: 1.4.2(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))
       '@antv/scale':
         specifier: 'catalog:'
-        version: 0.4.16
+        version: 0.5.2
       '@antv/util':
         specifier: 'catalog:'
         version: 3.3.11
@@ -1087,6 +1087,9 @@ packages:
 
   '@antv/scale@0.4.16':
     resolution: {integrity: sha512-5wg/zB5kXHxpTV5OYwJD3ja6R8yTiqIOkjOhmpEJiowkzRlbEC/BOyMvNUq5fqFIHnMCE9woO7+c3zxEQCKPjw==}
+
+  '@antv/scale@0.5.2':
+    resolution: {integrity: sha512-rTHRAwvpHWC5PGZF/mJ2ZuTDqwwvVBDRph0Uu5PV9BXwzV7K8+9lsqGJ+XHVLxe8c6bKog5nlzvV/dcYb0d5Ow==}
 
   '@antv/util@2.0.17':
     resolution: {integrity: sha512-o6I9hi5CIUvLGDhth0RxNSFDRwXeywmt6ExR4+RmVAzIi48ps6HUy+svxOCayvrPBN37uE6TAc2KDofRo0nK9Q==}
@@ -6983,6 +6986,12 @@ snapshots:
       tslib: 2.8.1
 
   '@antv/scale@0.4.16':
+    dependencies:
+      '@antv/util': 3.3.11
+      color-string: 1.9.1
+      fecha: 4.2.3
+
+  '@antv/scale@0.5.2':
     dependencies:
       '@antv/util': 3.3.11
       color-string: 1.9.1
