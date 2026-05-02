@@ -63,7 +63,7 @@ catalog:
   '@antv/g-plugin-dragndrop': 2.0.38
   '@antv/g-plugin-html-renderer': 2.1.27
   '@antv/g-plugin-image-loader': 2.1.26
-  '@antv/g-web-animations-api': 2.1.28
+  '@antv/g-web-animations-api': 2.1.32
   '@antv/g6': ^5.1.0
   '@antv/graphlib': ^2.0.4
   '@antv/hierarchy': ^0.7.1

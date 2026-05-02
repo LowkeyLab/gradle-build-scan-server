@@ -85,8 +85,8 @@ catalogs:
       specifier: 2.1.26
       version: 2.1.26
     '@antv/g-web-animations-api':
-      specifier: 2.1.28
-      version: 2.1.28
+      specifier: 2.1.32
+      version: 2.1.32
     '@antv/g6':
       specifier: ^5.1.0
       version: 5.1.0
@@ -484,7 +484,7 @@ importers:
         version: 2.1.26
       '@antv/g-web-animations-api':
         specifier: 'catalog:'
-        version: 2.1.28
+        version: 2.1.32
       '@antv/g6':
         specifier: 'catalog:'
         version: 5.1.0
@@ -1064,8 +1064,8 @@ packages:
   '@antv/g-plugin-image-loader@2.1.26':
     resolution: {integrity: sha512-AElV0QOX2LAhB3jr9XtvkynntuKhcaU5n7avu5ynM5VoAtMaJRANhCyefA2G3myeJxWcHk4nWDX6u4YMaZnnvw==}
 
-  '@antv/g-web-animations-api@2.1.28':
-    resolution: {integrity: sha512-V5g8bO2D1hb8fRMMi5hXL/De+1UDRzW3C5EX07oazR0q71GONASP+sVwniZdt9R1HAmJSN5dvW3SqWeU3EEstQ==}
+  '@antv/g-web-animations-api@2.1.32':
+    resolution: {integrity: sha512-4Tf1bJbXxZkBF+DsHS+c6vEiv+ccNRqjeRfmniPOE3vwSVXZCKgvMhhIMQoxz0vVOaxYrDTpchquM5PF64qC0Q==}
 
   '@antv/g6@5.1.0':
     resolution: {integrity: sha512-tvoBDKypL/zWEG99pgwGJLWr2CKA+6zVixYxaVzDOp0+TrPY2cxB1jevxFGPjbTOLBIMYt/vKCh1jnmDtfvtpg==}
@@ -6918,9 +6918,9 @@ snapshots:
       gl-matrix: 3.4.4
       tslib: 2.8.1
 
-  '@antv/g-web-animations-api@2.1.28':
+  '@antv/g-web-animations-api@2.1.32':
     dependencies:
-      '@antv/g-lite': 2.3.2
+      '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.2
       tslib: 2.8.1
