@@ -70,8 +70,8 @@ catalogs:
       specifier: 2.3.1
       version: 2.3.1
     '@antv/g-plugin-canvas-renderer':
-      specifier: 2.3.3
-      version: 2.3.3
+      specifier: 2.5.1
+      version: 2.5.1
     '@antv/g-plugin-dom-interaction':
       specifier: 2.1.31
       version: 2.1.31
@@ -469,7 +469,7 @@ importers:
         version: 2.3.1
       '@antv/g-plugin-canvas-renderer':
         specifier: 'catalog:'
-        version: 2.3.3
+        version: 2.5.1
       '@antv/g-plugin-dom-interaction':
         specifier: 'catalog:'
         version: 2.1.31
@@ -1037,17 +1037,11 @@ packages:
   '@antv/g-math@3.1.0':
     resolution: {integrity: sha512-DtN1Gj/yI0UiK18nSBsZX8RK0LszGwqfb+cBYWgE+ddyTm8dZnW4tPUhV7QXePsS6/A5hHC+JFpAAK7OEGo5ZQ==}
 
-  '@antv/g-plugin-canvas-path-generator@2.1.22':
-    resolution: {integrity: sha512-Z0IawzTGgTppa9IpkNNKsqgoU89oOjUsiU8GZZlkDkUggQTHP0wOxTeLAb43YgClx3aTI3bRs44uMQutNdSVxw==}
-
   '@antv/g-plugin-canvas-path-generator@2.1.26':
     resolution: {integrity: sha512-87V9NUbESa4PecvQmdGiQKu2avgLln3OTC1zjtexioOUJEpfTx8NTQeWcyzv6T7mJJMlptznfpkuRyZgDg/1+g==}
 
   '@antv/g-plugin-canvas-picker@2.3.1':
     resolution: {integrity: sha512-h/ZgCuLxFo6xiA/XLGihBvfBjcGayua9buY6sqvyu8fHGA3AvE1RAhA/PeEOCDVBVQFvFLlkP1SaU9c+fqp23Q==}
-
-  '@antv/g-plugin-canvas-renderer@2.3.3':
-    resolution: {integrity: sha512-d6JkZy1YmLnvI9wsbO8QVpBz7z7tl6JRQkF5hx9XLDtf2fD4n83KINeMq13skiNwaiudS771WWiBtfzUHB73pQ==}
 
   '@antv/g-plugin-canvas-renderer@2.5.1':
     resolution: {integrity: sha512-nhKLU2tsMItOHWnPAQR3ryy/tQG4X5f2IGgzp8UjA1r2qwPcS8eB+vt0uqOwlk4Lo0ugujTt4rIIbfAXL6cRfQ==}
@@ -6844,14 +6838,6 @@ snapshots:
       gl-matrix: 3.4.4
       tslib: 2.8.1
 
-  '@antv/g-plugin-canvas-path-generator@2.1.22':
-    dependencies:
-      '@antv/g-lite': 2.3.2
-      '@antv/g-math': 3.0.1
-      '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.2
-      tslib: 2.8.1
-
   '@antv/g-plugin-canvas-path-generator@2.1.26':
     dependencies:
       '@antv/g-lite': 2.5.1
@@ -6866,17 +6852,6 @@ snapshots:
       '@antv/g-math': 3.0.1
       '@antv/g-plugin-canvas-path-generator': 2.1.26
       '@antv/g-plugin-canvas-renderer': 2.5.1
-      '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.2
-      gl-matrix: 3.4.4
-      tslib: 2.8.1
-
-  '@antv/g-plugin-canvas-renderer@2.3.3':
-    dependencies:
-      '@antv/g-lite': 2.3.2
-      '@antv/g-math': 3.0.1
-      '@antv/g-plugin-canvas-path-generator': 2.1.22
-      '@antv/g-plugin-image-loader': 2.1.26
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.2
       gl-matrix: 3.4.4
