@@ -58,8 +58,8 @@ catalogs:
       specifier: 2.0.42
       version: 2.0.42
     '@antv/g-lite':
-      specifier: 2.3.2
-      version: 2.3.2
+      specifier: 2.7.0
+      version: 2.7.0
     '@antv/g-math':
       specifier: 3.0.1
       version: 3.0.1
@@ -457,7 +457,7 @@ importers:
         version: 2.0.42
       '@antv/g-lite':
         specifier: 'catalog:'
-        version: 2.3.2
+        version: 2.7.0
       '@antv/g-math':
         specifier: 'catalog:'
         version: 3.0.1
