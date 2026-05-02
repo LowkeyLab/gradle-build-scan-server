@@ -522,6 +522,14 @@ export class TaskDependencyGraphComponent {
       zoomRange: [0.5, 2.5],
       animation: false,
       behaviors: ["drag-canvas", "zoom-canvas"],
+      plugins: [
+        {
+          type: "minimap",
+          key: "task-graph-minimap",
+          size: [240, 160],
+          position: "right-bottom",
+        },
+      ],
       node: {
         type: "circle",
         state: {
