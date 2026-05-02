@@ -16,7 +16,17 @@
             "browser": "projects/build-scan-web/src/main.ts",
             "tsConfig": "projects/build-scan-web/tsconfig.app.json",
             "assets": [
-              { "glob": "**/*", "input": "projects/build-scan-web/public" }
+              { "glob": "**/*", "input": "projects/build-scan-web/public" },
+              {
+                "glob": "index.min.js",
+                "input": "node_modules/@antv/layout-wasm/dist",
+                "output": "."
+              },
+              {
+                "glob": "*.wasm",
+                "input": "node_modules/@antv/layout-wasm/dist",
+                "output": "."
+              }
             ],
             "styles": ["projects/build-scan-web/src/processed_styles.css"],
             "baseHref": "/web/"

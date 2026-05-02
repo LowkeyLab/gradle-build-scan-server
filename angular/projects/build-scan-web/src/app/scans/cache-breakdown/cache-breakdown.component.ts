@@ -99,15 +99,23 @@ const CATEGORY_ORDER = [
             }
             <div class="mt-3 flex flex-wrap gap-2" data-testid="tier-breakdown">
               <div class="flex items-center gap-1.5 text-sm">
-                <span class="badge badge-sm badge-success">{{ tierBreakdown().localHits }}</span>
+                <span class="badge badge-sm badge-success">{{
+                  tierBreakdown().localHits
+                }}</span>
                 <span class="opacity-70">Local hits</span>
               </div>
               <div class="flex items-center gap-1.5 text-sm">
-                <span class="badge badge-sm" style="background:oklch(72% 0.15 230);color:white">{{ tierBreakdown().remoteHits }}</span>
+                <span
+                  class="badge badge-sm"
+                  style="background:oklch(72% 0.15 230);color:white"
+                  >{{ tierBreakdown().remoteHits }}</span
+                >
                 <span class="opacity-70">Remote hits</span>
               </div>
               <div class="flex items-center gap-1.5 text-sm">
-                <span class="badge badge-sm badge-ghost">{{ tierBreakdown().misses }}</span>
+                <span class="badge badge-sm badge-ghost">{{
+                  tierBreakdown().misses
+                }}</span>
                 <span class="opacity-70">Misses</span>
               </div>
             </div>
@@ -211,13 +219,16 @@ export class CacheBreakdownComponent {
         (op) => op.operationType === "RemoteLoad" && op.succeeded,
       );
       const hasLoadOps = ops.some(
-        (op) => op.operationType === "LocalLoad" || op.operationType === "RemoteLoad",
+        (op) =>
+          op.operationType === "LocalLoad" || op.operationType === "RemoteLoad",
       );
       const allLoadsFailed =
         hasLoadOps &&
         ops
           .filter(
-            (op) => op.operationType === "LocalLoad" || op.operationType === "RemoteLoad",
+            (op) =>
+              op.operationType === "LocalLoad" ||
+              op.operationType === "RemoteLoad",
           )
           .every((op) => !op.succeeded);
       if (localHit) localHits++;

@@ -45,8 +45,10 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
     let mut requested_tasks: Vec<String> = Vec::new();
 
     // Cache operation tracking: operation_id → (work_id, op_type, cache_key, started_archive_size, started_timestamp)
-    let mut cache_op_started: HashMap<i64, (i64, CacheOperationType, Option<String>, Option<i64>, i64)> =
-        HashMap::new();
+    let mut cache_op_started: HashMap<
+        i64,
+        (i64, CacheOperationType, Option<String>, Option<i64>, i64),
+    > = HashMap::new();
     let mut cache_op_finished: HashMap<i64, CacheOpFinished> = HashMap::new();
 
     for (frame, decoded) in &events {
@@ -179,14 +181,17 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                         .executor_name
                         .clone()
                         .or_else(|| executor_names.get(&e.executor_id).cloned());
-                    all_test_cases.push((Some(models::TestCase {
-                        class_name: e.class_name.clone(),
-                        method_name: e.method_name.clone(),
-                        executor_name,
-                        outcome: None,
-                        duration_ms: None,
-                        failure_id: None,
-                    }), frame.timestamp));
+                    all_test_cases.push((
+                        Some(models::TestCase {
+                            class_name: e.class_name.clone(),
+                            method_name: e.method_name.clone(),
+                            executor_name,
+                            outcome: None,
+                            duration_ms: None,
+                            failure_id: None,
+                        }),
+                        frame.timestamp,
+                    ));
                 } else {
                     // Non-method event (class-level or executor-init): placeholder to
                     // keep positional alignment with TestResult events.
@@ -479,8 +484,7 @@ pub fn assemble(events: Vec<(FramedEvent, DecodedEvent)>) -> BuildScanPayload {
                 duration_ms: duration_ms.map(models::Duration::new),
                 inputs,
                 up_to_date_messages: fin.and_then(|f| f.up_to_date_messages.clone()),
-                origin_build_invocation_id: fin
-                    .and_then(|f| f.origin_build_invocation_id.clone()),
+                origin_build_invocation_id: fin.and_then(|f| f.origin_build_invocation_id.clone()),
                 origin_execution_time: fin
                     .and_then(|f| f.origin_execution_time)
                     .map(models::Duration::new),
@@ -854,8 +858,14 @@ mod tests {
             "testFail: 2001 - 2000 = 1ms"
         );
         // failure_id is propagated from TestResult
-        assert!(payload.tests[0].failure_id.is_none(), "passing test should have no failure_id");
-        assert_eq!(payload.tests[1].failure_id, Some(models::FailureId::new(42)));
+        assert!(
+            payload.tests[0].failure_id.is_none(),
+            "passing test should have no failure_id"
+        );
+        assert_eq!(
+            payload.tests[1].failure_id,
+            Some(models::FailureId::new(42))
+        );
     }
 
     #[test]
@@ -884,7 +894,10 @@ mod tests {
         ];
         let payload = assemble(events);
         assert_eq!(payload.tests.len(), 1);
-        assert_eq!(payload.tests[0].duration_ms, None, "negative duration should produce None");
+        assert_eq!(
+            payload.tests[0].duration_ms, None,
+            "negative duration should produce None"
+        );
     }
 
     #[test]
@@ -1023,7 +1036,9 @@ mod tests {
 
     #[test]
     fn test_assemble_cache_operation_duration_none_when_finished_missing() {
-        use events::{BuildCacheLocalLoadStartedEvent, TaskFinishedEvent, TaskIdentityEvent, TaskStartedEvent};
+        use events::{
+            BuildCacheLocalLoadStartedEvent, TaskFinishedEvent, TaskIdentityEvent, TaskStartedEvent,
+        };
         use models::CacheOperationType;
 
         let task_id = TaskId::new(99);

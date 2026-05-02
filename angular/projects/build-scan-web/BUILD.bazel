@@ -39,8 +39,7 @@ process_styles(
     ],
 )
 
-# Transitive deps of @observablehq/plot -> d3 -> d3-* sub-packages,
-# d3-dag -> d3-array/javascript-lp-solver/quadprog/stringify-object,
+# Transitive deps of @observablehq/plot -> d3 -> d3-* sub-packages
 # and interval-tree-1d -> binary-search-bounds.
 # Bazel sandboxing requires these to be explicitly listed.
 _PLOT_TRANSITIVE_DEPS = [
@@ -56,7 +55,6 @@ _PLOT_TRANSITIVE_DEPS = [
     "//angular:node_modules/d3-chord",
     "//angular:node_modules/d3-color",
     "//angular:node_modules/d3-contour",
-    "//angular:node_modules/d3-dag",
     "//angular:node_modules/d3-delaunay",
     "//angular:node_modules/d3-dispatch",
     "//angular:node_modules/d3-drag",
@@ -83,9 +81,66 @@ _PLOT_TRANSITIVE_DEPS = [
     "//angular:node_modules/d3-zoom",
     "//angular:node_modules/interval-tree-1d",
     "//angular:node_modules/isoformat",
-    "//angular:node_modules/javascript-lp-solver",
-    "//angular:node_modules/quadprog",
-    "//angular:node_modules/stringify-object",
+]
+
+# Direct and transitive deps for @antv/g6 + @antv/layout-wasm.
+# Bazel sandboxing requires these to be explicitly listed.
+_G6_TRANSITIVE_DEPS = [
+    "//angular:node_modules/@antv/algorithm",
+    "//angular:node_modules/@antv/component",
+    "//angular:node_modules/@antv/event-emitter",
+    "//angular:node_modules/@antv/expr",
+    "//angular:node_modules/@antv/g",
+    "//angular:node_modules/@antv/g-camera-api",
+    "//angular:node_modules/@antv/g-canvas",
+    "//angular:node_modules/@antv/g-dom-mutation-observer-api",
+    "//angular:node_modules/@antv/g-lite",
+    "//angular:node_modules/@antv/g-math",
+    "//angular:node_modules/@antv/g-plugin-canvas-path-generator",
+    "//angular:node_modules/@antv/g-plugin-canvas-picker",
+    "//angular:node_modules/@antv/g-plugin-canvas-renderer",
+    "//angular:node_modules/@antv/g-plugin-dom-interaction",
+    "//angular:node_modules/@antv/g-plugin-dragndrop",
+    "//angular:node_modules/@antv/g-plugin-html-renderer",
+    "//angular:node_modules/@antv/g-plugin-image-loader",
+    "//angular:node_modules/@antv/g-web-animations-api",
+    "//angular:node_modules/@antv/g6",
+    "//angular:node_modules/@antv/graphlib",
+    "//angular:node_modules/@antv/hierarchy",
+    "//angular:node_modules/@antv/layout",
+    "//angular:node_modules/@antv/layout-wasm",
+    "//angular:node_modules/@antv/scale",
+    "//angular:node_modules/@antv/util",
+    "//angular:node_modules/@antv/vendor",
+    "//angular:node_modules/@babel/runtime",
+    "//angular:node_modules/css-line-break",
+    "//angular:node_modules/html2canvas",
+    "//angular:node_modules/is-arrayish",
+    "//angular:node_modules/text-segmentation",
+    "//angular:node_modules/bubblesets-js",
+    "//angular:node_modules/color-name",
+    "//angular:node_modules/color-string",
+    "//angular:node_modules/comlink",
+    "//angular:node_modules/d3-binarytree",
+    "//angular:node_modules/d3-force-3d",
+    "//angular:node_modules/d3-octree",
+    "//angular:node_modules/dagre",
+    "//angular:node_modules/eventemitter3",
+    "//angular:node_modules/fast-deep-equal",
+    "//angular:node_modules/fecha",
+    "//angular:node_modules/gl-matrix",
+    "//angular:node_modules/graphlib",
+    "//angular:node_modules/is-any-array",
+    "//angular:node_modules/lodash",
+    "//angular:node_modules/ml-array-max",
+    "//angular:node_modules/ml-array-min",
+    "//angular:node_modules/ml-array-rescale",
+    "//angular:node_modules/ml-matrix",
+    "//angular:node_modules/quickselect",
+    "//angular:node_modules/rbush",
+    "//angular:node_modules/simple-swizzle",
+    "//angular:node_modules/svg-path-parser",
+    "//angular:node_modules/wasm-feature-detect",
 ]
 
 ng_application(
@@ -108,7 +163,7 @@ ng_application(
         "//angular:node_modules/graphql",
         "//angular:node_modules/graphql-tag",
         "//angular:node_modules/optimism",
-    ] + _PLOT_TRANSITIVE_DEPS,
+    ] + _PLOT_TRANSITIVE_DEPS + _G6_TRANSITIVE_DEPS,
 )
 
 ng_test(
@@ -131,5 +186,5 @@ ng_test(
         "//angular:node_modules/graphql",
         "//angular:node_modules/graphql-tag",
         "//angular:node_modules/optimism",
-    ] + _PLOT_TRANSITIVE_DEPS,
+    ] + _PLOT_TRANSITIVE_DEPS + _G6_TRANSITIVE_DEPS,
 )
