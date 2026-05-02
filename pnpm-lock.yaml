@@ -55,8 +55,8 @@ catalogs:
       specifier: 2.0.48
       version: 2.0.48
     '@antv/g-dom-mutation-observer-api':
-      specifier: 2.0.38
-      version: 2.0.38
+      specifier: 2.0.42
+      version: 2.0.42
     '@antv/g-lite':
       specifier: 2.3.2
       version: 2.3.2
@@ -454,7 +454,7 @@ importers:
         version: 2.0.48
       '@antv/g-dom-mutation-observer-api':
         specifier: 'catalog:'
-        version: 2.0.38
+        version: 2.0.42
       '@antv/g-lite':
         specifier: 'catalog:'
         version: 2.3.2
@@ -1019,11 +1019,14 @@ packages:
   '@antv/g-canvas@2.0.48':
     resolution: {integrity: sha512-P98cTLRbKbCAcUVgHqMjKcvOany6nR7wvt+g+sazIfKSMUCWgjLTOjlLezux2up3At29mt80StaV2AR3d61YQA==}
 
-  '@antv/g-dom-mutation-observer-api@2.0.38':
-    resolution: {integrity: sha512-xzgbt8GUOiToBeDVv+jmGkDE+HtI9tD6uO8TirJbCya88DKcY/jurQALq0NdWKgMJLn7WPiUKyDwHWimwQcBJw==}
+  '@antv/g-dom-mutation-observer-api@2.0.42':
+    resolution: {integrity: sha512-Utu0TZFEeGrBsw3cQD7MZwKBY39Cuys4zMsZpVetYDqQm/SexzqUQeIgCm9V0zJZfXPGEJNSvWL0NV6HGSYT3Q==}
 
   '@antv/g-lite@2.3.2':
     resolution: {integrity: sha512-fkIxRoqLOGsNPwsp26bPp58cPWuX3E4wQ9cfkB/DHy5LtLrPpvOwHWB3+MBPgZwzk8jTTjchiXa756ZFOAWyQQ==}
+
+  '@antv/g-lite@2.5.1':
+    resolution: {integrity: sha512-58Ul+fZb9qT/PYXMW7zUJrl62Q46MmZYZ6V7XelDZxZCL6LP2F2avDrreDGa3uYrihUjf7IvhVfBDviL4T4sdg==}
 
   '@antv/g-lite@2.7.0':
     resolution: {integrity: sha512-uSzgHYa5bwR5L2Au7/5tsOhFmXKZKLPBH90+Q9bP9teVs5VT4kOAi0isPSpDI8uhdDC2/VrfTWu5K9HhWI6FWw==}
@@ -6775,9 +6778,9 @@ snapshots:
       '@babel/runtime': 7.29.2
       tslib: 2.8.1
 
-  '@antv/g-dom-mutation-observer-api@2.0.38':
+  '@antv/g-dom-mutation-observer-api@2.0.42':
     dependencies:
-      '@antv/g-lite': 2.3.2
+      '@antv/g-lite': 2.5.1
       '@babel/runtime': 7.29.2
 
   '@antv/g-lite@2.3.2':
@@ -6789,6 +6792,16 @@ snapshots:
       eventemitter3: 5.0.4
       gl-matrix: 3.4.4
       rbush: 3.0.1
+      tslib: 2.8.1
+
+  '@antv/g-lite@2.5.1':
+    dependencies:
+      '@antv/g-math': 3.0.1
+      '@antv/util': 3.3.11
+      '@antv/vendor': 1.0.11
+      '@babel/runtime': 7.29.2
+      eventemitter3: 5.0.4
+      gl-matrix: 3.4.4
       tslib: 2.8.1
 
   '@antv/g-lite@2.7.0':
