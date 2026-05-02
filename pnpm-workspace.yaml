@@ -52,7 +52,7 @@ catalog:
   '@antv/expr': ^1.0.2
   '@antv/g': ^6.1.28
   '@antv/g-camera-api': 2.0.45
-  '@antv/g-canvas': 2.0.48
+  '@antv/g-canvas': 2.2.0
   '@antv/g-dom-mutation-observer-api': 2.0.42
   '@antv/g-lite': 2.7.0
   '@antv/g-math': 3.0.1
