@@ -79,8 +79,8 @@ catalogs:
       specifier: 2.1.1
       version: 2.1.1
     '@antv/g-plugin-html-renderer':
-      specifier: 2.1.27
-      version: 2.1.27
+      specifier: 2.3.1
+      version: 2.3.1
     '@antv/g-plugin-image-loader':
       specifier: 2.1.26
       version: 2.1.26
@@ -478,7 +478,7 @@ importers:
         version: 2.1.1
       '@antv/g-plugin-html-renderer':
         specifier: 'catalog:'
-        version: 2.1.27
+        version: 2.3.1
       '@antv/g-plugin-image-loader':
         specifier: 'catalog:'
         version: 2.1.26
@@ -1052,8 +1052,8 @@ packages:
   '@antv/g-plugin-dragndrop@2.1.1':
     resolution: {integrity: sha512-+aesDUJVQDs6UJ2bOBbDlaGAPCfHmU0MbrMTlQlfpwNplWueqtgVAZ3L57oZ2ZGHRWUHiRwZGPjXMBM3O2LELw==}
 
-  '@antv/g-plugin-html-renderer@2.1.27':
-    resolution: {integrity: sha512-NnI4GxDBb71o/XZzoRdi0xI3xg7GJmthyO5xP5/MiOFmwJ/jW/QDz17vUonmzUVbCt6upikHV5GyYOaogRqdVg==}
+  '@antv/g-plugin-html-renderer@2.3.1':
+    resolution: {integrity: sha512-s13zOJHbtCIRiSKI1N2xnX+XT253a9npPuJKH8bxbujWbRfXQVW6VaP517hVDeODO3sDklbEuDlMHSF94IP0Hg==}
 
   '@antv/g-plugin-image-loader@2.1.26':
     resolution: {integrity: sha512-AElV0QOX2LAhB3jr9XtvkynntuKhcaU5n7avu5ynM5VoAtMaJRANhCyefA2G3myeJxWcHk4nWDX6u4YMaZnnvw==}
@@ -6881,9 +6881,9 @@ snapshots:
       '@babel/runtime': 7.29.2
       tslib: 2.8.1
 
-  '@antv/g-plugin-html-renderer@2.1.27':
+  '@antv/g-plugin-html-renderer@2.3.1':
     dependencies:
-      '@antv/g-lite': 2.3.2
+      '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.2
       gl-matrix: 3.4.4
