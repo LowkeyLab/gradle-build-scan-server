@@ -73,8 +73,8 @@ catalogs:
       specifier: 2.3.3
       version: 2.3.3
     '@antv/g-plugin-dom-interaction':
-      specifier: 2.1.27
-      version: 2.1.27
+      specifier: 2.1.31
+      version: 2.1.31
     '@antv/g-plugin-dragndrop':
       specifier: 2.0.38
       version: 2.0.38
@@ -472,7 +472,7 @@ importers:
         version: 2.3.3
       '@antv/g-plugin-dom-interaction':
         specifier: 'catalog:'
-        version: 2.1.27
+        version: 2.1.31
       '@antv/g-plugin-dragndrop':
         specifier: 'catalog:'
         version: 2.0.38
@@ -1051,6 +1051,9 @@ packages:
 
   '@antv/g-plugin-dom-interaction@2.1.27':
     resolution: {integrity: sha512-hltVZZH+bj0uXmGSR+6BIwhCFYyHmDIQi3vrj/Wn1Dn6PgufvMCXfjr3DfmkQnY+FFP8ZCpg5N9MaE0BE9OddA==}
+
+  '@antv/g-plugin-dom-interaction@2.1.31':
+    resolution: {integrity: sha512-5FKJaVvc1O80yQlSLwyevuZZgYXGzcRHCLjPDwZ9tIa/79S5q9Hc9qkTBS4pM5B85EtHN+wZqVXHZKfm/6a9jA==}
 
   '@antv/g-plugin-dragndrop@2.0.38':
     resolution: {integrity: sha512-yCef5ER759i0WpuOekFQ+AcDTu0N/COMbkPOG6YuswVnhQH447GUpuNm7Le+Mq26qONlXTDyjxuMHoUOWwJ7Cw==}
@@ -6892,6 +6895,12 @@ snapshots:
   '@antv/g-plugin-dom-interaction@2.1.27':
     dependencies:
       '@antv/g-lite': 2.3.2
+      '@babel/runtime': 7.29.2
+      tslib: 2.8.1
+
+  '@antv/g-plugin-dom-interaction@2.1.31':
+    dependencies:
+      '@antv/g-lite': 2.5.1
       '@babel/runtime': 7.29.2
       tslib: 2.8.1
 
