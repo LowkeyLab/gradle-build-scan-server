@@ -82,8 +82,8 @@ catalogs:
       specifier: 2.3.1
       version: 2.3.1
     '@antv/g-plugin-image-loader':
-      specifier: 2.1.26
-      version: 2.1.26
+      specifier: 2.3.1
+      version: 2.3.1
     '@antv/g-web-animations-api':
       specifier: 2.1.32
       version: 2.1.32
@@ -481,7 +481,7 @@ importers:
         version: 2.3.1
       '@antv/g-plugin-image-loader':
         specifier: 'catalog:'
-        version: 2.1.26
+        version: 2.3.1
       '@antv/g-web-animations-api':
         specifier: 'catalog:'
         version: 2.1.32
@@ -1022,9 +1022,6 @@ packages:
   '@antv/g-dom-mutation-observer-api@2.0.42':
     resolution: {integrity: sha512-Utu0TZFEeGrBsw3cQD7MZwKBY39Cuys4zMsZpVetYDqQm/SexzqUQeIgCm9V0zJZfXPGEJNSvWL0NV6HGSYT3Q==}
 
-  '@antv/g-lite@2.3.2':
-    resolution: {integrity: sha512-fkIxRoqLOGsNPwsp26bPp58cPWuX3E4wQ9cfkB/DHy5LtLrPpvOwHWB3+MBPgZwzk8jTTjchiXa756ZFOAWyQQ==}
-
   '@antv/g-lite@2.5.1':
     resolution: {integrity: sha512-58Ul+fZb9qT/PYXMW7zUJrl62Q46MmZYZ6V7XelDZxZCL6LP2F2avDrreDGa3uYrihUjf7IvhVfBDviL4T4sdg==}
 
@@ -1054,9 +1051,6 @@ packages:
 
   '@antv/g-plugin-html-renderer@2.3.1':
     resolution: {integrity: sha512-s13zOJHbtCIRiSKI1N2xnX+XT253a9npPuJKH8bxbujWbRfXQVW6VaP517hVDeODO3sDklbEuDlMHSF94IP0Hg==}
-
-  '@antv/g-plugin-image-loader@2.1.26':
-    resolution: {integrity: sha512-AElV0QOX2LAhB3jr9XtvkynntuKhcaU5n7avu5ynM5VoAtMaJRANhCyefA2G3myeJxWcHk4nWDX6u4YMaZnnvw==}
 
   '@antv/g-plugin-image-loader@2.3.1':
     resolution: {integrity: sha512-7UKLe2nbg/5YBQN3yy+dir5gHp53tp7rk7JxqnQnB2piXv/eZe6yq5hrfSVn74jwWkoUnjLe8u+++mHgoAsTng==}
@@ -6796,17 +6790,6 @@ snapshots:
       '@antv/g-lite': 2.5.1
       '@babel/runtime': 7.29.2
 
-  '@antv/g-lite@2.3.2':
-    dependencies:
-      '@antv/g-math': 3.0.1
-      '@antv/util': 3.3.11
-      '@antv/vendor': 1.0.11
-      '@babel/runtime': 7.29.2
-      eventemitter3: 5.0.4
-      gl-matrix: 3.4.4
-      rbush: 3.0.1
-      tslib: 2.8.1
-
   '@antv/g-lite@2.5.1':
     dependencies:
       '@antv/g-math': 3.0.1
@@ -6887,14 +6870,6 @@ snapshots:
   '@antv/g-plugin-html-renderer@2.3.1':
     dependencies:
       '@antv/g-lite': 2.5.1
-      '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.2
-      gl-matrix: 3.4.4
-      tslib: 2.8.1
-
-  '@antv/g-plugin-image-loader@2.1.26':
-    dependencies:
-      '@antv/g-lite': 2.3.2
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.2
       gl-matrix: 3.4.4
