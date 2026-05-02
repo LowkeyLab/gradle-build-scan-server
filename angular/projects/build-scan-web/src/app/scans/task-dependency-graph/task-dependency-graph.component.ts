@@ -351,6 +351,12 @@ export class TaskDependencyGraphComponent {
         if (seenEdges.has(key)) return false;
         seenEdges.add(key);
         return true;
+      })
+      .sort((left, right) => {
+        const sourceDelta = left.sourceId.localeCompare(right.sourceId);
+        return sourceDelta !== 0
+          ? sourceDelta
+          : left.targetId.localeCompare(right.targetId);
       });
 
     return { nodes, edges };
@@ -484,7 +490,7 @@ export class TaskDependencyGraphComponent {
   ): Promise<void> {
     const requestId = ++this.renderRequestId;
     if (!this.g6Graph || this.g6ContainerElement !== container) {
-      this.destroyGraph();
+      this.destroyGraph(false);
       this.g6ContainerElement = container;
       this.g6Graph = new Graph(this.buildGraphOptions(container, graphData));
       this.bindGraphEvents(this.g6Graph);
@@ -606,8 +612,8 @@ export class TaskDependencyGraphComponent {
     void this.g6Graph.setElementState(states);
   }
 
-  private destroyGraph(): void {
-    this.renderRequestId += 1;
+  private destroyGraph(cancelPendingRender = true): void {
+    if (cancelPendingRender) this.renderRequestId += 1;
     this.lastRenderedGraphKey = null;
     this.pendingGraphKey = null;
     this.g6ContainerElement = null;

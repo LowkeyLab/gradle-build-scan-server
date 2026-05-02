@@ -278,8 +278,23 @@ describe("TaskDependencyGraphComponent", () => {
         ":test",
       ]);
       expect(graph.edges).toEqual([
-        { sourceId: "T1", targetId: "T3" },
         { sourceId: "T1", targetId: "T2" },
+        { sourceId: "T1", targetId: "T3" },
+      ]);
+    });
+
+    it("builds a deterministic edge order independent of task input order", async () => {
+      await render([
+        buildTaskEdge({ id: "T3", dependencies: ["T2"], taskPath: ":gamma" }),
+        buildTaskEdge({ id: "T2", dependencies: ["T1"], taskPath: ":beta" }),
+        buildTaskEdge({ id: "T4", dependencies: ["T1"], taskPath: ":delta" }),
+        buildTaskEdge({ id: "T1", taskPath: ":alpha" }),
+      ]);
+
+      expect(component.graph().edges).toEqual([
+        { sourceId: "T1", targetId: "T2" },
+        { sourceId: "T1", targetId: "T4" },
+        { sourceId: "T2", targetId: "T3" },
       ]);
     });
 
@@ -349,6 +364,7 @@ describe("TaskDependencyGraphComponent", () => {
         nodesep: 56,
         ranksep: 96,
       });
+      expect(graphInstance().fitView).toHaveBeenCalledTimes(1);
     });
 
     it("lets the layout position nodes instead of passing explicit coordinates", async () => {
