@@ -56,7 +56,7 @@ catalog:
   '@antv/g-dom-mutation-observer-api': 2.0.42
   '@antv/g-lite': 2.3.2
   '@antv/g-math': 3.0.1
-  '@antv/g-plugin-canvas-path-generator': 2.1.22
+  '@antv/g-plugin-canvas-path-generator': 2.1.26
   '@antv/g-plugin-canvas-picker': 2.1.27
   '@antv/g-plugin-canvas-renderer': 2.3.3
   '@antv/g-plugin-dom-interaction': 2.1.27
