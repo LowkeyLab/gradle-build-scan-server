@@ -35,6 +35,7 @@ const g6Mock = vi.hoisted(() => {
     node?: Record<string, unknown>;
     edge?: Record<string, unknown>;
     behaviors?: string[];
+    plugins?: Array<Record<string, unknown>>;
   };
   type HoistedElementStateMap = Record<string, string[]>;
 
@@ -413,6 +414,14 @@ describe("TaskDependencyGraphComponent", () => {
       expect(instance.options.behaviors).toEqual([
         "drag-canvas",
         "zoom-canvas",
+      ]);
+      expect(instance.options.plugins).toEqual([
+        {
+          type: "minimap",
+          key: "task-graph-minimap",
+          size: [240, 160],
+          position: "right-bottom",
+        },
       ]);
       expect(instance.data.nodes).toEqual(
         expect.arrayContaining([
