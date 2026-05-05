@@ -30,9 +30,16 @@ bazel_dep(name = "aspect_rules_js", version = "3.0.3")
 bazel_dep(name = "rules_angular")
 git_override(
     module_name = "rules_angular",
-    commit = "32ce54318d9ec5d84269d4acecbc39944cd8b5e7",
+    commit = "b1d295334e70335dab7ac9984a989fae0a9c9dc2",
     remote = "https://github.com/devversion/rules_angular.git",
 )
+
+rules_angular_ext = use_extension("@rules_angular//setup:extensions.bzl", "rules_angular")
+rules_angular_ext.setup(
+    angular_compiler_cli = "//:node_modules/@angular/compiler-cli",
+    typescript = "//:node_modules/typescript",
+)
+use_repo(rules_angular_ext, "rules_angular_configurable_deps")
 
 #########################
 # Support for Rust, see https://github.com/bazelbuild/rules_rust
