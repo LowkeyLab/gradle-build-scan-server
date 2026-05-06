@@ -49,21 +49,9 @@ interface TaskDependencyHighlightState {
   highlightedEdgeKeys: ReadonlySet<string>;
 }
 
-interface TaskDependencyCriticalPathState {
-  nodeIds: ReadonlySet<string>;
-  edgeKeys: ReadonlySet<string>;
-  hasCycle: boolean;
-}
-
-interface CriticalPathCandidate {
-  score: number;
-  path: string[];
-}
-
-interface LegendNodeItem {
+interface CriticalPathTargetOption {
+  nodeId: string;
   label: string;
-  fillColor: string;
-  strokeColor: string;
 }
 
 interface G6TaskGraphData {
@@ -71,6 +59,23 @@ interface G6TaskGraphData {
   key: string;
   nodeIds: string[];
   edgeIds: string[];
+}
+
+interface CriticalPathCandidate {
+  score: number;
+  path: string[];
+}
+
+interface TaskDependencyCriticalPathState {
+  nodeIds: ReadonlySet<string>;
+  edgeKeys: ReadonlySet<string>;
+  hasCycle: boolean;
+}
+
+interface LegendNodeItem {
+  label: string;
+  fillColor: string;
+  strokeColor: string;
 }
 
 interface TaskGraphLayoutOptions extends Record<string, unknown> {
@@ -245,6 +250,44 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
           </div>
           @if (graph().nodes.length > 0) {
             <div class="flex flex-col items-end gap-2 text-right">
+              <div class="flex flex-col items-end gap-1">
+                <label
+                  class="text-xs font-medium uppercase tracking-wide opacity-70"
+                  for="task-critical-path-target-input"
+                >
+                  Critical path target
+                </label>
+                <input
+                  id="task-critical-path-target-input"
+                  data-testid="task-critical-path-target-input"
+                  type="text"
+                  list="task-critical-path-target-options"
+                  class="input input-sm input-bordered w-64 max-w-full font-mono text-xs"
+                  [value]="targetInputValue()"
+                  [disabled]="terminalOptions().length === 0"
+                  [attr.aria-describedby]="'task-critical-path-target-help'"
+                  [attr.aria-invalid]="criticalPathTargetInputInvalid()"
+                  (input)="selectCriticalPathTarget($any($event.target).value)"
+                  (change)="selectCriticalPathTarget($any($event.target).value)"
+                />
+                <datalist
+                  id="task-critical-path-target-options"
+                  data-testid="task-critical-path-target-options"
+                >
+                  @for (option of terminalOptions(); track option.nodeId) {
+                    <option [value]="option.label"></option>
+                  }
+                </datalist>
+                <p
+                  id="task-critical-path-target-help"
+                  data-testid="task-critical-path-target-help"
+                  class="max-w-64 text-xs"
+                  [class.opacity-60]="!criticalPathTargetInputInvalid()"
+                  [class.text-error]="criticalPathTargetInputInvalid()"
+                >
+                  {{ criticalPathTargetHelpText() }}
+                </p>
+              </div>
               <button
                 data-testid="task-critical-path-toggle"
                 type="button"
@@ -292,13 +335,12 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             </div>
           </div>
 
-          @if (criticalPathHasCycle()) {
+          @if (criticalPathWarning()) {
             <div
               data-testid="task-critical-path-warning"
               class="mb-3 rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
             >
-              Critical path highlighting is unavailable because this graph
-              contains a dependency cycle.
+              {{ criticalPathWarning() }}
             </div>
           }
 
@@ -320,6 +362,7 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
 })
 export class TaskDependencyGraphComponent {
   taskEdges = input.required<TaskEdge[]>();
+  readonly requestedTasks = input<readonly string[]>([]);
   legendNodeItems = LEGEND_NODE_ITEMS;
   readonly edgeKey = edgeKey;
 
@@ -332,7 +375,66 @@ export class TaskDependencyGraphComponent {
   private renderRequestId = 0;
   private hasSyncedActiveElementStates = false;
   private selectedNodeId = signal<string | null>(null);
+  readonly targetInputValue = signal<string>("");
+  private selectedTerminalNodeId = signal<string | null>(null);
+  private userModifiedTarget = signal(false);
   showCriticalPath = signal(false);
+  readonly terminalOptions = computed<CriticalPathTargetOption[]>(() => {
+    const graph = this.graph();
+    const sourceNodeIds = new Set(graph.edges.map((edge) => edge.sourceId));
+    return graph.nodes
+      .filter((node) => !sourceNodeIds.has(node.id))
+      .map((node) => ({
+        nodeId: node.id,
+        label: node.label,
+      }));
+  });
+  readonly effectiveCriticalPathTargetNodeId = computed(() => {
+    const selectedTerminalNodeId = this.selectedTerminalNodeId();
+    return selectedTerminalNodeId &&
+      this.isTerminalNodeId(selectedTerminalNodeId)
+      ? selectedTerminalNodeId
+      : null;
+  });
+  readonly criticalPathTargetInputInvalid = computed(() => {
+    const targetInputValue = this.targetInputValue();
+    return (
+      targetInputValue.length > 0 &&
+      !this.terminalOptions().some(
+        (option) => option.label === targetInputValue,
+      )
+    );
+  });
+  readonly criticalPathTargetHelpText = computed(() => {
+    if (this.terminalOptions().length === 0) {
+      return "No terminal tasks are available for this graph.";
+    }
+    if (this.criticalPathTargetInputInvalid()) {
+      return "Value must match a terminal task.";
+    }
+    return "Choose a terminal task to inspect critical path candidates.";
+  });
+  private requestedTaskPreselection = computed(() => {
+    const requestedTasks = this.requestedTasks();
+    if (requestedTasks.length !== 1) return null;
+    const requestedTask = requestedTasks[0];
+    if (!requestedTask) return null;
+
+    const terminalOptions = this.terminalOptions();
+    const exactMatches = terminalOptions.filter(
+      (option) => option.label === requestedTask,
+    );
+    if (exactMatches.length === 1) return exactMatches[0]?.nodeId ?? null;
+
+    if (requestedTask.startsWith(":")) return null;
+
+    const normalizedMatches = terminalOptions.filter(
+      (option) => option.label === `:${requestedTask}`,
+    );
+    return normalizedMatches.length === 1
+      ? (normalizedMatches[0]?.nodeId ?? null)
+      : null;
+  });
   private selectedNodeIdInGraph = computed(() => {
     const selectedNodeId = this.selectedNodeId();
     if (!selectedNodeId) return null;
@@ -347,6 +449,37 @@ export class TaskDependencyGraphComponent {
     });
 
     afterRenderEffect(() => {
+      const terminalOptions = this.terminalOptions();
+      const selectedTerminalNodeId = this.selectedTerminalNodeId();
+      const selectedTerminalLabel = terminalOptions.find(
+        (option) => option.nodeId === selectedTerminalNodeId,
+      )?.label;
+      const requestedTaskPreselection = this.requestedTaskPreselection();
+
+      if (
+        selectedTerminalNodeId &&
+        !terminalOptions.some(
+          (option) => option.nodeId === selectedTerminalNodeId,
+        )
+      ) {
+        this.selectedTerminalNodeId.set(null);
+        if (this.targetInputValue() === selectedTerminalLabel) {
+          this.targetInputValue.set("");
+        }
+      }
+
+      if (!this.userModifiedTarget() && requestedTaskPreselection) {
+        this.selectedTerminalNodeId.set(requestedTaskPreselection);
+        this.targetInputValue.set(
+          terminalOptions.find(
+            (option) => option.nodeId === requestedTaskPreselection,
+          )?.label ?? "",
+        );
+      } else if (!this.userModifiedTarget() && !requestedTaskPreselection) {
+        this.selectedTerminalNodeId.set(null);
+        this.targetInputValue.set("");
+      }
+
       if (this.selectedNodeId() && !this.selectedNodeIdInGraph()) {
         this.selectedNodeId.set(null);
       }
@@ -519,12 +652,23 @@ export class TaskDependencyGraphComponent {
       };
     }
 
-    const bestPath = [...bestByNodeId.values()].reduce(
-      (currentBest, candidate) =>
-        isBetterCriticalPathCandidate(candidate, currentBest)
-          ? candidate
-          : currentBest,
-    );
+    const terminalNodeId = this.effectiveCriticalPathTargetNodeId();
+    if (!terminalNodeId) {
+      return {
+        nodeIds: new Set<string>(),
+        edgeKeys: new Set<string>(),
+        hasCycle: false,
+      };
+    }
+
+    const bestPath = bestByNodeId.get(terminalNodeId);
+    if (!bestPath) {
+      return {
+        nodeIds: new Set<string>(),
+        edgeKeys: new Set<string>(),
+        hasCycle: false,
+      };
+    }
     const edgeKeys = new Set<string>();
     for (let index = 1; index < bestPath.path.length; index += 1) {
       edgeKeys.add(`${bestPath.path[index - 1]}:${bestPath.path[index]}`);
@@ -540,6 +684,27 @@ export class TaskDependencyGraphComponent {
   criticalPathHasCycle = computed(
     () => this.showCriticalPath() && this.criticalPathState().hasCycle,
   );
+
+  criticalPathWarning = computed(() => {
+    if (!this.showCriticalPath()) {
+      return null;
+    }
+
+    const criticalPathState = this.criticalPathState();
+    if (criticalPathState.hasCycle) {
+      return "Critical path highlighting is unavailable because this graph contains a dependency cycle.";
+    }
+
+    if (this.criticalPathTargetInputInvalid()) {
+      return "Critical path highlighting is unavailable because the target must match a terminal task.";
+    }
+
+    if (!this.effectiveCriticalPathTargetNodeId()) {
+      return "Critical path highlighting is unavailable because you must choose a terminal task from the selector.";
+    }
+
+    return null;
+  });
 
   private g6GraphData = computed<G6TaskGraphData>(() => {
     const graph = this.graph();
@@ -600,6 +765,7 @@ export class TaskDependencyGraphComponent {
 
   highlightState = computed<TaskDependencyHighlightState | null>(() => {
     if (this.showCriticalPath()) {
+      if (this.criticalPathTargetInputInvalid()) return null;
       const criticalPath = this.criticalPathState();
       const [activeNodeId] = criticalPath.nodeIds;
       if (criticalPath.hasCycle || !activeNodeId) return null;
@@ -659,6 +825,19 @@ export class TaskDependencyGraphComponent {
 
   toggleCriticalPath(): void {
     this.showCriticalPath.update((isShown) => !isShown);
+  }
+
+  selectCriticalPathTarget(typedValue: string | null): void {
+    this.userModifiedTarget.set(true);
+    this.targetInputValue.set(typedValue ?? "");
+    const match = this.terminalOptions().find(
+      (option) => option.label === typedValue,
+    );
+    this.selectedTerminalNodeId.set(match?.nodeId ?? null);
+  }
+
+  private isTerminalNodeId(nodeId: string): boolean {
+    return this.terminalOptions().some((option) => option.nodeId === nodeId);
   }
 
   nodeHighlightState(
@@ -782,10 +961,12 @@ export class TaskDependencyGraphComponent {
 
   private bindGraphEvents(graph: Graph): void {
     graph.on(NodeEvent.CLICK, (event: IElementEvent) => {
+      if (this.showCriticalPath()) return;
       const nodeId = getNodeIdFromEvent(event);
       if (nodeId) this.selectNode(nodeId);
     });
     graph.on(CanvasEvent.CLICK, () => {
+      if (this.showCriticalPath()) return;
       this.clearSelectedNode();
     });
   }
