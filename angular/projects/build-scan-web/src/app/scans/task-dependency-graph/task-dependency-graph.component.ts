@@ -137,6 +137,11 @@ const FALLBACK_STYLE = {
   strokeColor: "oklch(55% 0.04 260)",
 };
 
+const CRITICAL_STYLE = {
+  strokeColor: "oklch(72% 0.18 70)",
+  shadowColor: "oklch(72% 0.18 70 / 0.72)",
+};
+
 const LEGEND_NODE_ITEMS: LegendNodeItem[] = [
   { label: "Success", ...SUCCESS_STYLE },
   { label: "From Cache", ...FROM_CACHE_STYLE },
@@ -239,9 +244,26 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             </p>
           </div>
           @if (graph().nodes.length > 0) {
-            <div class="text-xs opacity-60">
-              {{ graph().nodes.length }} nodes ·
-              {{ graph().edges.length }} edges
+            <div class="flex flex-col items-end gap-2 text-right">
+              <button
+                data-testid="task-critical-path-toggle"
+                type="button"
+                class="btn btn-sm border-base-300 shadow-none"
+                [class.btn-warning]="showCriticalPath()"
+                [class.btn-outline]="!showCriticalPath()"
+                [attr.aria-pressed]="showCriticalPath()"
+                (click)="toggleCriticalPath()"
+              >
+                @if (showCriticalPath()) {
+                  Critical path highlighted
+                } @else {
+                  Highlight critical path
+                }
+              </button>
+              <div class="text-xs opacity-60">
+                {{ graph().nodes.length }} nodes ·
+                {{ graph().edges.length }} edges
+              </div>
             </div>
           }
         </div>
@@ -269,6 +291,16 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
               <span>Task dependency</span>
             </div>
           </div>
+
+          @if (criticalPathHasCycle()) {
+            <div
+              data-testid="task-critical-path-warning"
+              class="mb-3 rounded-box border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning"
+            >
+              Critical path highlighting is unavailable because this graph
+              contains a dependency cycle.
+            </div>
+          }
 
           <div
             class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
@@ -625,9 +657,20 @@ export class TaskDependencyGraphComponent {
     this.selectedNodeId.set(null);
   }
 
-  nodeHighlightState(nodeId: string): "idle" | "highlighted" | "dimmed" {
+  toggleCriticalPath(): void {
+    this.showCriticalPath.update((isShown) => !isShown);
+  }
+
+  nodeHighlightState(
+    nodeId: string,
+  ): "idle" | "highlighted" | "critical" | "dimmed" {
     const highlightState = this.highlightState();
     if (!highlightState) return "idle";
+    if (highlightState.mode === "critical") {
+      return highlightState.highlightedNodeIds.has(nodeId)
+        ? "critical"
+        : "dimmed";
+    }
     return highlightState.highlightedNodeIds.has(nodeId)
       ? "highlighted"
       : "dimmed";
@@ -635,12 +678,14 @@ export class TaskDependencyGraphComponent {
 
   edgeHighlightState(
     edge: TaskDependencyEdge,
-  ): "idle" | "highlighted" | "dimmed" {
+  ): "idle" | "highlighted" | "critical" | "dimmed" {
     const highlightState = this.highlightState();
     if (!highlightState) return "idle";
-    return highlightState.highlightedEdgeKeys.has(edgeKey(edge))
-      ? "highlighted"
-      : "dimmed";
+    const isHighlighted = highlightState.highlightedEdgeKeys.has(edgeKey(edge));
+    if (highlightState.mode === "critical") {
+      return isHighlighted ? "critical" : "dimmed";
+    }
+    return isHighlighted ? "highlighted" : "dimmed";
   }
 
   private async renderG6Graph(
@@ -700,6 +745,12 @@ export class TaskDependencyGraphComponent {
           selected: {
             lineWidth: 4,
           },
+          critical: {
+            stroke: CRITICAL_STYLE.strokeColor,
+            lineWidth: 5,
+            shadowBlur: 18,
+            shadowColor: CRITICAL_STYLE.shadowColor,
+          },
           dimmed: {
             opacity: 0.28,
             labelOpacity: 0.36,
@@ -714,6 +765,11 @@ export class TaskDependencyGraphComponent {
         state: {
           highlighted: {
             lineWidth: 3,
+            opacity: 1,
+          },
+          critical: {
+            stroke: CRITICAL_STYLE.strokeColor,
+            lineWidth: 5,
             opacity: 1,
           },
           dimmed: {
@@ -758,7 +814,9 @@ export class TaskDependencyGraphComponent {
 
     for (const nodeId of graphData.nodeIds) {
       const state = this.nodeHighlightState(nodeId);
-      if (state === "highlighted") {
+      if (state === "critical") {
+        states[nodeId] = ["critical"];
+      } else if (state === "highlighted") {
         states[nodeId] =
           highlightState?.mode === "selected" &&
           highlightState.activeNodeId === nodeId

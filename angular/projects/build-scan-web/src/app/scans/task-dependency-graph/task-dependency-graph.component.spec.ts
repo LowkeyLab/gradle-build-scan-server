@@ -574,6 +574,29 @@ describe("TaskDependencyGraphComponent", () => {
           endArrow: false,
         },
       });
+      expect(instance.options.node).toMatchObject({
+        state: {
+          highlighted: expect.objectContaining({ lineWidth: 3 }),
+          selected: expect.objectContaining({ lineWidth: 4 }),
+          critical: expect.objectContaining({
+            lineWidth: 5,
+            stroke: expect.any(String),
+            shadowBlur: 18,
+          }),
+          dimmed: expect.objectContaining({ opacity: 0.28 }),
+        },
+      });
+      expect(instance.options.edge).toMatchObject({
+        state: {
+          highlighted: expect.objectContaining({ lineWidth: 3 }),
+          critical: expect.objectContaining({
+            lineWidth: 5,
+            stroke: expect.any(String),
+            opacity: 1,
+          }),
+          dimmed: expect.objectContaining({ opacity: 0.12 }),
+        },
+      });
       expect(instance.options.behaviors).toEqual([
         "drag-canvas",
         "zoom-canvas",
@@ -762,6 +785,57 @@ describe("TaskDependencyGraphComponent", () => {
       expect(elementState(instance, "T4")).toEqual([]);
       expect(elementState(instance, "T6")).toEqual([]);
     });
+
+    it("pushes critical path states into G6 and restores selected states when disabled", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha", durationMs: 10 }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":beta",
+          durationMs: 20,
+        }),
+        buildTaskEdge({ id: "T3", taskPath: ":gamma", durationMs: 1 }),
+        buildTaskEdge({
+          id: "T4",
+          dependencies: ["T2"],
+          taskPath: ":delta",
+          durationMs: 30,
+        }),
+        buildTaskEdge({ id: "T5", taskPath: ":epsilon", durationMs: 2 }),
+      ]);
+      const instance = graphInstance();
+
+      instance.emitNode("node:click", "T5");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(elementState(instance, "T5")).toEqual(["highlighted", "selected"]);
+
+      component.toggleCriticalPath();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.mode).toBe("critical");
+      expect(instance.elementStates).toMatchObject({
+        T1: ["critical"],
+        T2: ["critical"],
+        T4: ["critical"],
+        T3: ["dimmed"],
+        T5: ["dimmed"],
+        "T1:T2": ["critical"],
+        "T2:T4": ["critical"],
+      } satisfies ElementStateMap);
+      expect(elementState(instance, "T5")).not.toContain("selected");
+
+      component.toggleCriticalPath();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(component.highlightState()?.activeNodeId).toBe("T5");
+      expect(elementState(instance, "T5")).toEqual(["highlighted", "selected"]);
+      expect(elementState(instance, "T1")).toEqual(["dimmed"]);
+      expect(elementState(instance, "T1:T2")).toEqual(["dimmed"]);
+    });
   });
 
   describe("template rendering", () => {
@@ -786,6 +860,23 @@ describe("TaskDependencyGraphComponent", () => {
       expect(card.textContent).toContain("3 nodes · 2 edges");
       expect(card.textContent).not.toContain("Timeline");
       expect(card.querySelector("svg")).toBeNull();
+
+      const toggle = card.querySelector(
+        '[data-testid="task-critical-path-toggle"]',
+      ) as HTMLButtonElement;
+      expect(toggle).toBeTruthy();
+      expect(toggle.getAttribute("aria-pressed")).toBe("false");
+      expect(toggle.textContent?.trim()).toBe("Highlight critical path");
+      expect(
+        card.querySelector('[data-testid="task-critical-path-warning"]'),
+      ).toBeFalsy();
+
+      toggle.click();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+      expect(toggle.getAttribute("aria-pressed")).toBe("true");
+      expect(toggle.textContent?.trim()).toBe("Critical path highlighted");
 
       const container = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-graph"]',
@@ -826,7 +917,64 @@ describe("TaskDependencyGraphComponent", () => {
           '[data-testid="task-dependency-legend"]',
         ),
       ).toBeFalsy();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-toggle"]',
+        ),
+      ).toBeFalsy();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-warning"]',
+        ),
+      ).toBeFalsy();
       expect(g6Mock.MockGraph.instances).toHaveLength(0);
+    });
+
+    it("renders the cycle warning only while critical path mode is enabled", async () => {
+      await render([
+        buildTaskEdge({
+          id: "A",
+          dependencies: ["B"],
+          taskPath: ":a",
+          durationMs: 10,
+        }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 20,
+        }),
+      ]);
+
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-warning"]',
+        ),
+      ).toBeFalsy();
+
+      const toggle = fixture.nativeElement.querySelector(
+        '[data-testid="task-critical-path-toggle"]',
+      ) as HTMLButtonElement;
+      toggle.click();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      const warning = fixture.nativeElement.querySelector(
+        '[data-testid="task-critical-path-warning"]',
+      ) as HTMLElement;
+      expect(warning).toBeTruthy();
+      expect(warning.textContent).toContain("dependency cycle");
+
+      toggle.click();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-warning"]',
+        ),
+      ).toBeFalsy();
     });
   });
 });
