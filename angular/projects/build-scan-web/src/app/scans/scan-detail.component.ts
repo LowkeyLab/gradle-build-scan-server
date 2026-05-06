@@ -70,6 +70,7 @@ const GET_BUILD_SCAN_OVERVIEW = gql`
               <app-scan-tasks-tab
                 [scanId]="scan.id"
                 [taskCount]="scan.taskCount"
+                [requestedTasks]="scan.requestedTasks ?? []"
               />
             </section>
           }

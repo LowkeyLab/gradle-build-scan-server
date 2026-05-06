@@ -146,7 +146,10 @@ const GET_SCAN_TASKS = gql`
         />
 
         @if (showDependencyGraph()) {
-          <app-task-dependency-graph [taskEdges]="taskEdges()" />
+          <app-task-dependency-graph
+            [taskEdges]="taskEdges()"
+            [requestedTasks]="requestedTasks()"
+          />
         } @else if (hasLargeTaskGraph()) {
           <div
             class="rounded-md border border-base-300 bg-base-200 p-4 text-sm"
@@ -181,6 +184,7 @@ const GET_SCAN_TASKS = gql`
 export class ScanTasksTabComponent implements OnInit {
   scanId = input.required<string>();
   taskCount = input.required<number>();
+  readonly requestedTasks = input<readonly string[]>([]);
 
   private apollo = inject(Apollo);
   private destroyRef = inject(DestroyRef);
