@@ -44,9 +44,20 @@ interface TaskDependencyEdge {
 
 interface TaskDependencyHighlightState {
   activeNodeId: string;
-  mode: "selected";
+  mode: "selected" | "critical";
   highlightedNodeIds: ReadonlySet<string>;
   highlightedEdgeKeys: ReadonlySet<string>;
+}
+
+interface TaskDependencyCriticalPathState {
+  nodeIds: ReadonlySet<string>;
+  edgeKeys: ReadonlySet<string>;
+  hasCycle: boolean;
+}
+
+interface CriticalPathCandidate {
+  score: number;
+  path: string[];
 }
 
 interface LegendNodeItem {
@@ -142,6 +153,28 @@ function truncateTaskLabel(label: string): string {
 
 function edgeKey(edge: TaskDependencyEdge): string {
   return `${edge.sourceId}:${edge.targetId}`;
+}
+
+function compareNodeIdPaths(
+  left: readonly string[],
+  right: readonly string[],
+): number {
+  const length = Math.min(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    const delta = left[index].localeCompare(right[index]);
+    if (delta !== 0) return delta;
+  }
+  return left.length - right.length;
+}
+
+function isBetterCriticalPathCandidate(
+  candidate: CriticalPathCandidate,
+  current: CriticalPathCandidate,
+): boolean {
+  if (candidate.score !== current.score) {
+    return candidate.score > current.score;
+  }
+  return compareNodeIdPaths(candidate.path, current.path) < 0;
 }
 
 function buildIncomingDependencyCounts(
@@ -267,6 +300,7 @@ export class TaskDependencyGraphComponent {
   private renderRequestId = 0;
   private hasSyncedActiveElementStates = false;
   private selectedNodeId = signal<string | null>(null);
+  showCriticalPath = signal(false);
   private selectedNodeIdInGraph = computed(() => {
     const selectedNodeId = this.selectedNodeId();
     if (!selectedNodeId) return null;
@@ -362,6 +396,119 @@ export class TaskDependencyGraphComponent {
     return { nodes, edges };
   });
 
+  private criticalPathState = computed<TaskDependencyCriticalPathState>(() => {
+    const graph = this.graph();
+    const nodeIds = graph.nodes.map((node) => node.id).sort();
+    if (nodeIds.length === 0) {
+      return {
+        nodeIds: new Set<string>(),
+        edgeKeys: new Set<string>(),
+        hasCycle: false,
+      };
+    }
+
+    const durationsByNodeId = new Map(
+      graph.nodes.map((node) => [node.id, node.durationMs ?? 0]),
+    );
+    const outgoingEdgesBySource = new Map<string, TaskDependencyEdge[]>();
+    const incomingCounts = new Map<string, number>();
+    const bestByNodeId = new Map<string, CriticalPathCandidate>();
+
+    for (const nodeId of nodeIds) {
+      incomingCounts.set(nodeId, 0);
+      bestByNodeId.set(nodeId, {
+        score: durationsByNodeId.get(nodeId) ?? 0,
+        path: [nodeId],
+      });
+    }
+
+    for (const edge of graph.edges) {
+      const outgoingEdges = outgoingEdgesBySource.get(edge.sourceId) ?? [];
+      outgoingEdges.push(edge);
+      outgoingEdgesBySource.set(edge.sourceId, outgoingEdges);
+      incomingCounts.set(
+        edge.targetId,
+        (incomingCounts.get(edge.targetId) ?? 0) + 1,
+      );
+    }
+
+    for (const outgoingEdges of outgoingEdgesBySource.values()) {
+      outgoingEdges.sort((left, right) => {
+        const sourceDelta = left.sourceId.localeCompare(right.sourceId);
+        return sourceDelta !== 0
+          ? sourceDelta
+          : left.targetId.localeCompare(right.targetId);
+      });
+    }
+
+    const pendingNodeIds = nodeIds.filter(
+      (nodeId) => (incomingCounts.get(nodeId) ?? 0) === 0,
+    );
+    let processedNodeCount = 0;
+
+    while (pendingNodeIds.length > 0) {
+      const sourceId = pendingNodeIds.shift();
+      if (!sourceId) continue;
+      processedNodeCount += 1;
+
+      const sourceCandidate = bestByNodeId.get(sourceId);
+      if (!sourceCandidate) continue;
+
+      for (const edge of outgoingEdgesBySource.get(sourceId) ?? []) {
+        const targetCandidate = bestByNodeId.get(edge.targetId);
+        const candidate = {
+          score:
+            sourceCandidate.score + (durationsByNodeId.get(edge.targetId) ?? 0),
+          path: [...sourceCandidate.path, edge.targetId],
+        };
+        if (
+          !targetCandidate ||
+          isBetterCriticalPathCandidate(candidate, targetCandidate)
+        ) {
+          bestByNodeId.set(edge.targetId, candidate);
+        }
+
+        incomingCounts.set(
+          edge.targetId,
+          (incomingCounts.get(edge.targetId) ?? 0) - 1,
+        );
+        if ((incomingCounts.get(edge.targetId) ?? 0) === 0) {
+          pendingNodeIds.push(edge.targetId);
+          pendingNodeIds.sort((left, right) => left.localeCompare(right));
+        }
+      }
+    }
+
+    if (processedNodeCount < nodeIds.length) {
+      return {
+        nodeIds: new Set<string>(),
+        edgeKeys: new Set<string>(),
+        hasCycle: true,
+      };
+    }
+
+    const bestPath = [...bestByNodeId.values()].reduce(
+      (currentBest, candidate) =>
+        isBetterCriticalPathCandidate(candidate, currentBest)
+          ? candidate
+          : currentBest,
+    );
+    const edgeKeys = new Set<string>();
+    for (let index = 1; index < bestPath.path.length; index += 1) {
+      edgeKeys.add(`${bestPath.path[index - 1]}:${bestPath.path[index]}`);
+    }
+
+    return {
+      nodeIds: new Set(bestPath.path),
+      edgeKeys,
+      hasCycle: false,
+    };
+  });
+
+  criticalPathHasCycle = computed(
+    () => this.showCriticalPath() && this.criticalPathState().hasCycle,
+  );
+
   private g6GraphData = computed<G6TaskGraphData>(() => {
     const graph = this.graph();
     const incomingCounts = buildIncomingDependencyCounts(graph.edges);
@@ -420,6 +567,18 @@ export class TaskDependencyGraphComponent {
   });
 
   highlightState = computed<TaskDependencyHighlightState | null>(() => {
+    if (this.showCriticalPath()) {
+      const criticalPath = this.criticalPathState();
+      const [activeNodeId] = criticalPath.nodeIds;
+      if (criticalPath.hasCycle || !activeNodeId) return null;
+      return {
+        activeNodeId,
+        mode: "critical",
+        highlightedNodeIds: criticalPath.nodeIds,
+        highlightedEdgeKeys: criticalPath.edgeKeys,
+      };
+    }
+
     const activeNodeId = this.selectedNodeIdInGraph();
     if (!activeNodeId) return null;
 

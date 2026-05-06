@@ -247,6 +247,18 @@ describe("TaskDependencyGraphComponent", () => {
     return size;
   }
 
+  function highlightedNodeIds(): string[] {
+    return [
+      ...(component.highlightState()?.highlightedNodeIds ?? new Set<string>()),
+    ].sort();
+  }
+
+  function highlightedEdgeKeys(): string[] {
+    return [
+      ...(component.highlightState()?.highlightedEdgeKeys ?? new Set<string>()),
+    ].sort();
+  }
+
   describe("graph data construction", () => {
     it("builds sorted labeled nodes and deduplicated dependency edges", async () => {
       await render([
@@ -345,6 +357,157 @@ describe("TaskDependencyGraphComponent", () => {
 
       component.selectNode("T4");
       expect(component.highlightState()).toBeNull();
+    });
+  });
+
+  describe("critical path state", () => {
+    it("computes a critical path through dependency edge direction", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 10 }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 20,
+        }),
+        buildTaskEdge({
+          id: "C",
+          dependencies: ["B"],
+          taskPath: ":c",
+          durationMs: 30,
+        }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(component.highlightState()?.mode).toBe("critical");
+      expect(highlightedNodeIds()).toEqual(["A", "B", "C"]);
+      expect(highlightedEdgeKeys()).toEqual(["A:B", "B:C"]);
+      expect(component.criticalPathHasCycle()).toBe(false);
+    });
+
+    it("chooses the global longest cumulative path in disconnected graphs", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 100 }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 1,
+        }),
+        buildTaskEdge({ id: "C", taskPath: ":c", durationMs: 10 }),
+        buildTaskEdge({
+          id: "D",
+          dependencies: ["C"],
+          taskPath: ":d",
+          durationMs: 10,
+        }),
+        buildTaskEdge({
+          id: "E",
+          dependencies: ["D"],
+          taskPath: ":e",
+          durationMs: 10,
+        }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(highlightedNodeIds()).toEqual(["A", "B"]);
+      expect(highlightedEdgeKeys()).toEqual(["A:B"]);
+    });
+
+    it("breaks equal-score ties with the lexicographically smallest full node-id path", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 5 }),
+        buildTaskEdge({ id: "B", taskPath: ":b", durationMs: 5 }),
+        buildTaskEdge({
+          id: "C",
+          dependencies: ["A", "B"],
+          taskPath: ":c",
+          durationMs: 5,
+        }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(highlightedNodeIds()).toEqual(["A", "C"]);
+      expect(highlightedEdgeKeys()).toEqual(["A:C"]);
+    });
+
+    it("treats null durations as zero", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: null }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 10,
+        }),
+        buildTaskEdge({ id: "C", taskPath: ":c", durationMs: 9 }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(highlightedNodeIds()).toEqual(["A", "B"]);
+      expect(highlightedEdgeKeys()).toEqual(["A:B"]);
+    });
+
+    it("chooses the highest-duration isolated node and ties by node id", async () => {
+      await render([
+        buildTaskEdge({ id: "B", taskPath: ":b", durationMs: 20 }),
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 20 }),
+        buildTaskEdge({ id: "C", taskPath: ":c", durationMs: 10 }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(highlightedNodeIds()).toEqual(["A"]);
+      expect(highlightedEdgeKeys()).toEqual([]);
+    });
+
+    it("returns no critical highlight and exposes a warning for cyclic graph data", async () => {
+      await render([
+        buildTaskEdge({
+          id: "A",
+          dependencies: ["B"],
+          taskPath: ":a",
+          durationMs: 10,
+        }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 20,
+        }),
+      ]);
+
+      component.showCriticalPath.set(true);
+
+      expect(component.highlightState()).toBeNull();
+      expect(component.criticalPathHasCycle()).toBe(true);
+    });
+
+    it("keeps selected-node state intact while critical-path mode is toggled", async () => {
+      await render([
+        buildTaskEdge({ id: "T1", taskPath: ":alpha", durationMs: 10 }),
+        buildTaskEdge({
+          id: "T2",
+          dependencies: ["T1"],
+          taskPath: ":beta",
+          durationMs: 20,
+        }),
+      ]);
+
+      component.selectNode("T2");
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(component.highlightState()?.activeNodeId).toBe("T2");
+
+      component.showCriticalPath.set(true);
+      expect(component.highlightState()?.mode).toBe("critical");
+
+      component.showCriticalPath.set(false);
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(component.highlightState()?.activeNodeId).toBe("T2");
     });
   });
 
