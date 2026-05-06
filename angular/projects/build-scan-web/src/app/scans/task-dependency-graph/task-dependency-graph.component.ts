@@ -400,9 +400,7 @@ export class TaskDependencyGraphComponent {
     const targetInputValue = this.targetInputValue();
     return (
       targetInputValue.length > 0 &&
-      !this.terminalOptions().some(
-        (option) => option.label === targetInputValue,
-      )
+      this.matchingTerminalOptions(targetInputValue).length !== 1
     );
   });
   readonly criticalPathTargetHelpText = computed(() => {
@@ -410,7 +408,7 @@ export class TaskDependencyGraphComponent {
       return "No terminal tasks are available for this graph.";
     }
     if (this.criticalPathTargetInputInvalid()) {
-      return "Value must match a terminal task.";
+      return "Value must match exactly one terminal task.";
     }
     return "Choose a terminal task to inspect critical path candidates.";
   });
@@ -609,11 +607,12 @@ export class TaskDependencyGraphComponent {
     const pendingNodeIds = nodeIds.filter(
       (nodeId) => (incomingCounts.get(nodeId) ?? 0) === 0,
     );
+    let pendingNodeIndex = 0;
     let processedNodeCount = 0;
 
-    while (pendingNodeIds.length > 0) {
-      const sourceId = pendingNodeIds.shift();
-      if (!sourceId) continue;
+    while (pendingNodeIndex < pendingNodeIds.length) {
+      const sourceId = pendingNodeIds[pendingNodeIndex];
+      pendingNodeIndex += 1;
       processedNodeCount += 1;
 
       const sourceCandidate = bestByNodeId.get(sourceId);
@@ -639,7 +638,6 @@ export class TaskDependencyGraphComponent {
         );
         if ((incomingCounts.get(edge.targetId) ?? 0) === 0) {
           pendingNodeIds.push(edge.targetId);
-          pendingNodeIds.sort((left, right) => left.localeCompare(right));
         }
       }
     }
@@ -696,7 +694,7 @@ export class TaskDependencyGraphComponent {
     }
 
     if (this.criticalPathTargetInputInvalid()) {
-      return "Critical path highlighting is unavailable because the target must match a terminal task.";
+      return "Critical path highlighting is unavailable because the target must match exactly one terminal task.";
     }
 
     if (!this.effectiveCriticalPathTargetNodeId()) {
@@ -830,10 +828,14 @@ export class TaskDependencyGraphComponent {
   selectCriticalPathTarget(typedValue: string | null): void {
     this.userModifiedTarget.set(true);
     this.targetInputValue.set(typedValue ?? "");
-    const match = this.terminalOptions().find(
-      (option) => option.label === typedValue,
+    const matches = this.matchingTerminalOptions(typedValue ?? "");
+    this.selectedTerminalNodeId.set(
+      matches.length === 1 ? (matches[0]?.nodeId ?? null) : null,
     );
-    this.selectedTerminalNodeId.set(match?.nodeId ?? null);
+  }
+
+  private matchingTerminalOptions(label: string): CriticalPathTargetOption[] {
+    return this.terminalOptions().filter((option) => option.label === label);
   }
 
   private isTerminalNodeId(nodeId: string): boolean {

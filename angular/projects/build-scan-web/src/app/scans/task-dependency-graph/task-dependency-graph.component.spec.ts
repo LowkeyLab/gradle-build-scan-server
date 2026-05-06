@@ -421,6 +421,37 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.criticalPathWarning()).toContain("terminal task");
     });
 
+    it("treats duplicate terminal labels as ambiguous target values", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":build", durationMs: 10 }),
+        buildTaskEdge({ id: "B", taskPath: ":build", durationMs: 20 }),
+      ]);
+
+      expect(component.terminalOptions().map((option) => option.label)).toEqual([
+        ":build",
+        ":build",
+      ]);
+
+      component.selectCriticalPathTarget(":build");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      expect(component.targetInputValue()).toBe(":build");
+      expect(component.effectiveCriticalPathTargetNodeId()).toBeNull();
+      expect(component.criticalPathTargetInputInvalid()).toBe(true);
+      expect(component.criticalPathTargetHelpText()).toContain(
+        "exactly one terminal task",
+      );
+
+      component.showCriticalPath.set(true);
+
+      expect(component.highlightState()).toBeNull();
+      expect(component.criticalPathWarning()).toContain(
+        "exactly one terminal task",
+      );
+    });
+
     it("handles zero, multiple, missing, non-terminal, and terminal requested-task preselection cases", async () => {
       await render([
         buildTaskEdge({ id: "A", taskPath: ":build" }),
@@ -1319,7 +1350,9 @@ describe("TaskDependencyGraphComponent", () => {
       const help = fixture.nativeElement.querySelector(
         '[data-testid="task-critical-path-target-help"]',
       ) as HTMLElement;
-      expect(help.textContent).toContain("Value must match a terminal task");
+      expect(help.textContent).toContain(
+        "Value must match exactly one terminal task",
+      );
       expect(component.effectiveCriticalPathTargetNodeId()).toBeNull();
 
       component.toggleCriticalPath();
