@@ -87,6 +87,9 @@ catalogs:
     '@antv/g-web-animations-api':
       specifier: 2.1.32
       version: 2.1.32
+    '@antv/g6':
+      specifier: ^5.1.0
+      version: 5.1.1
     '@antv/graphlib':
       specifier: ^2.0.4
       version: 2.0.4
@@ -114,9 +117,6 @@ catalogs:
     '@astrojs/check':
       specifier: ^0.9.8
       version: 0.9.9
-    '@astrojs/starlight':
-      specifier: ^0.39.0
-      version: 0.39.1
     '@babel/runtime':
       specifier: ^7.25.6
       version: 7.29.2
@@ -496,7 +496,7 @@ importers:
         version: 2.0.0
       '@antv/layout-wasm':
         specifier: 'catalog:'
-        version: 1.4.2(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))
+        version: 1.4.2(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))
       '@antv/scale':
         specifier: 'catalog:'
         version: 0.5.2
@@ -791,7 +791,7 @@ importers:
         version: 0.9.9(prettier@3.8.3)(typescript@5.9.3)
       '@astrojs/starlight':
         specifier: 'catalog:'
-        version: 0.39.1(astro@6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4))(typescript@5.9.3)
+        version: 0.39.2(astro@6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4))(typescript@5.9.3)
       astro:
         specifier: 'catalog:'
         version: 6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4)
@@ -1168,8 +1168,8 @@ packages:
   '@astrojs/sitemap@3.7.2':
     resolution: {integrity: sha512-PqkzkcZTb5ICiyIR8VoKbIAP/laNRXi5tw616N1Ckk+40oNB8Can1AzVV56lrbC5GKSZFCyJYUVYqVivMisvpA==}
 
-  '@astrojs/starlight@0.39.1':
-    resolution: {integrity: sha512-9kIAXBwcqAuFQ7Ft419fr6rz6p0SPg7Yfgc28TfzoCcuOH9utZgIola9yOq5YIMDrR8rmm8kyl7pCsfrPVmLhQ==}
+  '@astrojs/starlight@0.39.2':
+    resolution: {integrity: sha512-vlw+bwnjtf5buCTUtLU7JfV6D3knslxqnspr6LKs6hfRuFZiyr5hT44F7GyDqR9FKANUqFxnIzWM81F1k/kOUA==}
     peerDependencies:
       astro: ^6.0.0
 
@@ -3056,8 +3056,8 @@ packages:
   '@types/nlcst@2.0.3':
     resolution: {integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==}
 
-  '@types/node@24.12.2':
-    resolution: {integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==}
+  '@types/node@24.12.3':
+    resolution: {integrity: sha512-8oljBDGun9cIsZRJR6fkihn0TSXJI0UDOOhncYaERq6M0JMDoPLxyscwruJcb4GKS6dvK/d8xebYBg27h/duaQ==}
 
   '@types/node@25.6.2':
     resolution: {integrity: sha512-sokuT28dxf9JT5Kady1fsXOvI4HVpjZa95NKT5y9PNTIrs2AsobR4GFAA90ZG8M+nxVRLysCXsVj6eGC7Vbrlw==}
@@ -5788,18 +5788,45 @@ packages:
     resolution: {integrity: sha512-/7sHKgQO3JLP9ESlwTYUUftHUadOURUqq23xs1vjcnp8Vss6k0wCfzulyEtk5g91pjvnuriimGlyG7k6msrzRw==}
     engines: {node: '>=18'}
 
-  terser-webpack-plugin@5.5.0:
-    resolution: {integrity: sha512-UYhptBwhWvfIjKd/UuFo6D8uq9xpGLDK+z8EDsj/zWhrTaH34cKEbrkMKfV5YWqGBvAYA3tlzZbs2R+qYrbQJA==}
+  terser-webpack-plugin@5.6.0:
+    resolution: {integrity: sha512-Eum+5ajkaOhf5KbM26osvv21kLD7BaGqQ1UA4Ami4arYwylmGUQTgHFpHDdmJod1q4QXa66p0to/FBKID+J1vA==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
+      '@minify-html/node': '*'
       '@swc/core': '*'
+      '@swc/css': '*'
+      '@swc/html': '*'
+      clean-css: '*'
+      cssnano: '*'
+      csso: '*'
       esbuild: '*'
+      html-minifier-terser: '*'
+      lightningcss: '*'
+      postcss: '*'
       uglify-js: '*'
       webpack: ^5.1.0
     peerDependenciesMeta:
+      '@minify-html/node':
+        optional: true
       '@swc/core':
         optional: true
+      '@swc/css':
+        optional: true
+      '@swc/html':
+        optional: true
+      clean-css:
+        optional: true
+      cssnano:
+        optional: true
+      csso:
+        optional: true
       esbuild:
+        optional: true
+      html-minifier-terser:
+        optional: true
+      lightningcss:
+        optional: true
+      postcss:
         optional: true
       uglify-js:
         optional: true
@@ -6936,9 +6963,9 @@ snapshots:
 
   '@antv/hierarchy@0.7.1': {}
 
-  '@antv/layout-wasm@1.4.2(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))':
+  '@antv/layout-wasm@1.4.2(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))':
     dependencies:
-      '@antv/layout': 1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))
+      '@antv/layout': 1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))
       '@antv/util': 3.3.11
       comlink: 4.4.2
       tslib: 2.8.1
@@ -6946,12 +6973,12 @@ snapshots:
     transitivePeerDependencies:
       - workerize-loader
 
-  '@antv/layout@1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))':
+  '@antv/layout@1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))':
     dependencies:
       '@antv/event-emitter': 0.1.3
       '@antv/graphlib': 2.0.4
       '@antv/util': 3.3.11
-      '@naoak/workerize-transferable': 0.1.0(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))
+      '@naoak/workerize-transferable': 0.1.0(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))
       comlink: 4.4.2
       d3-force: 3.0.0
       d3-force-3d: 3.0.6
@@ -7176,7 +7203,7 @@ snapshots:
       stream-replace-string: 2.0.0
       zod: 4.4.3
 
-  '@astrojs/starlight@0.39.1(astro@6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4))(typescript@5.9.3)':
+  '@astrojs/starlight@0.39.2(astro@6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4))(typescript@5.9.3)':
     dependencies:
       '@astrojs/markdown-remark': 7.1.1
       '@astrojs/mdx': 5.0.4(astro@6.3.1(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.3)(sass@1.97.3)(terser@5.47.1)(yaml@2.8.4))
@@ -8015,9 +8042,9 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
-  '@naoak/workerize-transferable@0.1.0(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)))':
+  '@naoak/workerize-transferable@0.1.0(workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)))':
     dependencies:
-      workerize-loader: 2.0.2(webpack@5.106.2(esbuild@0.27.7))
+      workerize-loader: 2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14))
 
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
@@ -8694,7 +8721,7 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/node@24.12.2':
+  '@types/node@24.12.3':
     dependencies:
       undici-types: 7.16.0
 
@@ -8704,7 +8731,7 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 24.12.2
+      '@types/node': 24.12.3
 
   '@types/unist@2.0.11': {}
 
@@ -12190,7 +12217,7 @@ snapshots:
 
   sitemap@9.0.1:
     dependencies:
-      '@types/node': 24.12.2
+      '@types/node': 24.12.3
       '@types/sax': 1.2.7
       arg: 5.0.2
       sax: 1.6.0
@@ -12328,15 +12355,17 @@ snapshots:
       minizlib: 3.1.0
       yallist: 5.0.0
 
-  terser-webpack-plugin@5.5.0(esbuild@0.27.7)(webpack@5.106.2(esbuild@0.27.7)):
+  terser-webpack-plugin@5.6.0(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.47.1
-      webpack: 5.106.2(esbuild@0.27.7)
+      webpack: 5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)
     optionalDependencies:
       esbuild: 0.27.7
+      lightningcss: 1.32.0
+      postcss: 8.5.14
 
   terser@5.47.1:
     dependencies:
@@ -12765,7 +12794,7 @@ snapshots:
 
   webpack-sources@3.4.1: {}
 
-  webpack@5.106.2(esbuild@0.27.7):
+  webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -12788,12 +12817,21 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.5.0(esbuild@0.27.7)(webpack@5.106.2(esbuild@0.27.7))
+      terser-webpack-plugin: 5.6.0(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14))
       watchpack: 2.5.1
       webpack-sources: 3.4.1
     transitivePeerDependencies:
+      - '@minify-html/node'
       - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
       - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
       - uglify-js
 
   whatwg-mimetype@5.0.0: {}
@@ -12823,10 +12861,10 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)):
+  workerize-loader@2.0.2(webpack@5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)):
     dependencies:
       loader-utils: 2.0.4
-      webpack: 5.106.2(esbuild@0.27.7)
+      webpack: 5.106.2(esbuild@0.27.7)(lightningcss@1.32.0)(postcss@8.5.14)
 
   wrap-ansi@6.2.0:
     dependencies:
