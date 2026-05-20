@@ -145,12 +145,13 @@ const GET_SCAN_TASKS = gql`
           [loading]="loading()"
         />
 
-        @if (showDependencyGraph()) {
-          <app-task-dependency-graph
-            [taskEdges]="taskEdges()"
-            [requestedTasks]="requestedTasks()"
-          />
-        } @else if (hasLargeTaskGraph()) {
+        <app-task-dependency-graph
+          [taskEdges]="taskEdges()"
+          [requestedTasks]="requestedTasks()"
+          [hiddenForLargeGraph]="hasLargeTaskGraph() && !renderLargeGraph()"
+        />
+
+        @if (hasLargeTaskGraph() && !renderLargeGraph()) {
           <div
             class="rounded-md border border-base-300 bg-base-200 p-4 text-sm"
           >
@@ -195,9 +196,6 @@ export class ScanTasksTabComponent implements OnInit {
   renderLargeGraph = signal(false);
   hasLargeTaskGraph = computed(
     () => this.taskCount() > LARGE_GRAPH_TASK_THRESHOLD,
-  );
-  showDependencyGraph = computed(
-    () => !this.hasLargeTaskGraph() || this.renderLargeGraph(),
   );
 
   private loadRemainingPages(

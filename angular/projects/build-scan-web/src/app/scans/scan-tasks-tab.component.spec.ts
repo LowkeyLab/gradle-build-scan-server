@@ -121,6 +121,7 @@ describe("ScanTasksTabComponent", () => {
       fixture.nativeElement.querySelector("app-task-dependency-graph"),
     ).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain("Task Dependencies");
+    expect(fixture.nativeElement.textContent).toContain("Critical Path");
     expect(fixture.nativeElement.querySelector("app-tasks-table")).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll("tbody tr").length).toBe(1);
   });
@@ -204,10 +205,16 @@ describe("ScanTasksTabComponent", () => {
 
     expect(
       largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
-    ).toBeNull();
+    ).toBeTruthy();
+    expect(
+      largeFixture.nativeElement.querySelector(
+        "[data-testid='task-dependency-graph-hidden']",
+      ),
+    ).toBeTruthy();
     expect(largeFixture.nativeElement.textContent).toContain(
       "Task dependency graph hidden",
     );
+    expect(largeFixture.nativeElement.textContent).toContain("Critical Path");
 
     const buttons = Array.from(
       (largeFixture.nativeElement as HTMLElement).querySelectorAll("button"),
@@ -224,6 +231,15 @@ describe("ScanTasksTabComponent", () => {
     expect(
       largeFixture.nativeElement.querySelector("app-task-dependency-graph"),
     ).toBeTruthy();
+    expect(
+      largeFixture.nativeElement.querySelector(
+        "[data-testid='task-dependency-graph-hidden']",
+      ),
+    ).toBeNull();
+    expect(largeFixture.nativeElement.textContent).toContain("Critical Path");
+    expect(largeFixture.nativeElement.textContent).not.toContain(
+      "Task dependency graph hidden",
+    );
 
     largeFixture.destroy();
   });
