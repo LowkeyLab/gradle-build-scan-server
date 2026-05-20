@@ -44,7 +44,7 @@ interface TaskDependencyEdge {
 
 interface TaskDependencyHighlightState {
   activeNodeId: string;
-  mode: "selected" | "critical";
+  mode: "selected";
   highlightedNodeIds: ReadonlySet<string>;
   highlightedEdgeKeys: ReadonlySet<string>;
 }
@@ -142,11 +142,6 @@ const FALLBACK_STYLE = {
   strokeColor: "oklch(55% 0.04 260)",
 };
 
-const CRITICAL_STYLE = {
-  strokeColor: "oklch(72% 0.18 70)",
-  shadowColor: "oklch(72% 0.18 70 / 0.72)",
-};
-
 const LEGEND_NODE_ITEMS: LegendNodeItem[] = [
   { label: "Success", ...SUCCESS_STYLE },
   { label: "From Cache", ...FROM_CACHE_STYLE },
@@ -235,6 +230,65 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
   return event.target?.id ?? null;
 }
 
+function buildG6TaskGraphData(graph: {
+  nodes: TaskDependencyNode[];
+  edges: TaskDependencyEdge[];
+}): G6TaskGraphData {
+  const incomingCounts = buildIncomingDependencyCounts(graph.edges);
+  const nodes = graph.nodes.map((node) => {
+    const style = getOutcomeStyle(node.outcome);
+    const incomingDependencyCount = incomingCounts.get(node.id) ?? 0;
+    return {
+      id: node.id,
+      data: {
+        label: node.label,
+        displayLabel: node.displayLabel,
+        outcome: node.outcome,
+        incomingDependencyCount,
+      },
+      style: {
+        size: getNodeSize(incomingDependencyCount),
+        fill: style.fillColor,
+        stroke: style.strokeColor,
+        lineWidth: 2,
+        labelText: node.displayLabel,
+        labelFill: "currentColor",
+        labelFontSize: 16,
+        labelFontWeight: 600,
+      },
+    };
+  });
+
+  const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const edges = graph.edges.map((edge) => {
+    const targetNode = nodesById.get(edge.targetId);
+    const targetStyle = targetNode
+      ? getOutcomeStyle(targetNode.outcome)
+      : FALLBACK_STYLE;
+    return {
+      id: edgeKey(edge),
+      source: edge.sourceId,
+      target: edge.targetId,
+      data: {
+        sourceId: edge.sourceId,
+        targetId: edge.targetId,
+      },
+      style: {
+        stroke: targetStyle.strokeColor,
+        lineWidth: 2.4,
+        opacity: 0.92,
+      },
+    };
+  });
+
+  return {
+    data: { nodes, edges },
+    key: buildGraphDataKey(graph),
+    nodeIds: graph.nodes.map((node) => node.id),
+    edgeIds: graph.edges.map((edge) => edgeKey(edge)),
+  };
+}
+
 @Component({
   selector: "app-task-dependency-graph",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -249,64 +303,9 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             </p>
           </div>
           @if (graph().nodes.length > 0) {
-            <div class="flex flex-col items-end gap-2 text-right">
-              <div class="flex flex-col items-end gap-1">
-                <label
-                  class="text-xs font-medium uppercase tracking-wide opacity-70"
-                  for="task-critical-path-target-input"
-                >
-                  Critical path target
-                </label>
-                <input
-                  id="task-critical-path-target-input"
-                  data-testid="task-critical-path-target-input"
-                  type="text"
-                  list="task-critical-path-target-options"
-                  class="input input-sm input-bordered w-64 max-w-full font-mono text-xs"
-                  [value]="targetInputValue()"
-                  [disabled]="terminalOptions().length === 0"
-                  [attr.aria-describedby]="'task-critical-path-target-help'"
-                  [attr.aria-invalid]="criticalPathTargetInputInvalid()"
-                  (input)="selectCriticalPathTarget($any($event.target).value)"
-                  (change)="selectCriticalPathTarget($any($event.target).value)"
-                />
-                <datalist
-                  id="task-critical-path-target-options"
-                  data-testid="task-critical-path-target-options"
-                >
-                  @for (option of terminalOptions(); track option.nodeId) {
-                    <option [value]="option.label"></option>
-                  }
-                </datalist>
-                <p
-                  id="task-critical-path-target-help"
-                  data-testid="task-critical-path-target-help"
-                  class="max-w-64 text-xs"
-                  [class.opacity-60]="!criticalPathTargetInputInvalid()"
-                  [class.text-error]="criticalPathTargetInputInvalid()"
-                >
-                  {{ criticalPathTargetHelpText() }}
-                </p>
-              </div>
-              <button
-                data-testid="task-critical-path-toggle"
-                type="button"
-                class="btn btn-sm border-base-300 shadow-none"
-                [class.btn-warning]="showCriticalPath()"
-                [class.btn-outline]="!showCriticalPath()"
-                [attr.aria-pressed]="showCriticalPath()"
-                (click)="toggleCriticalPath()"
-              >
-                @if (showCriticalPath()) {
-                  Critical path highlighted
-                } @else {
-                  Highlight critical path
-                }
-              </button>
-              <div class="text-xs opacity-60">
-                {{ graph().nodes.length }} nodes ·
-                {{ graph().edges.length }} edges
-              </div>
+            <div class="text-right text-xs opacity-60">
+              {{ graph().nodes.length }} nodes ·
+              {{ graph().edges.length }} edges
             </div>
           }
         </div>
@@ -335,6 +334,90 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             </div>
           </div>
 
+          @if (!hiddenForLargeGraph()) {
+            <div
+              class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
+            >
+              <div
+                #graphContainer
+                data-testid="task-dependency-graph"
+                class="task-dependency-g6 h-[36rem] min-h-[32rem] w-full touch-none select-none text-base-content"
+              ></div>
+            </div>
+          } @else {
+            <div
+              data-testid="task-dependency-graph-hidden"
+              class="rounded-box border border-base-300 bg-base-100/40 p-3 text-sm"
+            >
+              <div class="font-semibold">Full graph hidden</div>
+              <p class="mt-1 opacity-70">
+                The full dependency graph is hidden for this large scan. Use the
+                Critical Path section below or render the full graph anyway.
+              </p>
+            </div>
+          }
+        } @else {
+          <p class="text-sm opacity-60">No task dependency graph available.</p>
+        }
+      </div>
+    </div>
+
+    @if (graph().nodes.length > 0) {
+      <div class="card bg-base-200 mb-6">
+        <div class="card-body p-4">
+          <div class="mb-3 flex items-start justify-between gap-4">
+            <div>
+              <h4 class="font-semibold">Critical Path</h4>
+              <p class="text-xs opacity-60">
+                Render only the longest dependency chain for a terminal task.
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-1 text-right">
+              <label
+                class="text-xs font-medium uppercase tracking-wide opacity-70"
+                for="task-critical-path-target-input"
+              >
+                Critical path target
+              </label>
+              <input
+                id="task-critical-path-target-input"
+                data-testid="task-critical-path-target-input"
+                type="text"
+                list="task-critical-path-target-options"
+                class="input input-sm input-bordered w-64 max-w-full font-mono text-xs"
+                [value]="targetInputValue()"
+                [disabled]="terminalOptions().length === 0"
+                [attr.aria-describedby]="'task-critical-path-target-help'"
+                [attr.aria-invalid]="criticalPathTargetInputInvalid()"
+                (input)="selectCriticalPathTarget($any($event.target).value)"
+                (change)="selectCriticalPathTarget($any($event.target).value)"
+              />
+              <datalist
+                id="task-critical-path-target-options"
+                data-testid="task-critical-path-target-options"
+              >
+                @for (option of terminalOptions(); track option.nodeId) {
+                  <option [value]="option.label"></option>
+                }
+              </datalist>
+              <p
+                id="task-critical-path-target-help"
+                data-testid="task-critical-path-target-help"
+                class="max-w-64 text-xs"
+                [class.opacity-60]="!criticalPathTargetInputInvalid()"
+                [class.text-error]="criticalPathTargetInputInvalid()"
+              >
+                {{ criticalPathTargetHelpText() }}
+              </p>
+              @if (!criticalPathWarning()) {
+                <div class="text-xs opacity-60">
+                  {{ criticalPathGraphData().nodeIds.length }} nodes ·
+                  {{ criticalPathGraphData().edgeIds.length }} edges
+                </div>
+              }
+            </div>
+          </div>
+
           @if (criticalPathWarning()) {
             <div
               data-testid="task-critical-path-warning"
@@ -342,22 +425,20 @@ function getNodeIdFromEvent(event: IElementEvent): string | null {
             >
               {{ criticalPathWarning() }}
             </div>
-          }
-
-          <div
-            class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
-          >
+          } @else if (criticalPathGraphData().nodeIds.length > 0) {
             <div
-              #graphContainer
-              data-testid="task-dependency-graph"
-              class="task-dependency-g6 h-[36rem] min-h-[32rem] w-full touch-none select-none text-base-content"
-            ></div>
-          </div>
-        } @else {
-          <p class="text-sm opacity-60">No task dependency graph available.</p>
-        }
+              class="overflow-hidden rounded-box border border-base-300 bg-base-100/40 p-3"
+            >
+              <div
+                #criticalPathGraphContainer
+                data-testid="task-critical-path-graph"
+                class="task-dependency-g6 h-[28rem] min-h-[24rem] w-full touch-none select-none text-base-content"
+              ></div>
+            </div>
+          }
+        </div>
       </div>
-    </div>
+    }
   `,
 })
 export class TaskDependencyGraphComponent {
@@ -367,6 +448,9 @@ export class TaskDependencyGraphComponent {
   readonly edgeKey = edgeKey;
 
   private graphContainer = viewChild<ElementRef<HTMLElement>>("graphContainer");
+  private criticalPathGraphContainer = viewChild<ElementRef<HTMLElement>>(
+    "criticalPathGraphContainer",
+  );
   private destroyRef = inject(DestroyRef);
   private g6Graph: Graph | null = null;
   private g6ContainerElement: HTMLElement | null = null;
@@ -374,11 +458,16 @@ export class TaskDependencyGraphComponent {
   private pendingGraphKey: string | null = null;
   private renderRequestId = 0;
   private hasSyncedActiveElementStates = false;
+  private criticalPathG6Graph: Graph | null = null;
+  private criticalPathG6ContainerElement: HTMLElement | null = null;
+  private lastRenderedCriticalPathGraphKey: string | null = null;
+  private pendingCriticalPathGraphKey: string | null = null;
+  private criticalPathRenderRequestId = 0;
   private selectedNodeId = signal<string | null>(null);
   readonly targetInputValue = signal<string>("");
   private selectedTerminalNodeId = signal<string | null>(null);
   private userModifiedTarget = signal(false);
-  showCriticalPath = signal(false);
+  readonly hiddenForLargeGraph = input(false);
   readonly terminalOptions = computed<CriticalPathTargetOption[]>(() => {
     const graph = this.graph();
     const sourceNodeIds = new Set(graph.edges.map((edge) => edge.sourceId));
@@ -444,6 +533,7 @@ export class TaskDependencyGraphComponent {
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.destroyGraph();
+      this.destroyCriticalPathGraph();
     });
 
     afterRenderEffect(() => {
@@ -484,23 +574,54 @@ export class TaskDependencyGraphComponent {
 
       const containerRef = this.graphContainer();
       const graphData = this.g6GraphData();
-      if (!containerRef || graphData.nodeIds.length === 0) {
+      if (
+        !containerRef ||
+        graphData.nodeIds.length === 0 ||
+        this.hiddenForLargeGraph()
+      ) {
         this.destroyGraph();
+      } else {
+        const container = containerRef.nativeElement;
+        if (
+          !(
+            this.g6Graph &&
+            this.g6ContainerElement === container &&
+            this.lastRenderedGraphKey === graphData.key
+          ) &&
+          this.pendingGraphKey !== graphData.key
+        ) {
+          this.pendingGraphKey = graphData.key;
+          void this.renderG6Graph(container, graphData);
+        }
+      }
+
+      const criticalPathContainerRef = this.criticalPathGraphContainer();
+      const criticalPathGraphData = this.criticalPathGraphData();
+      if (
+        !criticalPathContainerRef ||
+        criticalPathGraphData.nodeIds.length === 0 ||
+        this.criticalPathWarning()
+      ) {
+        this.destroyCriticalPathGraph();
         return;
       }
 
-      const container = containerRef.nativeElement;
+      const criticalPathContainer = criticalPathContainerRef.nativeElement;
       if (
-        this.g6Graph &&
-        this.g6ContainerElement === container &&
-        this.lastRenderedGraphKey === graphData.key
+        this.criticalPathG6Graph &&
+        this.criticalPathG6ContainerElement === criticalPathContainer &&
+        this.lastRenderedCriticalPathGraphKey === criticalPathGraphData.key
       ) {
         return;
       }
-      if (this.pendingGraphKey === graphData.key) return;
+      if (this.pendingCriticalPathGraphKey === criticalPathGraphData.key)
+        return;
 
-      this.pendingGraphKey = graphData.key;
-      void this.renderG6Graph(container, graphData);
+      this.pendingCriticalPathGraphKey = criticalPathGraphData.key;
+      void this.renderCriticalPathG6Graph(
+        criticalPathContainer,
+        criticalPathGraphData,
+      );
     });
 
     afterRenderEffect(() => {
@@ -679,102 +800,47 @@ export class TaskDependencyGraphComponent {
     };
   });
 
-  criticalPathHasCycle = computed(
-    () => this.showCriticalPath() && this.criticalPathState().hasCycle,
-  );
+  criticalPathHasCycle = computed(() => this.criticalPathState().hasCycle);
 
   criticalPathWarning = computed(() => {
-    if (!this.showCriticalPath()) {
-      return null;
-    }
+    if (this.graph().nodes.length === 0) return null;
 
     const criticalPathState = this.criticalPathState();
     if (criticalPathState.hasCycle) {
-      return "Critical path highlighting is unavailable because this graph contains a dependency cycle.";
+      return "Critical path is unavailable because this graph contains a dependency cycle.";
     }
 
     if (this.criticalPathTargetInputInvalid()) {
-      return "Critical path highlighting is unavailable because the target must match exactly one terminal task.";
+      return "Critical path is unavailable because the target must match exactly one terminal task.";
     }
 
     if (!this.effectiveCriticalPathTargetNodeId()) {
-      return "Critical path highlighting is unavailable because you must choose a terminal task from the selector.";
+      return "Critical path is unavailable because you must choose a terminal task from the selector.";
     }
 
     return null;
   });
 
-  private g6GraphData = computed<G6TaskGraphData>(() => {
+  private g6GraphData = computed<G6TaskGraphData>(() =>
+    buildG6TaskGraphData(this.graph()),
+  );
+
+  readonly criticalPathGraphData = computed<G6TaskGraphData>(() => {
     const graph = this.graph();
-    const incomingCounts = buildIncomingDependencyCounts(graph.edges);
-    const nodes = graph.nodes.map((node) => {
-      const style = getOutcomeStyle(node.outcome);
-      const incomingDependencyCount = incomingCounts.get(node.id) ?? 0;
-      return {
-        id: node.id,
-        data: {
-          label: node.label,
-          displayLabel: node.displayLabel,
-          outcome: node.outcome,
-          incomingDependencyCount,
-        },
-        style: {
-          size: getNodeSize(incomingDependencyCount),
-          fill: style.fillColor,
-          stroke: style.strokeColor,
-          lineWidth: 2,
-          labelText: node.displayLabel,
-          labelFill: "currentColor",
-          labelFontSize: 16,
-          labelFontWeight: 600,
-        },
-      };
-    });
-
-    const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
-    const edges = graph.edges.map((edge) => {
-      const targetNode = nodesById.get(edge.targetId);
-      const targetStyle = targetNode
-        ? getOutcomeStyle(targetNode.outcome)
-        : FALLBACK_STYLE;
-      return {
-        id: edgeKey(edge),
-        source: edge.sourceId,
-        target: edge.targetId,
-        data: {
-          sourceId: edge.sourceId,
-          targetId: edge.targetId,
-        },
-        style: {
-          stroke: targetStyle.strokeColor,
-          lineWidth: 2.4,
-          opacity: 0.92,
-        },
-      };
-    });
-
-    return {
-      data: { nodes, edges },
-      key: buildGraphDataKey(graph),
-      nodeIds: graph.nodes.map((node) => node.id),
-      edgeIds: graph.edges.map((edge) => edgeKey(edge)),
-    };
+    const criticalPathState = this.criticalPathState();
+    const nodes = graph.nodes.filter((node) =>
+      criticalPathState.nodeIds.has(node.id),
+    );
+    const edges = graph.edges.filter(
+      (edge) =>
+        criticalPathState.edgeKeys.has(edgeKey(edge)) &&
+        criticalPathState.nodeIds.has(edge.sourceId) &&
+        criticalPathState.nodeIds.has(edge.targetId),
+    );
+    return buildG6TaskGraphData({ nodes, edges });
   });
 
   highlightState = computed<TaskDependencyHighlightState | null>(() => {
-    if (this.showCriticalPath()) {
-      if (this.criticalPathTargetInputInvalid()) return null;
-      const criticalPath = this.criticalPathState();
-      const [activeNodeId] = criticalPath.nodeIds;
-      if (criticalPath.hasCycle || !activeNodeId) return null;
-      return {
-        activeNodeId,
-        mode: "critical",
-        highlightedNodeIds: criticalPath.nodeIds,
-        highlightedEdgeKeys: criticalPath.edgeKeys,
-      };
-    }
-
     const activeNodeId = this.selectedNodeIdInGraph();
     if (!activeNodeId) return null;
 
@@ -821,10 +887,6 @@ export class TaskDependencyGraphComponent {
     this.selectedNodeId.set(null);
   }
 
-  toggleCriticalPath(): void {
-    this.showCriticalPath.update((isShown) => !isShown);
-  }
-
   selectCriticalPathTarget(typedValue: string | null): void {
     this.userModifiedTarget.set(true);
     this.targetInputValue.set(typedValue ?? "");
@@ -842,16 +904,9 @@ export class TaskDependencyGraphComponent {
     return this.terminalOptions().some((option) => option.nodeId === nodeId);
   }
 
-  nodeHighlightState(
-    nodeId: string,
-  ): "idle" | "highlighted" | "critical" | "dimmed" {
+  nodeHighlightState(nodeId: string): "idle" | "highlighted" | "dimmed" {
     const highlightState = this.highlightState();
     if (!highlightState) return "idle";
-    if (highlightState.mode === "critical") {
-      return highlightState.highlightedNodeIds.has(nodeId)
-        ? "critical"
-        : "dimmed";
-    }
     return highlightState.highlightedNodeIds.has(nodeId)
       ? "highlighted"
       : "dimmed";
@@ -859,13 +914,10 @@ export class TaskDependencyGraphComponent {
 
   edgeHighlightState(
     edge: TaskDependencyEdge,
-  ): "idle" | "highlighted" | "critical" | "dimmed" {
+  ): "idle" | "highlighted" | "dimmed" {
     const highlightState = this.highlightState();
     if (!highlightState) return "idle";
     const isHighlighted = highlightState.highlightedEdgeKeys.has(edgeKey(edge));
-    if (highlightState.mode === "critical") {
-      return isHighlighted ? "critical" : "dimmed";
-    }
     return isHighlighted ? "highlighted" : "dimmed";
   }
 
@@ -892,6 +944,41 @@ export class TaskDependencyGraphComponent {
     if (this.pendingGraphKey === graphData.key) this.pendingGraphKey = null;
     await graph.fitView();
     this.syncG6ElementStates();
+  }
+
+  private async renderCriticalPathG6Graph(
+    container: HTMLElement,
+    graphData: G6TaskGraphData,
+  ): Promise<void> {
+    const requestId = ++this.criticalPathRenderRequestId;
+    if (
+      !this.criticalPathG6Graph ||
+      this.criticalPathG6ContainerElement !== container
+    ) {
+      this.destroyCriticalPathGraph(false);
+      this.criticalPathG6ContainerElement = container;
+      this.criticalPathG6Graph = new Graph(
+        this.buildGraphOptions(container, graphData),
+      );
+    } else {
+      this.criticalPathG6Graph.setData(graphData.data);
+      this.criticalPathG6Graph.setLayout(TASK_GRAPH_LAYOUT);
+    }
+
+    const graph = this.criticalPathG6Graph;
+    await graph.render();
+    if (
+      requestId !== this.criticalPathRenderRequestId ||
+      this.criticalPathG6Graph !== graph
+    ) {
+      return;
+    }
+
+    this.lastRenderedCriticalPathGraphKey = graphData.key;
+    if (this.pendingCriticalPathGraphKey === graphData.key) {
+      this.pendingCriticalPathGraphKey = null;
+    }
+    await graph.fitView();
   }
 
   private buildGraphOptions(
@@ -926,12 +1013,6 @@ export class TaskDependencyGraphComponent {
           selected: {
             lineWidth: 4,
           },
-          critical: {
-            stroke: CRITICAL_STYLE.strokeColor,
-            lineWidth: 5,
-            shadowBlur: 18,
-            shadowColor: CRITICAL_STYLE.shadowColor,
-          },
           dimmed: {
             opacity: 0.28,
             labelOpacity: 0.36,
@@ -948,11 +1029,6 @@ export class TaskDependencyGraphComponent {
             lineWidth: 3,
             opacity: 1,
           },
-          critical: {
-            stroke: CRITICAL_STYLE.strokeColor,
-            lineWidth: 5,
-            opacity: 1,
-          },
           dimmed: {
             opacity: 0.12,
           },
@@ -963,12 +1039,10 @@ export class TaskDependencyGraphComponent {
 
   private bindGraphEvents(graph: Graph): void {
     graph.on(NodeEvent.CLICK, (event: IElementEvent) => {
-      if (this.showCriticalPath()) return;
       const nodeId = getNodeIdFromEvent(event);
       if (nodeId) this.selectNode(nodeId);
     });
     graph.on(CanvasEvent.CLICK, () => {
-      if (this.showCriticalPath()) return;
       this.clearSelectedNode();
     });
   }
@@ -997,9 +1071,7 @@ export class TaskDependencyGraphComponent {
 
     for (const nodeId of graphData.nodeIds) {
       const state = this.nodeHighlightState(nodeId);
-      if (state === "critical") {
-        states[nodeId] = ["critical"];
-      } else if (state === "highlighted") {
+      if (state === "highlighted") {
         states[nodeId] =
           highlightState?.mode === "selected" &&
           highlightState.activeNodeId === nodeId
@@ -1029,5 +1101,15 @@ export class TaskDependencyGraphComponent {
     if (!this.g6Graph) return;
     this.g6Graph.destroy();
     this.g6Graph = null;
+  }
+
+  private destroyCriticalPathGraph(cancelPendingRender = true): void {
+    if (cancelPendingRender) this.criticalPathRenderRequestId += 1;
+    this.lastRenderedCriticalPathGraphKey = null;
+    this.pendingCriticalPathGraphKey = null;
+    this.criticalPathG6ContainerElement = null;
+    if (!this.criticalPathG6Graph) return;
+    this.criticalPathG6Graph.destroy();
+    this.criticalPathG6Graph = null;
   }
 }

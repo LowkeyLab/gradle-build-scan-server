@@ -247,6 +247,38 @@ describe("TaskDependencyGraphComponent", () => {
     return size;
   }
 
+  function graphNodeIds(
+    instance: InstanceType<typeof g6Mock.MockGraph>,
+  ): string[] {
+    return instance.data.nodes.map((node) => node.id).sort();
+  }
+
+  function graphEdgeIds(
+    instance: InstanceType<typeof g6Mock.MockGraph>,
+  ): string[] {
+    return instance.data.edges.map((edge) => edge.id).sort();
+  }
+
+  function graphEdgeSourcesAndTargets(
+    instance: InstanceType<typeof g6Mock.MockGraph>,
+  ): Array<{ source: string; target: string }> {
+    return instance.data.edges
+      .map((edge) => ({ source: edge.source, target: edge.target }))
+      .sort((left, right) =>
+        `${left.source}:${left.target}`.localeCompare(
+          `${right.source}:${right.target}`,
+        ),
+      );
+  }
+
+  function criticalPathNodeIds(): string[] {
+    return component.criticalPathGraphData().nodeIds.slice().sort();
+  }
+
+  function criticalPathEdgeIds(): string[] {
+    return component.criticalPathGraphData().edgeIds.slice().sort();
+  }
+
   function highlightedNodeIds(): string[] {
     return [
       ...(component.highlightState()?.highlightedNodeIds ?? new Set<string>()),
@@ -398,7 +430,6 @@ describe("TaskDependencyGraphComponent", () => {
       ]);
 
       component.selectCriticalPathTarget(":test");
-      component.showCriticalPath.set(true);
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
@@ -406,9 +437,9 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.targetInputValue()).toBe(":test");
       expect(component.effectiveCriticalPathTargetNodeId()).toBe("B");
       expect(component.criticalPathWarning()).toBeNull();
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(highlightedNodeIds()).toEqual(["A", "B"]);
-      expect(highlightedEdgeKeys()).toEqual(["A:B"]);
+      expect(component.highlightState()).toBeNull();
+      expect(criticalPathNodeIds()).toEqual(["A", "B"]);
+      expect(criticalPathEdgeIds()).toEqual(["A:B"]);
 
       component.selectCriticalPathTarget(":missing");
       fixture.detectChanges();
@@ -421,16 +452,101 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.criticalPathWarning()).toContain("terminal task");
     });
 
+    it("does not render the full graph as a fallback when the target is invalid or missing", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 50 }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 20,
+        }),
+        buildTaskEdge({
+          id: "C",
+          dependencies: ["B"],
+          taskPath: ":c",
+          durationMs: 30,
+        }),
+      ]);
+
+      const initialInstanceCount = g6Mock.MockGraph.instances.length;
+
+      component.selectCriticalPathTarget(":missing");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      expect(component.criticalPathWarning()).toContain("terminal task");
+      expect(g6Mock.MockGraph.instances).toHaveLength(initialInstanceCount);
+
+      component.selectCriticalPathTarget(":a");
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      expect(component.criticalPathWarning()).toContain("terminal task");
+      expect(g6Mock.MockGraph.instances).toHaveLength(initialInstanceCount);
+    });
+
+    it("does not render the full graph as a fallback when the graph contains a cycle", async () => {
+      await render([
+        buildTaskEdge({
+          id: "A",
+          taskPath: ":a",
+          durationMs: 50,
+          dependencies: ["C"],
+        }),
+        buildTaskEdge({
+          id: "B",
+          dependencies: ["A"],
+          taskPath: ":b",
+          durationMs: 20,
+        }),
+        buildTaskEdge({
+          id: "C",
+          dependencies: ["B"],
+          taskPath: ":c",
+          durationMs: 30,
+        }),
+      ]);
+
+      fixture.componentRef.setInput("requestedTasks", [":c"]);
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      expect(component.criticalPathHasCycle()).toBe(true);
+      expect(component.criticalPathWarning()).toContain("dependency cycle");
+      expect(g6Mock.MockGraph.instances).toHaveLength(1);
+    });
+
+    it("renders a one-node critical path for a terminal task with no dependencies", async () => {
+      await render([
+        buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 50 }),
+      ]);
+
+      fixture.componentRef.setInput("requestedTasks", [":a"]);
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+      fixture.detectChanges();
+
+      expect(component.highlightState()).toBeNull();
+      expect(criticalPathNodeIds()).toEqual(["A"]);
+      expect(criticalPathEdgeIds()).toEqual([]);
+      expect(component.criticalPathHasCycle()).toBe(false);
+      expect(g6Mock.MockGraph.instances).toHaveLength(2);
+      expect(graphNodeIds(graphInstance())).toEqual(["A"]);
+      expect(graphEdgeIds(graphInstance())).toEqual([]);
+    });
     it("treats duplicate terminal labels as ambiguous target values", async () => {
       await render([
         buildTaskEdge({ id: "A", taskPath: ":build", durationMs: 10 }),
         buildTaskEdge({ id: "B", taskPath: ":build", durationMs: 20 }),
       ]);
 
-      expect(component.terminalOptions().map((option) => option.label)).toEqual([
-        ":build",
-        ":build",
-      ]);
+      expect(component.terminalOptions().map((option) => option.label)).toEqual(
+        [":build", ":build"],
+      );
 
       component.selectCriticalPathTarget(":build");
       fixture.detectChanges();
@@ -443,8 +559,6 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.criticalPathTargetHelpText()).toContain(
         "exactly one terminal task",
       );
-
-      component.showCriticalPath.set(true);
 
       expect(component.highlightState()).toBeNull();
       expect(component.criticalPathWarning()).toContain(
@@ -556,7 +670,7 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.effectiveCriticalPathTargetNodeId()).toBeNull();
     });
 
-    it("computes a critical path through dependency edge direction", async () => {
+    it("computes full and critical path graph datasets for a branched dependency tree", async () => {
       await render([
         buildTaskEdge({ id: "A", taskPath: ":a", durationMs: 80 }),
         buildTaskEdge({
@@ -571,6 +685,12 @@ describe("TaskDependencyGraphComponent", () => {
           taskPath: ":c",
           durationMs: 30,
         }),
+        buildTaskEdge({
+          id: "D",
+          dependencies: ["A"],
+          taskPath: ":d",
+          durationMs: 10,
+        }),
       ]);
 
       fixture.componentRef.setInput("requestedTasks", [":c"]);
@@ -578,12 +698,26 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(highlightedNodeIds()).toEqual(["A", "B", "C"]);
-      expect(highlightedEdgeKeys()).toEqual(["A:B", "B:C"]);
+      expect(component.highlightState()).toBeNull();
+      expect(criticalPathNodeIds()).toEqual(["A", "B", "C"]);
+      expect(criticalPathEdgeIds()).toEqual(["A:B", "B:C"]);
       expect(component.criticalPathHasCycle()).toBe(false);
+
+      const instances = g6Mock.MockGraph.instances;
+      expect(instances).toHaveLength(2);
+
+      const fullGraph = instances[0];
+      const criticalPathGraph = instances[1];
+
+      expect(graphNodeIds(fullGraph)).toEqual(["A", "B", "C", "D"]);
+      expect(graphEdgeIds(fullGraph)).toEqual(["A:B", "A:D", "B:C"]);
+      expect(graphEdgeSourcesAndTargets(fullGraph)).toEqual([
+        { source: "A", target: "B" },
+        { source: "A", target: "D" },
+        { source: "B", target: "C" },
+      ]);
+      expect(graphNodeIds(criticalPathGraph)).toEqual(["A", "B", "C"]);
+      expect(graphEdgeIds(criticalPathGraph)).toEqual(["A:B", "B:C"]);
     });
 
     it("highlights only the requested terminal path in disconnected graphs", async () => {
@@ -615,10 +749,8 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(highlightedNodeIds()).toEqual(["A", "B"]);
-      expect(highlightedEdgeKeys()).toEqual(["A:B"]);
+      expect(criticalPathNodeIds()).toEqual(["A", "B"]);
+      expect(criticalPathEdgeIds()).toEqual(["A:B"]);
     });
 
     it("breaks equal-score ties by the lexicographically smallest terminal path", async () => {
@@ -651,10 +783,8 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(highlightedNodeIds()).toEqual(["A", "D", "F"]);
-      expect(highlightedEdgeKeys()).toEqual(["A:D", "D:F"]);
+      expect(criticalPathNodeIds()).toEqual(["A", "D", "F"]);
+      expect(criticalPathEdgeIds()).toEqual(["A:D", "D:F"]);
     });
 
     it("treats null durations as zero in terminal critical-path scoring", async () => {
@@ -680,10 +810,8 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(highlightedNodeIds()).toEqual(["A", "B"]);
-      expect(highlightedEdgeKeys()).toEqual(["A:B"]);
+      expect(criticalPathNodeIds()).toEqual(["A", "B"]);
+      expect(criticalPathEdgeIds()).toEqual(["A:B"]);
     });
 
     it("resolves a single exact taskPath match without normalization", async () => {
@@ -697,10 +825,8 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(highlightedNodeIds()).toEqual(["A"]);
-      expect(highlightedEdgeKeys()).toEqual([]);
+      expect(criticalPathNodeIds()).toEqual(["A"]);
+      expect(criticalPathEdgeIds()).toEqual([]);
     });
 
     it("normalizes a root task request to a single matching node", async () => {
@@ -716,10 +842,8 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
-
-      expect(highlightedNodeIds()).toEqual(["A"]);
-      expect(highlightedEdgeKeys()).toEqual([]);
+      expect(criticalPathNodeIds()).toEqual(["A"]);
+      expect(criticalPathEdgeIds()).toEqual([]);
     });
 
     it("returns no critical highlight when multiple tasks are requested", async () => {
@@ -732,9 +856,6 @@ describe("TaskDependencyGraphComponent", () => {
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
-
-      expect(component.criticalPathWarning()).toBeNull();
-      component.showCriticalPath.set(true);
 
       expect(component.highlightState()).toBeNull();
       expect(component.criticalPathHasCycle()).toBe(false);
@@ -754,12 +875,9 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      expect(component.criticalPathWarning()).toBeNull();
-      component.showCriticalPath.set(true);
-
       expect(component.highlightState()).toBeNull();
-      expect(highlightedNodeIds()).toEqual([]);
-      expect(highlightedEdgeKeys()).toEqual([]);
+      expect(criticalPathNodeIds()).toEqual([]);
+      expect(criticalPathEdgeIds()).toEqual([]);
       expect(component.criticalPathWarning()).toContain(
         "choose a terminal task from the selector",
       );
@@ -797,7 +915,6 @@ describe("TaskDependencyGraphComponent", () => {
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      component.showCriticalPath.set(true);
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
@@ -878,22 +995,12 @@ describe("TaskDependencyGraphComponent", () => {
         state: {
           highlighted: expect.objectContaining({ lineWidth: 3 }),
           selected: expect.objectContaining({ lineWidth: 4 }),
-          critical: expect.objectContaining({
-            lineWidth: 5,
-            stroke: expect.any(String),
-            shadowBlur: 18,
-          }),
           dimmed: expect.objectContaining({ opacity: 0.28 }),
         },
       });
       expect(instance.options.edge).toMatchObject({
         state: {
           highlighted: expect.objectContaining({ lineWidth: 3 }),
-          critical: expect.objectContaining({
-            lineWidth: 5,
-            stroke: expect.any(String),
-            opacity: 1,
-          }),
           dimmed: expect.objectContaining({ opacity: 0.12 }),
         },
       });
@@ -1086,7 +1193,7 @@ describe("TaskDependencyGraphComponent", () => {
       expect(elementState(instance, "T6")).toEqual([]);
     });
 
-    it("pushes critical path states into G6 and restores selected states when disabled", async () => {
+    it("keeps selected highlighting confined to the full dependency graph", async () => {
       await render([
         buildTaskEdge({ id: "T1", taskPath: ":alpha", durationMs: 10 }),
         buildTaskEdge({
@@ -1104,95 +1211,40 @@ describe("TaskDependencyGraphComponent", () => {
         }),
         buildTaskEdge({ id: "T5", taskPath: ":epsilon", durationMs: 2 }),
       ]);
-      const instance = graphInstance();
 
       fixture.componentRef.setInput("requestedTasks", [":delta"]);
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
 
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      component.showCriticalPath.set(true);
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(elementState(instance, "T4")).toEqual(["critical"]);
-      expect(elementState(instance, "T5")).toEqual(["dimmed"]);
+      expect(g6Mock.MockGraph.instances).toHaveLength(2);
+      const fullGraph = g6Mock.MockGraph.instances[0];
+      const criticalPathGraph = g6Mock.MockGraph.instances[1];
 
-      component.toggleCriticalPath();
+      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
+      expect(graphNodeIds(criticalPathGraph)).toEqual(["T1", "T2", "T4"]);
+      expect(graphEdgeIds(criticalPathGraph)).toEqual(["T1:T2", "T2:T4"]);
+      expect(criticalPathGraph.elementStates).toEqual({});
+
+      fullGraph.emitNode("node:click", "T5");
       fixture.detectChanges();
       await settleAsyncWork(fixture);
+
+      expect(component.highlightState()?.mode).toBe("selected");
+      expect(elementState(fullGraph, "T5")).toEqual([
+        "highlighted",
+        "selected",
+      ]);
+      expect(elementState(fullGraph, "T1")).toEqual(["dimmed"]);
+      expect(criticalPathGraph.elementStates).toEqual({});
+
+      fullGraph.emitCanvasClick();
+      fixture.detectChanges();
+      await settleAsyncWork(fixture);
+
       expect(component.highlightState()).toBeNull();
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual([]);
-
-      component.showCriticalPath.set(true);
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-
-      instance.emitNode("node:click", "T5");
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual(["dimmed"]);
-
-      instance.emitCanvasClick();
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual(["dimmed"]);
-
-      component.toggleCriticalPath();
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()).toBeNull();
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual([]);
-
-      component.showCriticalPath.set(true);
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-
-      instance.emitNode("node:click", "T5");
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual(["dimmed"]);
-
-      component.toggleCriticalPath();
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()).toBeNull();
-      expect(instance.elementStates).toMatchObject({
-        T1: [],
-        T2: [],
-        T4: [],
-        T3: [],
-        T5: [],
-        "T1:T2": [],
-        "T2:T4": [],
-      } satisfies ElementStateMap);
-      expect(elementState(instance, "T5")).not.toContain("selected");
-
-      component.toggleCriticalPath();
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      expect(component.highlightState()?.mode).toBe("critical");
-      expect(component.targetInputValue()).toBe(":delta");
-      expect(component.effectiveCriticalPathTargetNodeId()).toBe("T4");
-      expect(elementState(instance, "T5")).toEqual(["dimmed"]);
-      expect(elementState(instance, "T1")).toEqual(["critical"]);
-      expect(elementState(instance, "T1:T2")).toEqual(["critical"]);
+      expect(elementState(fullGraph, "T5")).toEqual([]);
+      expect(criticalPathGraph.elementStates).toEqual({});
     });
   });
 
@@ -1219,22 +1271,20 @@ describe("TaskDependencyGraphComponent", () => {
       expect(card.textContent).not.toContain("Timeline");
       expect(card.querySelector("svg")).toBeNull();
 
-      const toggle = card.querySelector(
-        '[data-testid="task-critical-path-toggle"]',
-      ) as HTMLButtonElement;
-      expect(toggle).toBeTruthy();
-      expect(toggle.getAttribute("aria-pressed")).toBe("false");
-      expect(toggle.textContent?.trim()).toBe("Highlight critical path");
+      expect(
+        card.querySelector('[data-testid="task-critical-path-toggle"]'),
+      ).toBeFalsy();
+      expect(
+        card.querySelector('[data-testid="task-critical-path-target-input"]'),
+      ).toBeFalsy();
       expect(
         card.querySelector('[data-testid="task-critical-path-warning"]'),
       ).toBeFalsy();
-
-      toggle.click();
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      fixture.detectChanges();
-      expect(toggle.getAttribute("aria-pressed")).toBe("true");
-      expect(toggle.textContent?.trim()).toBe("Critical path highlighted");
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-warning"]',
+        ),
+      ).toBeTruthy();
 
       const container = fixture.nativeElement.querySelector(
         '[data-testid="task-dependency-graph"]',
@@ -1296,7 +1346,6 @@ describe("TaskDependencyGraphComponent", () => {
 
       expect(component.targetInputValue()).toBe(":test");
       expect(component.effectiveCriticalPathTargetNodeId()).toBe("B");
-      expect(component.showCriticalPath()).toBe(false);
     });
 
     it("disables the terminal target input when no terminal tasks are available", async () => {
@@ -1355,7 +1404,6 @@ describe("TaskDependencyGraphComponent", () => {
       );
       expect(component.effectiveCriticalPathTargetNodeId()).toBeNull();
 
-      component.toggleCriticalPath();
       fixture.detectChanges();
       await settleAsyncWork(fixture);
 
@@ -1393,27 +1441,13 @@ describe("TaskDependencyGraphComponent", () => {
       expect(g6Mock.MockGraph.instances).toHaveLength(0);
     });
 
-    it("renders a terminal warning only after critical path mode is enabled", async () => {
+    it("renders a terminal warning in the Critical Path section when no target is selected", async () => {
       await render([
         buildTaskEdge({ id: "A", taskPath: ":build", durationMs: 10 }),
         buildTaskEdge({ id: "B", taskPath: ":test", durationMs: 20 }),
       ]);
 
       fixture.componentRef.setInput("requestedTasks", [":missing"]);
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      fixture.detectChanges();
-
-      expect(
-        fixture.nativeElement.querySelector(
-          '[data-testid="task-critical-path-warning"]',
-        ),
-      ).toBeFalsy();
-
-      const toggle = fixture.nativeElement.querySelector(
-        '[data-testid="task-critical-path-toggle"]',
-      ) as HTMLButtonElement;
-      toggle.click();
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
@@ -1426,6 +1460,11 @@ describe("TaskDependencyGraphComponent", () => {
         "choose a terminal task from the selector",
       );
       expect(warning.textContent).not.toContain("dependency cycle");
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-graph"]',
+        ),
+      ).toBeFalsy();
     });
 
     it("keeps cycle warnings ahead of target warnings", async () => {
@@ -1445,7 +1484,6 @@ describe("TaskDependencyGraphComponent", () => {
       ]);
 
       component.selectCriticalPathTarget(":missing");
-      component.showCriticalPath.set(true);
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
@@ -1456,27 +1494,13 @@ describe("TaskDependencyGraphComponent", () => {
       expect(component.criticalPathWarning()).not.toContain("terminal task");
     });
 
-    it("renders a multiple-request warning after critical path mode is enabled", async () => {
+    it("renders a multiple-request warning in the Critical Path section", async () => {
       await render([
         buildTaskEdge({ id: "A", taskPath: ":build", durationMs: 10 }),
         buildTaskEdge({ id: "B", taskPath: ":test", durationMs: 20 }),
       ]);
 
       fixture.componentRef.setInput("requestedTasks", [":build", ":test"]);
-      fixture.detectChanges();
-      await settleAsyncWork(fixture);
-      fixture.detectChanges();
-
-      expect(
-        fixture.nativeElement.querySelector(
-          '[data-testid="task-critical-path-warning"]',
-        ),
-      ).toBeFalsy();
-
-      const toggle = fixture.nativeElement.querySelector(
-        '[data-testid="task-critical-path-toggle"]',
-      ) as HTMLButtonElement;
-      toggle.click();
       fixture.detectChanges();
       await settleAsyncWork(fixture);
       fixture.detectChanges();
@@ -1488,6 +1512,11 @@ describe("TaskDependencyGraphComponent", () => {
       expect(warning.textContent).toContain(
         "choose a terminal task from the selector",
       );
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="task-critical-path-graph"]',
+        ),
+      ).toBeFalsy();
     });
   });
 });
