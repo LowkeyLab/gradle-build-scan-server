@@ -296,8 +296,8 @@
     "https://bcr.bazel.build/modules/rules_python/1.4.1/MODULE.bazel": "8991ad45bdc25018301d6b7e1d3626afc3c8af8aaf4bc04f23d0b99c938b73a6",
     "https://bcr.bazel.build/modules/rules_python/1.6.0/MODULE.bazel": "7e04ad8f8d5bea40451cf80b1bd8262552aa73f841415d20db96b7241bd027d8",
     "https://bcr.bazel.build/modules/rules_python/1.7.0/MODULE.bazel": "d01f995ecd137abf30238ad9ce97f8fc3ac57289c8b24bd0bf53324d937a14f8",
-    "https://bcr.bazel.build/modules/rules_python/1.9.0/MODULE.bazel": "afc3a05f29f09f2d3ee95ad99a145250dab41a2b2d8d6f82cc91936b3213282c",
-    "https://bcr.bazel.build/modules/rules_python/1.9.0/source.json": "3921ea0b65298d51aead5b9e4a82203d7be9b5918619b58b53f1c259f4e63169",
+    "https://bcr.bazel.build/modules/rules_python/1.9.1/MODULE.bazel": "c7c23dcdcdfd6071af861c1480ecdcba3dee3fd63b839896c31d51e7e36e8e84",
+    "https://bcr.bazel.build/modules/rules_python/1.9.1/source.json": "5f568534a68ae1ba8b6d21f51b66a9d9b85615189d35a498098b1581a95b6d28",
     "https://bcr.bazel.build/modules/rules_rs/0.0.59/MODULE.bazel": "2356bae8fb790877f0d1b64199f7fc219738781c8ea324d1507a9473cf06dfea",
     "https://bcr.bazel.build/modules/rules_rs/0.0.59/source.json": "0ee50d38cf9daec39106ba4110712f98fb8c8bc778717c4dc49f5fb629897a7b",
     "https://bcr.bazel.build/modules/rules_rust/0.45.1/MODULE.bazel": "a69d0db3a958fab2c6520961e1b2287afcc8b36690fd31bbc4f6f7391397150d",
@@ -1095,7 +1095,7 @@
     "@@rules_python+//python/uv:uv.bzl%uv": {
       "general": {
         "bzlTransitiveDigest": "yG9F6L2IZXKRbD/aIUa6sU7uITLUTBKOMWPbIvl1VdM=",
-        "usagesDigest": "6MjoD3H+netDdhklgMWks3NARpHVXxy8kfsMe9XXPa8=",
+        "usagesDigest": "mPuA4Am7rrvFsij0/gJA24bVqE3ZzeaG0/PmKHHZit8=",
         "recordedInputs": [
           "REPO_MAPPING:rules_python+,bazel_tools bazel_tools",
           "REPO_MAPPING:rules_python+,platforms platforms"
