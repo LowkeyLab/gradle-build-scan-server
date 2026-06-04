@@ -41,7 +41,8 @@
     "https://bcr.bazel.build/modules/aspect_rules_js/1.40.0/MODULE.bazel": "01a1014e95e6816b68ecee2584ae929c7d6a1b72e4333ab1ff2d2c6c30babdf1",
     "https://bcr.bazel.build/modules/aspect_rules_js/2.0.0/MODULE.bazel": "b45b507574aa60a92796e3e13c195cd5744b3b8aff516a9c0cb5ae6a048161c5",
     "https://bcr.bazel.build/modules/aspect_rules_js/3.1.2/MODULE.bazel": "e3685502155d3cc65f3bf98e714f7435de67d7f8f355d63478a80197310311fc",
-    "https://bcr.bazel.build/modules/aspect_rules_js/3.1.2/source.json": "a32ab71831452b945f3f83a1b1feb9402007e600bce55ac76e15ef0c1e08b520",
+    "https://bcr.bazel.build/modules/aspect_rules_js/3.2.0/MODULE.bazel": "c3d34345c51a4d90cf678d3b251c6f345b63d5e2e6b0253dbdda467a01efc31f",
+    "https://bcr.bazel.build/modules/aspect_rules_js/3.2.0/source.json": "3538ab18ac72ba3eaa3db0e4ec5171e04322768723afaa1149c0d822fe5411e2",
     "https://bcr.bazel.build/modules/aspect_rules_lint/0.12.0/MODULE.bazel": "e767c5dbfeb254ec03275a7701b5cfde2c4d2873676804bc7cb27ddff3728fed",
     "https://bcr.bazel.build/modules/aspect_rules_lint/2.5.2/MODULE.bazel": "50d9a42d387ed065f41cdf515cad200e0d95bf3daaa8fd7b5470a72a5a51742b",
     "https://bcr.bazel.build/modules/aspect_rules_lint/2.5.2/source.json": "243edc336b5a01ea54d001a54608128a8b2385650be9b734a3765d7380f40ee0",
@@ -375,7 +376,7 @@
     "@@aspect_tools_telemetry+//:extension.bzl%telemetry": {
       "general": {
         "bzlTransitiveDigest": "cl5A2O84vDL6Tt+Qga8FCj1DUDGqn+e7ly5rZ+4xvcc=",
-        "usagesDigest": "e3Jlzd1nQNmxz7iniYeM0D4RxA5wjpdy+e88SNoTF/I=",
+        "usagesDigest": "UVcsm2dm2UV6eJv2eYgwIah9IV8iej4AOQ3aBUneerA=",
         "recordedInputs": [
           "REPO_MAPPING:aspect_tools_telemetry+,bazel_lib bazel_lib+",
           "REPO_MAPPING:aspect_tools_telemetry+,bazel_skylib bazel_skylib+"
@@ -386,7 +387,7 @@
             "attributes": {
               "deps": {
                 "aspect_rules_lint": "2.5.2",
-                "aspect_rules_js": "3.1.2",
+                "aspect_rules_js": "3.2.0",
                 "rules_rs": "0.0.59",
                 "aspect_tools_telemetry": "0.3.3",
                 "aspect_rules_ts": "3.8.10"
@@ -615,7 +616,7 @@
     "@@rules_nodejs+//nodejs:extensions.bzl%node": {
       "general": {
         "bzlTransitiveDigest": "oZFClfRhTTwsYzpxVPkOpOt/r0+OzEfEV37au0jFZ0s=",
-        "usagesDigest": "BK6lywviq8rKEPGFIgMVKykNxv/SSJeWrMlQqdqbeFo=",
+        "usagesDigest": "SS97SpAs+7mw3kPWBgakDEkATjLmIx+ALtbFoouonbg=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
           "nodejs_linux_amd64": {
@@ -2051,7 +2052,7 @@
     "@@yq.bzl+//yq:extensions.bzl%yq": {
       "general": {
         "bzlTransitiveDigest": "UfFMy8CWK4/dVo/tfaSAIYUiDGNAPes5eRllx9O9Q9Q=",
-        "usagesDigest": "8lG6Oj0CAzfmF21BGPKRbTasySr2alYDlBultCoYq9c=",
+        "usagesDigest": "H6k2mpFrfb0S5mL58CZvNXYjH+lw8wexgPTgbo9Q9nE=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
           "yq_darwin_amd64": {
