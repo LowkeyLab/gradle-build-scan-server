@@ -26,7 +26,7 @@ git_override(
 )
 
 # JavaScript / Angular
-bazel_dep(name = "aspect_rules_js", version = "3.2.0")
+bazel_dep(name = "aspect_rules_js", version = "3.2.1")
 bazel_dep(name = "rules_angular")
 git_override(
     module_name = "rules_angular",
