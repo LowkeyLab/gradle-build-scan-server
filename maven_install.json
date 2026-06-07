@@ -7,6 +7,10 @@
     "com.google.errorprone:error_prone_annotations": -1035138750,
     "com.google.guava:guava": 1943808618,
     "com.google.j2objc:j2objc-annotations": 2003271689,
+    "io.arrow-kt:arrow-core": -1169041225,
+    "io.arrow-kt:arrow-fx-coroutines": 1717761296,
+    "io.arrow-kt:arrow-optics": -1217008290,
+    "io.arrow-kt:arrow-resilience": -258905431,
     "io.ktor:ktor-server-core-jvm": -2050597326,
     "io.ktor:ktor-server-netty-jvm": -1195433075,
     "io.ktor:ktor-server-test-host-jvm": -462752735,
@@ -47,6 +51,39 @@
     "com.typesafe:config": 846327280,
     "com.typesafe:config:jar:javadoc": -217481770,
     "com.typesafe:config:jar:sources": -850293068,
+    "io.arrow-kt:arrow-annotations-jvm": -2108710580,
+    "io.arrow-kt:arrow-annotations-jvm:jar:javadoc": 1607618863,
+    "io.arrow-kt:arrow-annotations-jvm:jar:sources": -1852525190,
+    "io.arrow-kt:arrow-atomic-jvm": 1367902390,
+    "io.arrow-kt:arrow-atomic-jvm:jar:javadoc": 659180794,
+    "io.arrow-kt:arrow-atomic-jvm:jar:sources": -26607918,
+    "io.arrow-kt:arrow-autoclose-jvm": 1006631853,
+    "io.arrow-kt:arrow-autoclose-jvm:jar:javadoc": 1432844163,
+    "io.arrow-kt:arrow-autoclose-jvm:jar:sources": -665156940,
+    "io.arrow-kt:arrow-core": 710568608,
+    "io.arrow-kt:arrow-core-jvm": -111864568,
+    "io.arrow-kt:arrow-core-jvm:jar:javadoc": -53865077,
+    "io.arrow-kt:arrow-core-jvm:jar:sources": 1054959891,
+    "io.arrow-kt:arrow-core:jar:javadoc": -1168365962,
+    "io.arrow-kt:arrow-core:jar:sources": 470522807,
+    "io.arrow-kt:arrow-fx-coroutines": -1851887114,
+    "io.arrow-kt:arrow-fx-coroutines-jvm": -465522536,
+    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:javadoc": -1932098191,
+    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:sources": 2060316846,
+    "io.arrow-kt:arrow-fx-coroutines:jar:javadoc": -2105422552,
+    "io.arrow-kt:arrow-fx-coroutines:jar:sources": -239654871,
+    "io.arrow-kt:arrow-optics": 1422244458,
+    "io.arrow-kt:arrow-optics-jvm": 1866341090,
+    "io.arrow-kt:arrow-optics-jvm:jar:javadoc": -1740483089,
+    "io.arrow-kt:arrow-optics-jvm:jar:sources": 2129336180,
+    "io.arrow-kt:arrow-optics:jar:javadoc": -2029991087,
+    "io.arrow-kt:arrow-optics:jar:sources": 2129336180,
+    "io.arrow-kt:arrow-resilience": 1946246775,
+    "io.arrow-kt:arrow-resilience-jvm": 617836435,
+    "io.arrow-kt:arrow-resilience-jvm:jar:javadoc": -1266202161,
+    "io.arrow-kt:arrow-resilience-jvm:jar:sources": -858809520,
+    "io.arrow-kt:arrow-resilience:jar:javadoc": 961280298,
+    "io.arrow-kt:arrow-resilience:jar:sources": -858809520,
     "io.ktor:ktor-client-apache5-jvm": -392055254,
     "io.ktor:ktor-client-apache5-jvm:jar:javadoc": -1835280084,
     "io.ktor:ktor-client-apache5-jvm:jar:sources": -2103153032,
@@ -348,6 +385,94 @@
         "sources": "64a9b8d126924b225690a9de5a9ab1f7dd348d60ed4b5153de8112f5f268118e"
       },
       "version": "1.4.8"
+    },
+    "io.arrow-kt:arrow-annotations-jvm": {
+      "shasums": {
+        "jar": "ced7ca0261e3d0fc502c1b8cff4395dc0395ad6c316fffcc596f7f1e1ddb9e5b",
+        "javadoc": "28b1f6cec932f30de264e50dcad61c1278560d1552f7d06773ad04bf9db9b620",
+        "sources": "a9aaa1edbeae86ba91d78a0bf7430415c9419b131dc7d0d58c8200bf403ff0eb"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-atomic-jvm": {
+      "shasums": {
+        "jar": "fdb36c4e152a89676239b8cbd5a132aae8a72fca14b56d91c7e7ac6b47e97bf1",
+        "javadoc": "13bb3c0b747c30f0add8af3db62518984165822a4bd6657f875a676cfec7ded0",
+        "sources": "1d1a7089d1028bc29b007a246b2e18c6318e023ac657fd45414f0e895b3abf51"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-autoclose-jvm": {
+      "shasums": {
+        "jar": "f69e803dd8113cc293a22ef9ddd28f5d1ab8f6703fedf8e0a62ec32fdfde568f",
+        "javadoc": "ee5ca892e276d55b4c8c8b7b9c4b4967e9bb4abed2563405b5f059e9ac3be86b",
+        "sources": "0d8d8e8dd75734124086774f4254dcf28046d7416aace28d4966e55263d77dab"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-core": {
+      "shasums": {
+        "jar": "230b92de14a9fe33033426cab641a5d749668ead5b5b281dc6b035a42f6dcac2",
+        "javadoc": "ba3a3fabaa925ffc2590fa728fc69d94eca9fd515edb76c68c33e8b23561a9a5",
+        "sources": "019cb5254a6428ae92377433f4f1fb01008e61c05845dc2fe216064cfc99c257"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-core-jvm": {
+      "shasums": {
+        "jar": "26c4f0a5bdc0353c866ed5039bce489d5595726a78433f03e0b219a4a2803da8",
+        "javadoc": "ec537a95ae25272c5d16053fffb8892d799156aafda8fef4a4092f2d32bfb83b",
+        "sources": "cab0f405e08cc364f5a80529d991fc11cf4f4fb6c06af2f32ea6a7991857d3df"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-fx-coroutines": {
+      "shasums": {
+        "jar": "f1cbc7d9d3866bd844db7a845222d3b6dc5d4b9b8752d923a280b3580ff4f93f",
+        "javadoc": "918a8ae8c73429f33c4de4a5bf85506a32922e71105f7bac965160127b873649",
+        "sources": "49327939f930d31cf9c96199a282a372eec9b558e914ec7fb0ac479b49f16956"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-fx-coroutines-jvm": {
+      "shasums": {
+        "jar": "458727dc8824c430e25d2fa51b8aa53ff168842ade06f28f159cb25afde6f24c",
+        "javadoc": "0c22c1877a806296a44d0988cb55dd199dffbbe59f3feb272f3bdc96a1613a86",
+        "sources": "61450c674be61ef5bab0c1bbfe5f449b1e3c9152308dcc8718aa84fe0555892a"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-optics": {
+      "shasums": {
+        "jar": "c32dd4e3670b96cf2bb70365f84a5a9089cbd4b21c6a67053e7395b2064290c2",
+        "javadoc": "393a8ee342bc3d66ebf178683a976c8e19dc1e216bcf875d045f10b38302c649",
+        "sources": "a1d028bb6ee6e03d9a28a4298dddfd64c6e9fefdb891dd86b3d33325e42eaffb"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-optics-jvm": {
+      "shasums": {
+        "jar": "f50f14d0b0a733057b4a1c85de9382b983d439b3b52379ab97ec424861b8de70",
+        "javadoc": "69705e45edf4da658d70a2dc2dbd2e54bcd8dba6bfea5642746d311d633a1ba0",
+        "sources": "a1d028bb6ee6e03d9a28a4298dddfd64c6e9fefdb891dd86b3d33325e42eaffb"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-resilience": {
+      "shasums": {
+        "jar": "9bf89460c480ad24226d7e79b516fe5d8ef974253427a48cb8631c85cd88037b",
+        "javadoc": "b174421fb3430dd1c5f0f8978b08c23f7da401fdafb6df0be9211549bde63e30",
+        "sources": "dda48bc126c90dac6400ce1425fc5a9e8adf3a949a436db87f351415c6e1e339"
+      },
+      "version": "2.1.2"
+    },
+    "io.arrow-kt:arrow-resilience-jvm": {
+      "shasums": {
+        "jar": "7741253986ea189854b720af32d96d13e11237307d2811be8983f9649e6bdd37",
+        "javadoc": "35d2660d7a535a15e90d9ee3174ebb4ed56899fecf378a5ac4e49ef0d9d8677b",
+        "sources": "dda48bc126c90dac6400ce1425fc5a9e8adf3a949a436db87f351415c6e1e339"
+      },
+      "version": "2.1.2"
     },
     "io.ktor:ktor-client-apache5-jvm": {
       "shasums": {
@@ -947,6 +1072,36 @@
       "com.google.j2objc:j2objc-annotations",
       "org.checkerframework:checker-qual"
     ],
+    "io.arrow-kt:arrow-annotations-jvm": ["org.jetbrains.kotlin:kotlin-stdlib"],
+    "io.arrow-kt:arrow-atomic-jvm": ["org.jetbrains.kotlin:kotlin-stdlib"],
+    "io.arrow-kt:arrow-autoclose-jvm": [
+      "io.arrow-kt:arrow-atomic-jvm",
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "io.arrow-kt:arrow-core": ["io.arrow-kt:arrow-core-jvm"],
+    "io.arrow-kt:arrow-core-jvm": [
+      "io.arrow-kt:arrow-annotations-jvm",
+      "io.arrow-kt:arrow-atomic-jvm",
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "io.arrow-kt:arrow-fx-coroutines": ["io.arrow-kt:arrow-fx-coroutines-jvm"],
+    "io.arrow-kt:arrow-fx-coroutines-jvm": [
+      "io.arrow-kt:arrow-autoclose-jvm",
+      "io.arrow-kt:arrow-core-jvm",
+      "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm"
+    ],
+    "io.arrow-kt:arrow-optics": ["io.arrow-kt:arrow-optics-jvm"],
+    "io.arrow-kt:arrow-optics-jvm": [
+      "io.arrow-kt:arrow-core-jvm",
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "io.arrow-kt:arrow-resilience": ["io.arrow-kt:arrow-resilience-jvm"],
+    "io.arrow-kt:arrow-resilience-jvm": [
+      "io.arrow-kt:arrow-core-jvm",
+      "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm"
+    ],
     "io.ktor:ktor-client-apache5-jvm": [
       "io.ktor:ktor-client-core-jvm",
       "org.apache.httpcomponents.client5:httpclient5",
@@ -1427,6 +1582,22 @@
       "com.typesafe.config.impl",
       "com.typesafe.config.parser"
     ],
+    "io.arrow-kt:arrow-annotations-jvm": ["arrow", "arrow.optics"],
+    "io.arrow-kt:arrow-atomic-jvm": ["arrow.atomic"],
+    "io.arrow-kt:arrow-autoclose-jvm": ["arrow"],
+    "io.arrow-kt:arrow-core-jvm": ["arrow.core", "arrow.core.raise"],
+    "io.arrow-kt:arrow-fx-coroutines-jvm": [
+      "arrow.fx.coroutines",
+      "arrow.fx.coroutines.await"
+    ],
+    "io.arrow-kt:arrow-optics-jvm": [
+      "arrow.optics",
+      "arrow.optics.dsl",
+      "arrow.optics.regex",
+      "arrow.optics.regex.dsl",
+      "arrow.optics.typeclasses"
+    ],
+    "io.arrow-kt:arrow-resilience-jvm": ["arrow.resilience"],
     "io.ktor:ktor-client-apache5-jvm": ["io.ktor.client.engine.apache5"],
     "io.ktor:ktor-client-cio-jvm": [
       "io.ktor.client.engine.cio",
@@ -2104,6 +2275,39 @@
       "com.typesafe:config",
       "com.typesafe:config:jar:javadoc",
       "com.typesafe:config:jar:sources",
+      "io.arrow-kt:arrow-annotations-jvm",
+      "io.arrow-kt:arrow-annotations-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-annotations-jvm:jar:sources",
+      "io.arrow-kt:arrow-atomic-jvm",
+      "io.arrow-kt:arrow-atomic-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-atomic-jvm:jar:sources",
+      "io.arrow-kt:arrow-autoclose-jvm",
+      "io.arrow-kt:arrow-autoclose-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-autoclose-jvm:jar:sources",
+      "io.arrow-kt:arrow-core",
+      "io.arrow-kt:arrow-core-jvm",
+      "io.arrow-kt:arrow-core-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-core-jvm:jar:sources",
+      "io.arrow-kt:arrow-core:jar:javadoc",
+      "io.arrow-kt:arrow-core:jar:sources",
+      "io.arrow-kt:arrow-fx-coroutines",
+      "io.arrow-kt:arrow-fx-coroutines-jvm",
+      "io.arrow-kt:arrow-fx-coroutines-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-fx-coroutines-jvm:jar:sources",
+      "io.arrow-kt:arrow-fx-coroutines:jar:javadoc",
+      "io.arrow-kt:arrow-fx-coroutines:jar:sources",
+      "io.arrow-kt:arrow-optics",
+      "io.arrow-kt:arrow-optics-jvm",
+      "io.arrow-kt:arrow-optics-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-optics-jvm:jar:sources",
+      "io.arrow-kt:arrow-optics:jar:javadoc",
+      "io.arrow-kt:arrow-optics:jar:sources",
+      "io.arrow-kt:arrow-resilience",
+      "io.arrow-kt:arrow-resilience-jvm",
+      "io.arrow-kt:arrow-resilience-jvm:jar:javadoc",
+      "io.arrow-kt:arrow-resilience-jvm:jar:sources",
+      "io.arrow-kt:arrow-resilience:jar:javadoc",
+      "io.arrow-kt:arrow-resilience:jar:sources",
       "io.ktor:ktor-client-apache5-jvm",
       "io.ktor:ktor-client-apache5-jvm:jar:javadoc",
       "io.ktor:ktor-client-apache5-jvm:jar:sources",
