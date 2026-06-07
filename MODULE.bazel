@@ -6,6 +6,10 @@ bazel_dep(name = "apple_support", version = "2.6.1")
 bazel_dep(name = "aspect_rules_lint", version = "2.5.2")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_java", version = "9.6.1")
+bazel_dep(name = "rules_kotlin", version = "2.3.20")
+bazel_dep(name = "rules_jvm_external", version = "7.0")
+bazel_dep(name = "rules_go", version = "0.61.1")
 bazel_dep(name = "rules_oci", version = "2.3.0")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "bazelrc-preset.bzl", version = "1.9.2")
@@ -40,6 +44,12 @@ rules_angular_ext.setup(
     typescript = "//:node_modules/typescript",
 )
 use_repo(rules_angular_ext, "rules_angular_configurable_deps")
+
+#########################
+# Go SDK for Gazelle plugins
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.25.5")
 
 #########################
 # Support for Rust, see https://github.com/bazelbuild/rules_rust
@@ -93,6 +103,68 @@ npm.npm_translate_lock(
 )
 use_repo(npm, "npm")
 
+#########################
+# Java and Kotlin
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    artifacts = [
+        "ch.qos.logback:logback-classic:1.5.34",
+        "io.ktor:ktor-server-core-jvm:3.5.0",
+        "io.ktor:ktor-server-netty-jvm:3.5.0",
+    ],
+    fetch_javadoc = True,
+    fetch_sources = True,
+    known_contributing_modules = ["protobuf"],
+    lock_file = "//:maven_install.json",
+    repositories = ["https://repo1.maven.org/maven2/"],
+)
+maven.artifact(
+    testonly = True,
+    artifact = "kotlin-test",
+    group = "org.jetbrains.kotlin",
+    version = "2.4.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "kotlin-test-junit5",
+    group = "org.jetbrains.kotlin",
+    version = "2.4.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "junit-jupiter-api",
+    group = "org.junit.jupiter",
+    version = "6.1.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "junit-jupiter-engine",
+    group = "org.junit.jupiter",
+    version = "6.1.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "junit-jupiter-params",
+    group = "org.junit.jupiter",
+    version = "6.1.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "junit-platform-console",
+    group = "org.junit.platform",
+    version = "6.1.0",
+)
+maven.artifact(
+    testonly = True,
+    artifact = "ktor-server-test-host-jvm",
+    group = "io.ktor",
+    version = "3.5.0",
+)
+use_repo(maven, "maven")
+
+register_toolchains("//:kotlin_toolchain")
+
 register_toolchains("//tools/toolchains:all")
 
 ##########################
@@ -106,4 +178,18 @@ oci_extension.pull(
         "linux/amd64",
     ],
 )
-use_repo(oci_extension, "distroless_cc", "distroless_cc_linux_amd64")
+oci_extension.pull(
+    name = "distroless_java25",
+    digest = "sha256:8ce26d023018ca2f11bf2530cd3a10a7fd8456c3142b5f9a7d6b135a1411c86a",
+    image = "gcr.io/distroless/java25-debian13",
+    platforms = [
+        "linux/amd64",
+    ],
+)
+use_repo(
+    oci_extension,
+    "distroless_cc",
+    "distroless_cc_linux_amd64",
+    "distroless_java25",
+    "distroless_java25_linux_amd64",
+)

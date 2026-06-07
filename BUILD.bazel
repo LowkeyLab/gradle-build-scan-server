@@ -3,6 +3,7 @@
 load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@gazelle//:def.bzl", "DEFAULT_LANGUAGES", "gazelle", "gazelle_binary")
 load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
 # Platform definition for rules_rs experimental toolchains.
 # The toolchains require libc constraint values that the default host platform
@@ -38,6 +39,12 @@ gazelle_binary(
 gazelle(
     name = "gazelle",
     gazelle = ":gazelle_bin",
+)
+
+### Kotlin toolchain configuration
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    jvm_target = "25",
 )
 
 ### JavaScript/TypeScript linting & formatting config targets
