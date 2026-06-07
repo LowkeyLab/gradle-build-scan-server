@@ -8,6 +8,10 @@ kt_jvm_library(
     name = "kotlin_bootstrap_app",
     srcs = glob(["src/main/kotlin/**/*.kt"]),
     deps = [
+        "@maven//:io_arrow_kt_arrow_core",
+        "@maven//:io_arrow_kt_arrow_fx_coroutines",
+        "@maven//:io_arrow_kt_arrow_optics",
+        "@maven//:io_arrow_kt_arrow_resilience",
         "@maven//:io_ktor_ktor_server_core_jvm",
         "@maven//:io_ktor_ktor_server_netty_jvm",
     ],
