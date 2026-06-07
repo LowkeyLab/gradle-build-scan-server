@@ -13,7 +13,6 @@ fun main() {
   embeddedServer(Netty, port = port, host = host, module = Application::module)
       .start(wait = true)
 }
-}
 
 fun Application.module() {
   routing { get("/health") { call.respondText("OK") } }
