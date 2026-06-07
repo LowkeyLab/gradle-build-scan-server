@@ -1,0 +1,53 @@
+# gazelle:exclude src
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//bzl:kotlin.bzl", "kt_junit5_test")
+
+kt_jvm_library(
+    name = "kotlin_bootstrap_app",
+    srcs = glob(["src/main/kotlin/**/*.kt"]),
+    deps = [
+        "@maven//:io_ktor_ktor_server_core_jvm",
+        "@maven//:io_ktor_ktor_server_netty_jvm",
+    ],
+)
+
+kt_jvm_binary(
+    name = "server",
+    main_class = "build.scan.jvm.server.ApplicationKt",
+    runtime_deps = [
+        ":kotlin_bootstrap_app",
+        "@maven//:ch_qos_logback_logback_classic",
+    ],
+)
+
+kt_junit5_test(
+    name = "application_test",
+    size = "small",
+    srcs = glob(["src/test/kotlin/**/*.kt"]),
+    test_package = "build.scan.jvm.server",
+    runtime_deps = ["@maven//:ch_qos_logback_logback_classic"],
+    deps = [
+        ":kotlin_bootstrap_app",
+        "@maven//:io_ktor_ktor_server_test_host_jvm",
+    ],
+)
+
+pkg_tar(
+    name = "server_binary_layer",
+    srcs = [":server"],
+    package_dir = "/app",
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_java25",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/app/server.jar",
+    ],
+    env = {"PORT": "8080"},
+    tars = [":server_binary_layer"],
+)
