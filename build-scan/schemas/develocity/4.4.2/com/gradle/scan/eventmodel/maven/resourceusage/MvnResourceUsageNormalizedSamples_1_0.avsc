@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "MvnResourceUsageNormalizedSamples_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.resourceusage",
+  "fields": [
+    { "name": "samples", "type": ["null", "bytes"], "default": null },
+    { "name": "max", "type": "long" }
+  ]
+}

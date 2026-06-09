@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "CollectionCallbackParticipantRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.collectioncallback",
+  "symbols": ["SCRIPT", "PLUGIN", "COLLECTION_CALLBACK", "LIFECYCLE_LISTENER"]
+}

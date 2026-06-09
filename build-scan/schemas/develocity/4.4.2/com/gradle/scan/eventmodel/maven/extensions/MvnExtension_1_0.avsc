@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "MvnExtension_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.extensions",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "groupId", "type": ["null", "string"], "default": null },
+    { "name": "artifactId", "type": ["null", "string"], "default": null },
+    { "name": "version", "type": ["null", "string"], "default": null },
+    {
+      "name": "location",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "realmName", "type": ["null", "string"], "default": null },
+    {
+      "name": "type",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.extensions.MvnExtensionApplicationType_1"
+      ],
+      "default": null
+    },
+    {
+      "name": "listeners",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.extensions.MvnExtensionListener_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

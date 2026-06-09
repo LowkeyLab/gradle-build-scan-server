@@ -1,0 +1,16 @@
+{
+  "type": "enum",
+  "name": "MvnExtensionListenerType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.extensions",
+  "symbols": [
+    "GRADLE_ENTERPRISE_LISTENER",
+    "EVENT_SPY",
+    "ABSTRACT_MAVEN_LIFECYCLE_PARTICIPANT",
+    "EXECUTION_LISTENER",
+    "AVAILABLE_EXECUTION_LISTENER",
+    "PROJECT_EXECUTION_LISTENER",
+    "MOJO_EXECUTION_LISTENER",
+    "WEAK_MOJO_EXECUTION_LISTENER",
+    "DEVELOCITY_LISTENER"
+  ]
+}

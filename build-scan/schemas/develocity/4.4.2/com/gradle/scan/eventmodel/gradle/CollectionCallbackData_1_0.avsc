@@ -1,0 +1,29 @@
+{
+  "type": "record",
+  "name": "CollectionCallbackData_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "participants",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.collectioncallback.CollectionCallbackParticipantRef_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "executions",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.collectioncallback.CollectionCallbackExecutionAggregate_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

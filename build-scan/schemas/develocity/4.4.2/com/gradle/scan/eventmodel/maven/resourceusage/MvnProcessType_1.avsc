@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnProcessType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.resourceusage",
+  "symbols": ["SELF", "DESCENDANT", "OTHER"]
+}

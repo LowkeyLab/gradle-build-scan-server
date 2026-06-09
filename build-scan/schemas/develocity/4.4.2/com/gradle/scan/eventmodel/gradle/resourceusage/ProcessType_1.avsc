@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "ProcessType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.resourceusage",
+  "symbols": ["SELF", "DESCENDANT", "OTHER"]
+}

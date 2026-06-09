@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "TaskFinished_1_7",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "skipReasonMessage", "type": ["null", "string"], "default": null }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "AndroidPluginApplied_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "projectPath", "type": ["null", "string"], "default": null },
+    { "name": "pluginVersion", "type": ["null", "string"], "default": null },
+    {
+      "name": "pluginType",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.android.AndroidPluginType_1"
+      ],
+      "default": null
+    }
+  ]
+}

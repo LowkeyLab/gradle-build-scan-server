@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnLocality_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "localeLanguage", "type": ["null", "string"], "default": null },
+    { "name": "localeCountry", "type": ["null", "string"], "default": null },
+    { "name": "localeVariant", "type": ["null", "string"], "default": null },
+    { "name": "timeZoneId", "type": ["null", "string"], "default": null },
+    { "name": "timeZoneOffsetMillis", "type": "int" }
+  ]
+}

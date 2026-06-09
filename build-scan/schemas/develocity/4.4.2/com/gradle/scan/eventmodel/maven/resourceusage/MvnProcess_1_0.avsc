@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "MvnProcess_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.resourceusage",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "displayName", "type": ["null", "string"], "default": null },
+    {
+      "name": "type",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnProcessType_1"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "SelectionProfile_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.pts",
+  "symbols": ["CONSERVATIVE", "STANDARD", "FAST"]
+}

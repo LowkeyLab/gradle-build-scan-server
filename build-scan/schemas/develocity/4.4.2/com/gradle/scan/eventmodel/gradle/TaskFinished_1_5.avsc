@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "TaskFinished_1_5",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "originExecutionTime", "type": ["null", "long"], "default": null }
+  ]
+}

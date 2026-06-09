@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MvnUserCaptureSettings_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [{ "name": "resourceUsage", "type": "boolean" }]
+}

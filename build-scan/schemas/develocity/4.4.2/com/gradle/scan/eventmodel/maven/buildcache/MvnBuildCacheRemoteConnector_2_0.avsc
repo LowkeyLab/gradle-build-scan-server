@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteConnector_2_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    { "name": "url", "type": ["null", "string"], "default": null },
+    {
+      "name": "disablement",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.buildcache.MvnBuildCacheRemoteConnectorDisablement_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "config",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.buildcache.MvnBuildCacheRemoteConnectorConfig_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

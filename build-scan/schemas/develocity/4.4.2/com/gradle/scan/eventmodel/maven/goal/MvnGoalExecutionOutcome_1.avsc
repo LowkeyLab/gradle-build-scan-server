@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnGoalExecutionOutcome_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.goal",
+  "symbols": ["SKIPPED", "FAILED", "SUCCESS", "FROM_CACHE"]
+}

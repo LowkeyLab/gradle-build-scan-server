@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MvnRepository_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "modelId", "type": ["null", "string"], "default": null },
+    { "name": "url", "type": ["null", "string"], "default": null },
+    { "name": "releasePolicy", "type": "long" },
+    { "name": "snapshotPolicy", "type": "long" },
+    {
+      "name": "mirroredRepositories",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

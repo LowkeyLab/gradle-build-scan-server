@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "PluginApplicationStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "targetType", "type": ["null", "string"], "default": null },
+    { "name": "targetPath", "type": ["null", "string"], "default": null },
+    { "name": "buildPath", "type": ["null", "string"], "default": null },
+    { "name": "pluginClassName", "type": ["null", "string"], "default": null },
+    { "name": "inferredVersion", "type": ["null", "string"], "default": null },
+    { "name": "inferredId", "type": ["null", "string"], "default": null },
+    {
+      "name": "codeSourceType",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.plugin.PluginCodeSourceType_1"
+      ],
+      "default": null
+    }
+  ]
+}

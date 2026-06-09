@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "TestOutputFileTransferBatchStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.testdistribution",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "executorId", "type": "long" }
+  ]
+}

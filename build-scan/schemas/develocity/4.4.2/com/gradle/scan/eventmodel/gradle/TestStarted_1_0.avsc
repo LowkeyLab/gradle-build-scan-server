@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "TestStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "parent", "type": ["null", "long"], "default": null },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "className", "type": ["null", "string"], "default": null },
+    { "name": "suite", "type": "boolean" }
+  ]
+}

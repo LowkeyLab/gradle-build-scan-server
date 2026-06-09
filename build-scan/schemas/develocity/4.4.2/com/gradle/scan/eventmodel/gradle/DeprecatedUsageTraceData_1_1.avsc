@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "DeprecatedUsageTraceData_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "stackTraceFragments",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

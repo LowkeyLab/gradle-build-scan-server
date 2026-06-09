@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "TransformExecutionFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "failureId", "type": ["null", "long"], "default": null },
+    {
+      "name": "outcome",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.artifacttransforms.TransformExecutionOutcome_1"
+      ],
+      "default": null
+    },
+    {
+      "name": "executionReasons",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    },
+    {
+      "name": "cachingDisabledReasonCategory",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "cachingDisabledExplanation",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "originBuildInvocationId",
+      "type": ["null", "string"],
+      "default": null
+    },
+    { "name": "originExecutionTime", "type": ["null", "long"], "default": null }
+  ]
+}

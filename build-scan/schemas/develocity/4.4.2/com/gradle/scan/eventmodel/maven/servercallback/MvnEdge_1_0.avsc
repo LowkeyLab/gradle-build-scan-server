@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "MvnEdge_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.servercallback",
+  "fields": [
+    { "name": "id", "type": ["null", "string"], "default": null },
+    { "name": "publicAddress", "type": ["null", "string"], "default": null },
+    { "name": "locationName", "type": ["null", "string"], "default": null }
+  ]
+}

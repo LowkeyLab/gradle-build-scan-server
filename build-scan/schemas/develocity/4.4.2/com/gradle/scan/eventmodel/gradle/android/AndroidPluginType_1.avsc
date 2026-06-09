@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "AndroidPluginType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.android",
+  "symbols": ["APPLICATION", "LIBRARY"]
+}

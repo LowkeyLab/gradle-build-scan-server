@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "TaskGraphCalculationStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "buildPath", "type": ["null", "string"], "default": null }
+  ]
+}

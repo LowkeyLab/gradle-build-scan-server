@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "Attribute_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "value", "type": ["null", "string"], "default": null }
+  ]
+}

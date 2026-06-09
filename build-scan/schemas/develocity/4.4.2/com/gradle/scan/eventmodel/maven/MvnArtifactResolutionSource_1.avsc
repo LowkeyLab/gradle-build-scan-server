@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnArtifactResolutionSource_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "symbols": ["LOCAL_CACHE", "REMOTE_REPOSITORY"]
+}

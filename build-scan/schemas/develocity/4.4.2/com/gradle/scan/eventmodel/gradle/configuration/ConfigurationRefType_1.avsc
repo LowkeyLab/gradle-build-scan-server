@@ -1,0 +1,17 @@
+{
+  "type": "enum",
+  "name": "ConfigurationRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.configuration",
+  "symbols": [
+    "BUILD_SRC_BUILD",
+    "CONFIGURATION_RESOLUTION",
+    "EVALUATE_SETTINGS",
+    "LIFECYCLE_LISTENER_EXECUTION",
+    "PLUGIN_APPLICATION",
+    "PROJECT_EVALUATION",
+    "SCRIPT_APPLICATION",
+    "TASK_GRAPH_CALCULATION",
+    "TASK",
+    "SCRIPT_COMPILATION"
+  ]
+}

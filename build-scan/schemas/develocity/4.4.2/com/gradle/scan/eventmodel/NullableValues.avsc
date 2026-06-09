@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "NullableValues",
+  "namespace": "com.gradle.scan.eventmodel",
+  "fields": []
+}

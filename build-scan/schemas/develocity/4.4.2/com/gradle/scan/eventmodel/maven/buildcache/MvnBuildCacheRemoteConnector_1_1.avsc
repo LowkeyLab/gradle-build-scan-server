@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteConnector_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    {
+      "name": "allowInsecureProtocol",
+      "type": ["null", "boolean"],
+      "default": null
+    },
+    {
+      "name": "useExpectContinue",
+      "type": ["null", "boolean"],
+      "default": null
+    }
+  ]
+}

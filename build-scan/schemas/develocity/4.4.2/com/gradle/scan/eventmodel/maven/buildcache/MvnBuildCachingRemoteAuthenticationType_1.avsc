@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnBuildCachingRemoteAuthenticationType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "symbols": ["USERNAME_AND_PASSWORD", "ACCESS_KEY", "NONE"]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "MvnTestStarted_1_2",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "parent", "type": ["null", "long"], "default": null },
+    {
+      "name": "testType",
+      "type": ["null", "com.gradle.scan.eventmodel.maven.test.MvnTestType_1"],
+      "default": null
+    }
+  ]
+}

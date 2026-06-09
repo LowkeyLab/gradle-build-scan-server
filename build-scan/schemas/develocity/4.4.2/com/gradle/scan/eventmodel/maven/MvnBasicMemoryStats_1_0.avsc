@@ -1,0 +1,20 @@
+{
+  "type": "record",
+  "name": "MvnBasicMemoryStats_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "max", "type": "long" },
+    {
+      "name": "peakSnapshots",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.memory.MvnMemoryPoolSnapshot_1_0"
+        }
+      ],
+      "default": null
+    },
+    { "name": "gcTime", "type": "long" }
+  ]
+}

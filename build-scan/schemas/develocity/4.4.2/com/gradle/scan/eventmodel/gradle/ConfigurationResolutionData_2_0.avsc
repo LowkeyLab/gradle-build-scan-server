@@ -1,0 +1,89 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionData_2_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "identities",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.ComponentIdentity"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "components",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.Component_3_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "dependencies",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.ComponentDependency_3_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "failureIds",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "selectionDescriptors",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.ComponentSelectionDescriptor_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "attributes",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.Attribute_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "capabilities",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.Capability_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "variants",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.dependencies.Variant_2_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

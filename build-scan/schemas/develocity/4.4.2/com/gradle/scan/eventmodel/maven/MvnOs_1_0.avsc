@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "MvnOs_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "family", "type": ["null", "string"], "default": null },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "version", "type": ["null", "string"], "default": null },
+    { "name": "arch", "type": ["null", "string"], "default": null }
+  ]
+}

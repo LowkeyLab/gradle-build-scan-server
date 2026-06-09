@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "BuildCacheConfiguration_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "buildCacheEnabled", "type": "boolean" },
+    { "name": "buildPath", "type": ["null", "string"], "default": null }
+  ]
+}

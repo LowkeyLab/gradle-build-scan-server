@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "BuildCacheConfiguration_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "local",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.buildcache.BuildCacheConnector_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "remote",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.buildcache.BuildCacheConnector_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

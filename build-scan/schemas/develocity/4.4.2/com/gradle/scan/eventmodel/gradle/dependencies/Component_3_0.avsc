@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "Component_3_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    {
+      "name": "dependencies",
+      "type": ["null", { "type": "array", "items": "int" }],
+      "default": null
+    },
+    { "name": "repositoryId", "type": ["null", "long"], "default": null },
+    {
+      "name": "selectionReasons",
+      "type": ["null", { "type": "array", "items": "int" }],
+      "default": null
+    },
+    { "name": "identity", "type": "int" }
+  ]
+}

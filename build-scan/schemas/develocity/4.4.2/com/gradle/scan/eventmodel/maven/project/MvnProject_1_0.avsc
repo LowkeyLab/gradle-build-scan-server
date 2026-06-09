@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "MvnProject_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.project",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "groupId", "type": ["null", "string"], "default": null },
+    { "name": "artifactId", "type": ["null", "string"], "default": null },
+    { "name": "packaging", "type": ["null", "string"], "default": null },
+    { "name": "version", "type": ["null", "string"], "default": null },
+    {
+      "name": "projectDir",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "pomVersion", "type": ["null", "string"], "default": null },
+    {
+      "name": "children",
+      "type": ["null", { "type": "array", "items": "int" }],
+      "default": null
+    },
+    { "name": "excluded", "type": "boolean" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteConnector_1_2",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    {
+      "name": "authenticationType",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.buildcache.MvnBuildCachingRemoteAuthenticationType_1"
+      ],
+      "default": null
+    }
+  ]
+}

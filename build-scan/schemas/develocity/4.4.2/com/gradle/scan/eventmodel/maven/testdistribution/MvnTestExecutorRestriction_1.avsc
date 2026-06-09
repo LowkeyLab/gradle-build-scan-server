@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnTestExecutorRestriction_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.testdistribution",
+  "symbols": ["NONE", "LOCAL_ONLY", "REMOTE_ONLY"]
+}

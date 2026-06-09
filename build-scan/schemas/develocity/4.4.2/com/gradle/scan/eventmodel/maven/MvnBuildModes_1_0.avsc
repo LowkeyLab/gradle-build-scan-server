@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "MvnBuildModes_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "maxThreads", "type": "int" },
+    { "name": "errors", "type": "boolean" },
+    { "name": "nonRecursive", "type": "boolean" },
+    { "name": "noSnapshotUpdates", "type": "boolean" },
+    { "name": "offline", "type": "boolean" },
+    { "name": "updateSnapshots", "type": "boolean" },
+    { "name": "batchMode", "type": ["null", "boolean"], "default": null },
+    { "name": "debug", "type": ["null", "boolean"], "default": null },
+    { "name": "failAtEnd", "type": ["null", "boolean"], "default": null },
+    { "name": "failFast", "type": ["null", "boolean"], "default": null },
+    { "name": "failNever", "type": ["null", "boolean"], "default": null },
+    { "name": "laxChecksums", "type": ["null", "boolean"], "default": null },
+    { "name": "quiet", "type": ["null", "boolean"], "default": null },
+    { "name": "strictChecksums", "type": ["null", "boolean"], "default": null }
+  ]
+}

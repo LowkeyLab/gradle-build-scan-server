@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "DaemonState_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "singleUse", "type": ["null", "boolean"], "default": null }
+  ]
+}

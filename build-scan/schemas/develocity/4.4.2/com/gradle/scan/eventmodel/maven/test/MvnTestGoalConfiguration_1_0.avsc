@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "MvnTestGoalConfiguration_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.test",
+  "fields": [
+    { "name": "goalExecutionId", "type": "long" },
+    { "name": "forkCount", "type": "int" },
+    { "name": "reuseForks", "type": "boolean" }
+  ]
+}

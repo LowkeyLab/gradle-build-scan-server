@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MvnDependencyResolutionDownloadStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "owner",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.dependencies.MvnDependencyResolutionDownloadOwnerRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "url", "type": ["null", "string"], "default": null }
+  ]
+}

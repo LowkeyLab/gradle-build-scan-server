@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "MvnGoalExecutionStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "executionId", "type": ["null", "string"], "default": null },
+    { "name": "projectId", "type": "long" },
+    { "name": "mojoClassName", "type": ["null", "string"], "default": null },
+    { "name": "pluginId", "type": "long" },
+    { "name": "buildPhase", "type": ["null", "string"], "default": null }
+  ]
+}

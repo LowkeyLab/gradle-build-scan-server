@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MvnHardware_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [{ "name": "numProcessors", "type": "int" }]
+}

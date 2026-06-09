@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "MvnResolvedArtifact_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "file",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "size", "type": "long" },
+    {
+      "name": "source",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.MvnArtifactResolutionSource_1"
+      ],
+      "default": null
+    },
+    { "name": "repositoryId", "type": ["null", "long"], "default": null }
+  ]
+}

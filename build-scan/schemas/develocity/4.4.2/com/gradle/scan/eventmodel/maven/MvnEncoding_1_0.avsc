@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnEncoding_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "defaultCharset", "type": ["null", "string"], "default": null }
+  ]
+}

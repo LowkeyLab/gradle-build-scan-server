@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "MvnExtensionListener_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.extensions",
+  "fields": [
+    { "name": "className", "type": ["null", "string"], "default": null },
+    {
+      "name": "types",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.extensions.MvnExtensionListenerType_1"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

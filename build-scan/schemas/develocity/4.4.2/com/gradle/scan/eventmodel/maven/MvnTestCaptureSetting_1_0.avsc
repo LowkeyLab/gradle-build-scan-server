@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnTestCaptureSetting_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "captureDisabledReasons",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

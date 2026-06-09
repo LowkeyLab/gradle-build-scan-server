@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "ConfigurationCacheLoadFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "result",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationCacheLoadResult_1_0"
+      ],
+      "default": null
+    },
+    { "name": "failureId", "type": ["null", "long"], "default": null }
+  ]
+}

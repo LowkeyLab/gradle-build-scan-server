@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheLocalConnector_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    {
+      "name": "disabledReasonCategory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.buildcache.MvnBuildCachingDisabledReasonCategory_1"
+      ],
+      "default": null
+    },
+    { "name": "disabledReason", "type": ["null", "string"], "default": null },
+    {
+      "name": "directory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "cleanupEnabled", "type": ["null", "boolean"], "default": null },
+    { "name": "cleanupInterval", "type": ["null", "string"], "default": null },
+    { "name": "retentionPeriod", "type": ["null", "string"], "default": null }
+  ]
+}

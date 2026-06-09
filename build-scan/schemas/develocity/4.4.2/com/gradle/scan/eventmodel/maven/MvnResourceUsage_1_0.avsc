@@ -1,0 +1,113 @@
+{
+  "type": "record",
+  "name": "MvnResourceUsage_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "timestamps",
+      "type": ["null", { "type": "array", "items": "bytes" }],
+      "default": null
+    },
+    {
+      "name": "buildProcessCpu",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "buildChildProcessesCpu",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "allProcessesCpuSum",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    { "name": "allProcessesCpu", "type": ["null", "bytes"], "default": null },
+    {
+      "name": "buildProcessMemory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "buildChildProcessesMemory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "allProcessesMemory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    { "name": "totalSystemMemory", "type": ["null", "long"], "default": null },
+    {
+      "name": "diskReadSpeed",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "diskWriteSpeed",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "networkDownloadSpeed",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "networkUploadSpeed",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.resourceusage.MvnResourceUsageNormalizedSamples_1_0"
+      ],
+      "default": null
+    },
+    {
+      "name": "processes",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.resourceusage.MvnProcess_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "topProcesses",
+      "type": [
+        "null",
+        { "type": "array", "items": { "type": "array", "items": "int" } }
+      ],
+      "default": null
+    }
+  ]
+}

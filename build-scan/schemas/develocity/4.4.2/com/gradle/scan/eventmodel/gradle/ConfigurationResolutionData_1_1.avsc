@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionData_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "failureIds",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

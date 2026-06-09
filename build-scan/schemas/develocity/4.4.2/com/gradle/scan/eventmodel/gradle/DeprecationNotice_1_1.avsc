@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "DeprecationNotice_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "documentationUrl", "type": ["null", "string"], "default": null }
+  ]
+}

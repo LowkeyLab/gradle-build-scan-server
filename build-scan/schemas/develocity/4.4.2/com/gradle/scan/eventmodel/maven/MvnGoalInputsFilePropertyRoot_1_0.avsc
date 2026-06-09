@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "MvnGoalInputsFilePropertyRoot_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "file",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "rootHash", "type": ["null", "bytes"], "default": null },
+    {
+      "name": "children",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.goal.MvnGoalInputsFilePropertyRootChild_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

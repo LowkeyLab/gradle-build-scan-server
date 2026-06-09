@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "Component_2_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "repositoryId", "type": ["null", "long"], "default": null }
+  ]
+}

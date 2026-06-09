@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "MvnComponentDependency_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.dependencies",
+  "fields": [
+    { "name": "requested", "type": ["null", "int"], "default": null },
+    { "name": "to", "type": ["null", "int"], "default": null },
+    { "name": "attempted", "type": ["null", "int"], "default": null },
+    { "name": "optional", "type": "boolean" },
+    { "name": "scope", "type": ["null", "string"], "default": null },
+    { "name": "type", "type": ["null", "string"], "default": null }
+  ]
+}

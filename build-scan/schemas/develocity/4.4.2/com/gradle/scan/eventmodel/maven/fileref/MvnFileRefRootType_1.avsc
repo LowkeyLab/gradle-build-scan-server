@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "name": "MvnFileRefRootType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.fileref",
+  "symbols": [
+    "WORKSPACE",
+    "MAVEN_LOCAL_REPOSITORY",
+    "ABSOLUTE",
+    "USER_HOME",
+    "MAVEN_HOME"
+  ]
+}

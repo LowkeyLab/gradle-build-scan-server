@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "MvnBuildFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "failed", "type": "boolean" },
+    {
+      "name": "failureIds",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

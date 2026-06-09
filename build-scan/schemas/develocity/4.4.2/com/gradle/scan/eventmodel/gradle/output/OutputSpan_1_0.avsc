@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "OutputSpan_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.output",
+  "fields": [
+    { "name": "text", "type": ["null", "string"], "default": null },
+    { "name": "style", "type": ["null", "string"], "default": null }
+  ]
+}

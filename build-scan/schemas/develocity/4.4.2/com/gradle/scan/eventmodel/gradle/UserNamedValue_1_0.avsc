@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "UserNamedValue_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "key", "type": ["null", "string"], "default": null },
+    { "name": "value", "type": ["null", "string"], "default": null }
+  ]
+}

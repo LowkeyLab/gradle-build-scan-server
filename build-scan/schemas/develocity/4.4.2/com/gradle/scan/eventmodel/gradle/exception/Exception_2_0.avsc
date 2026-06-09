@@ -1,0 +1,35 @@
+{
+  "type": "record",
+  "name": "Exception_2_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.exception",
+  "fields": [
+    { "name": "className", "type": ["null", "string"], "default": null },
+    { "name": "message", "type": ["null", "string"], "default": null },
+    {
+      "name": "stacktrace",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.exception.StackFrame_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "causes",
+      "type": ["null", { "type": "array", "items": "int" }],
+      "default": null
+    },
+    {
+      "name": "metadata",
+      "type": ["null", { "type": "map", "values": "string" }],
+      "default": null
+    },
+    {
+      "name": "classLevelAnnotations",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "NetworkDownloadActivityFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "failure",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.exception.ExceptionTree_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

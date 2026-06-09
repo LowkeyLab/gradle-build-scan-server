@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnOutputOwnerRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.output",
+  "symbols": ["GOAL"]
+}

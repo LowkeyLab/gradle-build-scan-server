@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "TestDistributionConfiguration_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.testdistribution",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "maxLocalExecutors", "type": "int" },
+    { "name": "maxRemoteExecutors", "type": ["null", "int"], "default": null },
+    { "name": "remoteExecutionPreferred", "type": "boolean" },
+    { "name": "waitTimeout", "type": "long" },
+    { "name": "retryInSameJvm", "type": "boolean" },
+    {
+      "name": "requirements",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

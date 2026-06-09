@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MavenVersion",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": []
+}

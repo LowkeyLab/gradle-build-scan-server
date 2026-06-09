@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "NetworkDownloadActivityOwnerRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.network",
+  "symbols": ["TASK", "SNAPSHOTTING"]
+}

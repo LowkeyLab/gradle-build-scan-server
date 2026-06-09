@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "Project_2_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle.project",
+  "fields": [
+    { "name": "buildPath", "type": ["null", "string"], "default": null }
+  ]
+}

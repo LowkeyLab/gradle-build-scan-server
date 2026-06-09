@@ -1,0 +1,13 @@
+{
+  "type": "enum",
+  "name": "MvnBuildCachingDisabledReasonCategory_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "symbols": [
+    "NON_CLEAN_BUILD",
+    "NO_GE_SERVER_CONFIGURED",
+    "OFFLINE_BUILD",
+    "UNKNOWN_ENTITLEMENTS",
+    "NOT_ENTITLED",
+    "BUILD_CACHE_DISABLED_BY_USER"
+  ]
+}

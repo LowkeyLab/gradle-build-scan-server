@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "MvnTestSelectionFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.pts",
+  "fields": [
+    {
+      "name": "selectionProfile",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.pts.MvnSelectionProfile_1"
+      ],
+      "default": null
+    }
+  ]
+}

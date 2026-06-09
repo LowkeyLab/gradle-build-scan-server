@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "BuildCacheArtifactRejectedReason_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "symbols": ["ARTIFACT_SIZE_TOO_LARGE"]
+}

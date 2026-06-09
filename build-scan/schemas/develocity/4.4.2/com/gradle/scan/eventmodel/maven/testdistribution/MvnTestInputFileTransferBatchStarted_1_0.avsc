@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "MvnTestInputFileTransferBatchStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.testdistribution",
+  "fields": [
+    { "name": "goalExecutionId", "type": "long" },
+    { "name": "id", "type": "long" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "TaskInputsFilePropertyRootChild_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.task",
+  "fields": [
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "hash", "type": ["null", "bytes"], "default": null },
+    { "name": "parent", "type": ["null", "int"], "default": null }
+  ]
+}

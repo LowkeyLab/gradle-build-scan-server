@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnStackTrace_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.exception",
+  "fields": [
+    {
+      "name": "stackFrames",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

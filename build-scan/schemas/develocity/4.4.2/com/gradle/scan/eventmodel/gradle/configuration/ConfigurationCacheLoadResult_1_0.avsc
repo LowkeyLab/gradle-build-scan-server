@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "ConfigurationCacheLoadResult_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.configuration",
+  "fields": [
+    { "name": "cacheEntrySize", "type": "long" },
+    {
+      "name": "originBuildInvocationId",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "ResourceUsageNormalizedSamples_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.resourceusage",
+  "fields": [
+    { "name": "samples", "type": ["null", "bytes"], "default": null },
+    { "name": "max", "type": "long" }
+  ]
+}

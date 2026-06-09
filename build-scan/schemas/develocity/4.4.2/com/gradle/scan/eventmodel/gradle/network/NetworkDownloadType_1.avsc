@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "NetworkDownloadType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.network",
+  "symbols": ["READ", "READ_METADATA", "LIST"]
+}

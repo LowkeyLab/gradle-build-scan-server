@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "TestSelectionMode_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.pts",
+  "symbols": ["RELEVANT_TESTS", "REMAINING_TESTS"]
+}

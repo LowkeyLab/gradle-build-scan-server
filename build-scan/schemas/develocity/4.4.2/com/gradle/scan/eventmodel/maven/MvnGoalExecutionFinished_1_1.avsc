@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnGoalExecutionFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "originExecutionTime", "type": ["null", "long"], "default": null }
+  ]
+}

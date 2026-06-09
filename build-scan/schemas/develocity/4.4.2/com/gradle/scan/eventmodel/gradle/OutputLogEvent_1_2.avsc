@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "OutputLogEvent_1_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "failureId", "type": ["null", "long"], "default": null }]
+}

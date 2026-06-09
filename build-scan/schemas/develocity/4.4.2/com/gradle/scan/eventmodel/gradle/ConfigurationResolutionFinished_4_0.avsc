@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionFinished_4_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "result",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.dependencies.ConfigurationResolutionResult_3_0"
+      ],
+      "default": null
+    },
+    { "name": "failureId", "type": ["null", "long"], "default": null }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "type": "enum",
+  "name": "TaskOutcome_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.task",
+  "symbols": [
+    "UP_TO_DATE",
+    "SKIPPED",
+    "FAILED",
+    "SUCCESS",
+    "FROM_CACHE",
+    "NO_SOURCE",
+    "AVOIDED_FOR_UNKNOWN_REASON"
+  ]
+}

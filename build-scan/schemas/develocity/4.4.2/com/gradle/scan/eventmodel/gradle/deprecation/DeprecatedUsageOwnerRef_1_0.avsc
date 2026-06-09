@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "DeprecatedUsageOwnerRef_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.deprecation",
+  "fields": [
+    {
+      "name": "type",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.deprecation.DeprecatedUsageOwnerRefType_1"
+      ],
+      "default": null
+    },
+    { "name": "id", "type": ["null", "string"], "default": null }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "ExceptionTree_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.exception",
+  "fields": [
+    {
+      "name": "exceptions",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.exception.Exception_2_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

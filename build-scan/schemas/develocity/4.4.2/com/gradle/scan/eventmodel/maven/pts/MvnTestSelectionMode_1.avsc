@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnTestSelectionMode_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.pts",
+  "symbols": ["RELEVANT_TESTS", "REMAINING_TESTS"]
+}

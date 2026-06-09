@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "ResourceUsageIndexedNormalizedSamples_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.resourceusage",
+  "fields": [
+    {
+      "name": "indices",
+      "type": [
+        "null",
+        { "type": "array", "items": { "type": "array", "items": "int" } }
+      ],
+      "default": null
+    },
+    {
+      "name": "samples",
+      "type": ["null", { "type": "array", "items": "bytes" }],
+      "default": null
+    },
+    { "name": "max", "type": "long" }
+  ]
+}

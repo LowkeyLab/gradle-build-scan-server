@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "TestExecutorAssignmentReason_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.test",
+  "symbols": ["DEFAULT", "CONNECTION_TO_AGENT_LOST", "CONTAINER_RETRIED"]
+}

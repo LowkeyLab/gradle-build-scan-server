@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheUnpackStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "goalExecutionId", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "cacheKey", "type": ["null", "bytes"], "default": null },
+    { "name": "archiveSize", "type": "long" }
+  ]
+}

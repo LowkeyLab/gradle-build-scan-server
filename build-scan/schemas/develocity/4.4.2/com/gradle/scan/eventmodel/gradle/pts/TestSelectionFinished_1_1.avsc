@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "TestSelectionFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.pts",
+  "fields": [
+    {
+      "name": "selectionProfile",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.pts.SelectionProfile_1"
+      ],
+      "default": null
+    }
+  ]
+}

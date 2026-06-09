@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "PlannedTransformStepFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "outcome",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.artifacttransforms.TransformOutcome_1"
+      ],
+      "default": null
+    }
+  ]
+}

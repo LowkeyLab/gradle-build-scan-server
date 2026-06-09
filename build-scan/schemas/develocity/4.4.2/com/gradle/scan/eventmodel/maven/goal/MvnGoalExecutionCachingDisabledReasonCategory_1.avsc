@@ -1,0 +1,17 @@
+{
+  "type": "enum",
+  "name": "MvnGoalExecutionCachingDisabledReasonCategory_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.goal",
+  "symbols": [
+    "NON_CLEAN_BUILD",
+    "NO_GE_SERVER_CONFIGURED",
+    "OFFLINE_BUILD",
+    "UNKNOWN_ENTITLEMENTS",
+    "NOT_ENTITLED",
+    "BUILD_CACHE_DISABLED_BY_USER",
+    "GOAL_NOT_SUPPORTED",
+    "GOAL_EXECUTION_MARKED_NON_CACHEABLE",
+    "UNKNOWN",
+    "CACHEABILITY_MISCONFIGURED"
+  ]
+}

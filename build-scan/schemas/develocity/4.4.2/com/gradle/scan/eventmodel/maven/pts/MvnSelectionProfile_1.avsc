@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnSelectionProfile_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.pts",
+  "symbols": ["CONSERVATIVE", "STANDARD", "FAST"]
+}

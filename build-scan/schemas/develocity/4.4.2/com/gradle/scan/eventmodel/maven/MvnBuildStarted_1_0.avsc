@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MvnBuildStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": []
+}

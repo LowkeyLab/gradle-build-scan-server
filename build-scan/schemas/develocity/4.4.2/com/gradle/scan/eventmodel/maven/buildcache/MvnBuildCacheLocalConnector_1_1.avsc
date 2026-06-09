@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheLocalConnector_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    { "name": "storeEnabled", "type": ["null", "boolean"], "default": null }
+  ]
+}

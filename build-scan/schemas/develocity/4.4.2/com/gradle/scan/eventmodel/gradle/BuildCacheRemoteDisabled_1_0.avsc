@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteDisabled_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "buildCacheIdentifier",
+      "type": ["null", "string"],
+      "default": null
+    },
+    { "name": "cacheKey", "type": ["null", "string"], "default": null },
+    {
+      "name": "operationType",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.buildcache.BuildCacheOperationType_1"
+      ],
+      "default": null
+    },
+    { "name": "workId", "type": ["null", "long"], "default": null },
+    { "name": "failureId", "type": "long" }
+  ]
+}

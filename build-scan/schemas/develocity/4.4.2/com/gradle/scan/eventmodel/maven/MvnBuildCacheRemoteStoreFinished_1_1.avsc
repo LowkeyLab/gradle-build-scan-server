@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteStoreFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "rejectedReason",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.MvnBuildCacheArtifactRejectedReason_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

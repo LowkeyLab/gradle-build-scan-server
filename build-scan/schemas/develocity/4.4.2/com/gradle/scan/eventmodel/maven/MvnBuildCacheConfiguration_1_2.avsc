@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheConfiguration_1_2",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": []
+}

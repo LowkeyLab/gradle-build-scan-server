@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteFallback_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "newRemoteCacheLocationName",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "newRemoteCacheLocationId",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

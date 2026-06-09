@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteStoreFinished_1_2",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "maximumArtifactSize", "type": ["null", "long"], "default": null }
+  ]
+}

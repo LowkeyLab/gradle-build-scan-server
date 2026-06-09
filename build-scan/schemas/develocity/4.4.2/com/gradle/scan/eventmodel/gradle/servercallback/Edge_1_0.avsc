@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "Edge_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.servercallback",
+  "fields": [
+    { "name": "id", "type": ["null", "string"], "default": null },
+    { "name": "publicAddress", "type": ["null", "string"], "default": null },
+    { "name": "locationName", "type": ["null", "string"], "default": null }
+  ]
+}

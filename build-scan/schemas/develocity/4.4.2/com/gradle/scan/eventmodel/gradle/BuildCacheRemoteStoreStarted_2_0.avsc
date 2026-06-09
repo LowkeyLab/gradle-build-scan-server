@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteStoreStarted_2_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "workId", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "cacheKey", "type": ["null", "string"], "default": null },
+    { "name": "archiveSize", "type": "long" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "BuildCacheOperationType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.buildcache",
+  "symbols": ["LOAD", "STORE"]
+}

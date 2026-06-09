@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "LoadBuildStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "includedBy", "type": ["null", "string"], "default": null }
+  ]
+}

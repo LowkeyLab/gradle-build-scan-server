@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "UnknownTypeComponentIdentity_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "displayName", "type": ["null", "string"], "default": null },
+    { "name": "className", "type": ["null", "string"], "default": null }
+  ]
+}

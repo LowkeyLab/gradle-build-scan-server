@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "name": "FileRefRootType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.fileref",
+  "symbols": [
+    "WORKSPACE",
+    "GRADLE_USER_HOME",
+    "ABSOLUTE",
+    "READ_ONLY_DEPENDENCY_CACHE",
+    "USER_HOME"
+  ]
+}

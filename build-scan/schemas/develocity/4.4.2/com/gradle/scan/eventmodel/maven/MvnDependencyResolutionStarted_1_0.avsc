@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "MvnDependencyResolutionStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "projectId", "type": "long" }
+  ]
+}

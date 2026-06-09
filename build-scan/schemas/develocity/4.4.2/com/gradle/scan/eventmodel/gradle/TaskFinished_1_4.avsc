@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "TaskFinished_1_4",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "originBuildInvocationId",
+      "type": ["null", "string"],
+      "default": null
+    },
+    { "name": "actionable", "type": "boolean" },
+    {
+      "name": "upToDateMessages",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

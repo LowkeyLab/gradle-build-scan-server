@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "LifecycleListenerExecutionStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "registrant",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.listener.UserCodeApplicationRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "registrationPoint", "type": ["null", "string"], "default": null }
+  ]
+}

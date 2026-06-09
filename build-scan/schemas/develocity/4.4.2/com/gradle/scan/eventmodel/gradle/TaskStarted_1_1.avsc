@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "TaskStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "thread", "type": ["null", "long"], "default": null }]
+}

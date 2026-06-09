@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnTestExecutionOutcome_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.test",
+  "symbols": ["SKIPPED", "ABORTED", "FAILED", "SUCCESS"]
+}

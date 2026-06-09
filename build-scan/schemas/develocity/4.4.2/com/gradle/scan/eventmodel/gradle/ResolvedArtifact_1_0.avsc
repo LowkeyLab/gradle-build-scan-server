@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "ResolvedArtifact_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "file",
+      "type": ["null", "com.gradle.scan.eventmodel.gradle.fileref.FileRef_1_0"],
+      "default": null
+    },
+    { "name": "size", "type": "long" },
+    {
+      "name": "source",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.ArtifactResolutionSource_1"
+      ],
+      "default": null
+    },
+    { "name": "repositoryId", "type": ["null", "long"], "default": null }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "CollectionCallbackParticipantRef_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.collectioncallback",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "type",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.collectioncallback.CollectionCallbackParticipantRefType_1"
+      ],
+      "default": null
+    }
+  ]
+}

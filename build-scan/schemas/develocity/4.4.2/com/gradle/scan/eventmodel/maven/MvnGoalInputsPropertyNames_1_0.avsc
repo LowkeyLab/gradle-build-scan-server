@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "MvnGoalInputsPropertyNames_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "valueInputs",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    },
+    {
+      "name": "fileInputs",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    },
+    {
+      "name": "outputs",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

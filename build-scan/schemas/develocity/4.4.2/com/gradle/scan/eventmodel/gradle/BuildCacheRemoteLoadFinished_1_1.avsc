@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteLoadFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "failureId", "type": ["null", "long"], "default": null }]
+}

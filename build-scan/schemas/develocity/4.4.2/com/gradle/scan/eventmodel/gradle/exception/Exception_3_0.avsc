@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "Exception_3_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.exception",
+  "fields": [
+    { "name": "className", "type": ["null", "string"], "default": null },
+    { "name": "message", "type": ["null", "string"], "default": null },
+    { "name": "stackTrace", "type": "long" },
+    {
+      "name": "causes",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "metadata",
+      "type": ["null", { "type": "map", "values": "string" }],
+      "default": null
+    },
+    {
+      "name": "classLevelAnnotations",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

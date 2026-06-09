@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "TestSelectionStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.pts",
+  "fields": [
+    {
+      "name": "selectionMode",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.pts.TestSelectionMode_1"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "TransformExecutionFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "originBuildCacheKey",
+      "type": ["null", "bytes"],
+      "default": null
+    }
+  ]
+}

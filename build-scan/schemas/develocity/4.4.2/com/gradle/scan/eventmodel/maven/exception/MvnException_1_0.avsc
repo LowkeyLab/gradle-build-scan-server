@@ -1,0 +1,20 @@
+{
+  "type": "record",
+  "name": "MvnException_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.exception",
+  "fields": [
+    { "name": "className", "type": ["null", "string"], "default": null },
+    { "name": "message", "type": ["null", "string"], "default": null },
+    { "name": "stackTrace", "type": "long" },
+    {
+      "name": "causes",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "classLevelAnnotations",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

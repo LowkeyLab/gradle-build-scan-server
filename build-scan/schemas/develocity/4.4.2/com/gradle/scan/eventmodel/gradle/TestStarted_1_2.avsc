@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "TestStarted_1_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "displayName", "type": ["null", "string"], "default": null }
+  ]
+}

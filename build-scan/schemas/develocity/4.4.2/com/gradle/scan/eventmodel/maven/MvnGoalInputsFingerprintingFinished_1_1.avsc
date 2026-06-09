@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "MvnGoalInputsFingerprintingFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "implementation", "type": "long" },
+    { "name": "propertyNames", "type": "long" },
+    { "name": "valueInputs", "type": "long" },
+    {
+      "name": "fileInputs",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

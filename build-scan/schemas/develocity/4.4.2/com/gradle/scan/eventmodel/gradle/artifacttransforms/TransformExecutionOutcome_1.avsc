@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "name": "TransformExecutionOutcome_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.artifacttransforms",
+  "symbols": [
+    "FAILED",
+    "SUCCESS",
+    "FROM_CACHE",
+    "UP_TO_DATE",
+    "AVOIDED_FOR_UNKNOWN_REASON"
+  ]
+}

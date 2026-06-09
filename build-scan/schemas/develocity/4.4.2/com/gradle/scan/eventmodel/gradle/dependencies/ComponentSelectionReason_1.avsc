@@ -1,0 +1,13 @@
+{
+  "type": "enum",
+  "name": "ComponentSelectionReason_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "symbols": [
+    "FORCED",
+    "CONFLICT_RESOLUTION",
+    "SELECTED_BY_RULE",
+    "COMPOSITE_SUBSTITUTION",
+    "CONSTRAINT",
+    "UNKNOWN"
+  ]
+}

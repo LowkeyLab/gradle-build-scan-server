@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteConnectorDisablement_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.buildcache",
+  "fields": [
+    {
+      "name": "disabledReasonCategory",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.buildcache.MvnBuildCachingDisabledReasonCategory_1"
+      ],
+      "default": null
+    },
+    { "name": "disabledReason", "type": ["null", "string"], "default": null }
+  ]
+}

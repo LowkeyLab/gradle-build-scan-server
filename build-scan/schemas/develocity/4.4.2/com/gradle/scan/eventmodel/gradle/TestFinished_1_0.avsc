@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "TestFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "failed", "type": "boolean" },
+    { "name": "skipped", "type": "boolean" },
+    {
+      "name": "failure",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.exception.ExceptionTree_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "BuildModes_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "refreshDependencies", "type": "boolean" },
+    { "name": "parallelProjectExecution", "type": "boolean" },
+    { "name": "rerunTasks", "type": "boolean" },
+    { "name": "continuous", "type": "boolean" },
+    { "name": "continueOnFailure", "type": "boolean" },
+    { "name": "configureOnDemand", "type": "boolean" },
+    { "name": "daemon", "type": "boolean" },
+    { "name": "offline", "type": "boolean" },
+    { "name": "dryRun", "type": "boolean" },
+    { "name": "maxWorkers", "type": "int" }
+  ]
+}

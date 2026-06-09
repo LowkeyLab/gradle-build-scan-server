@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnBuildCacheRemoteLoadFinished_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "remoteCacheLocation",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

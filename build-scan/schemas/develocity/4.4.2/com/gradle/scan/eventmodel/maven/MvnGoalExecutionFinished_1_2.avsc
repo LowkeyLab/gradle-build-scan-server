@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnGoalExecutionFinished_1_2",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "storeEnabled", "type": ["null", "boolean"], "default": null }
+  ]
+}

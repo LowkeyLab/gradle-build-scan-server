@@ -1,0 +1,37 @@
+{
+  "type": "record",
+  "name": "ConfigurationCacheCheckFingerprintFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "status",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationCacheCheckFingerprintStatus_1"
+      ],
+      "default": null
+    },
+    {
+      "name": "buildInvalidationReasons",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationCacheBuildInvalidationReasons_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "projectInvalidationReasons",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationCacheProjectInvalidationReasons_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

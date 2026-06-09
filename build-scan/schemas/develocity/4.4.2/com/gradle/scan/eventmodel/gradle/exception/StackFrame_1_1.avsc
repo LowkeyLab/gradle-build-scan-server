@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "StackFrame_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.exception",
+  "fields": [
+    {
+      "name": "fileRef",
+      "type": ["null", "com.gradle.scan.eventmodel.gradle.fileref.FileRef_1_0"],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "ComponentIdentity",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": []
+}

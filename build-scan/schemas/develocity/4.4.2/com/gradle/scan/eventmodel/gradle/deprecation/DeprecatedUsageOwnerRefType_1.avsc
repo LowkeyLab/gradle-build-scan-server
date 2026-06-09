@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "DeprecatedUsageOwnerRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.deprecation",
+  "symbols": ["PLUGIN", "SCRIPT", "TASK"]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "TaskInputsFileProperty_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "attributes",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

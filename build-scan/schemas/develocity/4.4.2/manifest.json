@@ -1,0 +1,130 @@
+{
+  "coordinates": "com.gradle:develocity-gradle-plugin:4.4.2",
+  "artifactFile": "processed_develocity-gradle-plugin-4.4.2.jar",
+  "sha256": "9afb85af013479ee2ced35dde66bec6c2d56e612d25d06b77c77bcf53148f820",
+  "classesScanned": 502,
+  "schemasEmitted": 502,
+  "skippedClasses": [],
+  "ambiguousMappings": [
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_0",
+      "field": "components",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_0",
+      "field": "dependencies",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_0",
+      "field": "failures",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_0",
+      "field": "identities",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_3",
+      "field": "attributes",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_3",
+      "field": "capabilities",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_3",
+      "field": "selectionDescriptors",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ConfigurationResolutionData_1_3",
+      "field": "variants",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.DeprecatedUsageTraceData_1_0",
+      "field": "stackFrames",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.DeprecatedUsageTraceData_1_0",
+      "field": "stackTraces",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.DeprecatedUsageTraceData_1_1",
+      "field": "stackTraceFragments",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ExceptionData_1_0",
+      "field": "exceptions",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ExceptionData_1_0",
+      "field": "stackFrames",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.ExceptionData_1_0",
+      "field": "stackTraces",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.FileRefRoots_1_0",
+      "field": "rootPaths",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.Repository_1_0",
+      "field": "properties",
+      "reason": "wildcard generic type is unavailable"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.dependencies.ConfigurationResolutionResult_2_0",
+      "field": "dependencyToFailure",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.dependencies.ConfigurationResolutionResult_2_0",
+      "field": "identityToComponent",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.gradle.dependencies.ConfigurationResolutionResult_3_0",
+      "field": "dependencyToFailures",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.maven.MvnExceptionData_1_0",
+      "field": "exceptions",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.maven.MvnExceptionData_1_0",
+      "field": "stackFrames",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.maven.MvnExceptionData_1_0",
+      "field": "stackTraces",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.maven.MvnFileRefRoots_1_0",
+      "field": "rootPaths",
+      "reason": "map key type is not string-compatible"
+    },
+    {
+      "class": "com.gradle.scan.eventmodel.maven.dependencies.MvnDependencyResolutionResult_1_0",
+      "field": "dependencyToIdentityToFailure",
+      "reason": "map key type is not string-compatible"
+    }
+  ]
+}

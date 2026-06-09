@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "ProjectComponentIdentity_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "projectPath", "type": ["null", "string"], "default": null }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnComponentIdentity_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.dependencies",
+  "fields": [
+    { "name": "group", "type": ["null", "string"], "default": null },
+    { "name": "artifact", "type": ["null", "string"], "default": null },
+    { "name": "version", "type": ["null", "string"], "default": null },
+    { "name": "extension", "type": ["null", "string"], "default": null },
+    { "name": "classifier", "type": ["null", "string"], "default": null }
+  ]
+}

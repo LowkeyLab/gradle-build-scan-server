@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "MvnUserCaptureSettings_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "goalInputFiles", "type": "boolean" },
+    { "name": "buildLogging", "type": "boolean" },
+    { "name": "testLogging", "type": "boolean" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnFileRefRoots_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "rootPaths", "type": ["null", "string"], "default": null }
+  ]
+}

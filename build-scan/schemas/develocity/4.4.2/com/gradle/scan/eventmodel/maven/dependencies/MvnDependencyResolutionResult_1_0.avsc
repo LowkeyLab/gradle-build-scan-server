@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "MvnDependencyResolutionResult_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.dependencies",
+  "fields": [
+    { "name": "failed", "type": "boolean" },
+    { "name": "root", "type": "int" },
+    {
+      "name": "components",
+      "type": ["null", { "type": "array", "items": "int" }],
+      "default": null
+    },
+    {
+      "name": "repositories",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "dependencyToIdentityToFailure",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

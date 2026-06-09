@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "EvaluateSettingsStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "parent",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationParentRef_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "TestOutput_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "owner", "type": "long" },
+    { "name": "message", "type": ["null", "string"], "default": null },
+    { "name": "stdErr", "type": "boolean" }
+  ]
+}

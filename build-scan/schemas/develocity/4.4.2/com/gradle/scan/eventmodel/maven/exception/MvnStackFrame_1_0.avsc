@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "MvnStackFrame_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.exception",
+  "fields": [
+    { "name": "declaringClass", "type": ["null", "string"], "default": null },
+    { "name": "methodName", "type": ["null", "string"], "default": null },
+    { "name": "fileName", "type": ["null", "string"], "default": null },
+    {
+      "name": "fileRef",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "lineNumber", "type": "int" }
+  ]
+}

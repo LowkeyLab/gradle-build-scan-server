@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "TaskInputsFileProperty_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "normalization", "type": ["null", "string"], "default": null },
+    { "name": "hash", "type": ["null", "bytes"], "default": null },
+    {
+      "name": "roots",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

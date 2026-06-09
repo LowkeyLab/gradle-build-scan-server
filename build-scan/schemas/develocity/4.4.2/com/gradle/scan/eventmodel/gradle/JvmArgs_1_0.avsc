@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "JvmArgs_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "effective",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

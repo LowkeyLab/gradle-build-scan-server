@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "TaskRealizationStarted_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "buildPath", "type": ["null", "string"], "default": null },
+    { "name": "taskPath", "type": ["null", "string"], "default": null },
+    { "name": "eager", "type": "boolean" },
+    { "name": "replacement", "type": "boolean" }
+  ]
+}

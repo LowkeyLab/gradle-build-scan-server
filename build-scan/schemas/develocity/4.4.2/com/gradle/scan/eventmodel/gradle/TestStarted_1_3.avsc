@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "TestStarted_1_3",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "executorRestriction",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.testdistribution.ExecutorRestriction_1"
+      ],
+      "default": null
+    },
+    { "name": "executorId", "type": ["null", "long"], "default": null },
+    {
+      "name": "executorAssignmentReason",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.test.TestExecutorAssignmentReason_1"
+      ],
+      "default": null
+    }
+  ]
+}

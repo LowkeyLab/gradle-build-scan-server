@@ -1,0 +1,40 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_test")
+
+java_library(
+    name = "schema_infer_lib",
+    srcs = glob(
+        ["src/main/java/**/*.java"],
+        allow_empty = True,
+    ),
+    deps = [
+        "@maven//:org_ow2_asm_asm",
+    ],
+)
+
+java_binary(
+    name = "develocity-schema-infer",
+    main_class = "build.scan.tools.develocityschemainfer.Main",
+    runtime_deps = [":schema_infer_lib"],
+)
+
+java_test(
+    name = "schema_inference_test",
+    size = "small",
+    srcs = glob(["src/test/java/**/*.java"]),
+    args = [
+        "execute",
+        "--select-class=build.scan.tools.develocityschemainfer.SchemaInferenceToolTest",
+    ],
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    test_class = "org.junit.platform.console.ConsoleLauncher",
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    deps = [
+        ":schema_infer_lib",
+        "@maven//:org_apache_avro_avro",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_ow2_asm_asm",
+    ],
+)

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "BasicMemoryStats_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "free", "type": "long" },
+    { "name": "total", "type": "long" },
+    { "name": "max", "type": "long" }
+  ]
+}

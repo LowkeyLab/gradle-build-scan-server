@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "Hardware_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "numProcessors", "type": "int" }]
+}

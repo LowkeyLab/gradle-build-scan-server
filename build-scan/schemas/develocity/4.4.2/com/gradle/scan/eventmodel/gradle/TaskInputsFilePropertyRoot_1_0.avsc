@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "TaskInputsFilePropertyRoot_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "file",
+      "type": ["null", "com.gradle.scan.eventmodel.gradle.fileref.FileRef_1_0"],
+      "default": null
+    },
+    { "name": "rootHash", "type": ["null", "bytes"], "default": null },
+    {
+      "name": "children",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.task.TaskInputsFilePropertyRootChild_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

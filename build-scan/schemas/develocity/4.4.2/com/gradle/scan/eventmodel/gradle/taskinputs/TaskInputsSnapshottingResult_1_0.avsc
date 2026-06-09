@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "TaskInputsSnapshottingResult_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.taskinputs",
+  "fields": [
+    { "name": "hash", "type": ["null", "bytes"], "default": null },
+    { "name": "implementation", "type": "long" },
+    { "name": "propertyNames", "type": "long" },
+    { "name": "valueInputs", "type": "long" },
+    {
+      "name": "fileInputs",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

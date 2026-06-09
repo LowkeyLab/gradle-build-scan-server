@@ -1,0 +1,30 @@
+{
+  "type": "record",
+  "name": "PlannedTask_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "buildPath", "type": ["null", "string"], "default": null },
+    { "name": "taskPath", "type": ["null", "string"], "default": null },
+    {
+      "name": "dependencies",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "mustRunAfter",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "shouldRunAfter",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "finalizedBy",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

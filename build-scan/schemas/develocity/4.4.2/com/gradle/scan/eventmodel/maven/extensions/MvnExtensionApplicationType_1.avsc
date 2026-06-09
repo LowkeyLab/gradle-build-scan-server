@@ -1,0 +1,13 @@
+{
+  "type": "enum",
+  "name": "MvnExtensionApplicationType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.extensions",
+  "symbols": [
+    "CORE",
+    "MAVEN_EXT_CLASSPATH",
+    "LIB_EXT",
+    "PROJECT",
+    "POM",
+    "UNKNOWN"
+  ]
+}

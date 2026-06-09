@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "MvnJvm_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "version", "type": ["null", "string"], "default": null },
+    { "name": "vendor", "type": ["null", "string"], "default": null },
+    { "name": "runtimeName", "type": ["null", "string"], "default": null },
+    { "name": "runtimeVersion", "type": ["null", "string"], "default": null },
+    { "name": "classVersion", "type": ["null", "string"], "default": null },
+    { "name": "vmInfo", "type": ["null", "string"], "default": null },
+    { "name": "vmName", "type": ["null", "string"], "default": null },
+    { "name": "vmVersion", "type": ["null", "string"], "default": null },
+    { "name": "vmVendor", "type": ["null", "string"], "default": null }
+  ]
+}

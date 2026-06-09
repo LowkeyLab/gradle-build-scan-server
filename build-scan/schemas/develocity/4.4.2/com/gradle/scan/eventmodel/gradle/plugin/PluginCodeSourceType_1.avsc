@@ -1,0 +1,12 @@
+{
+  "type": "enum",
+  "name": "PluginCodeSourceType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.plugin",
+  "symbols": [
+    "GRADLE_DISTRIBUTION",
+    "DEPENDENCY_CACHE",
+    "BUILD_SCRIPT",
+    "BUILD_SRC",
+    "UNKNOWN"
+  ]
+}

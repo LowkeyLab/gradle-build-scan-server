@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "MvnNotSelectedTest_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.pts",
+  "fields": [
+    { "name": "goalExecutionId", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "testClassName", "type": ["null", "string"], "default": null },
+    { "name": "reasonOrdinal", "type": "int" }
+  ]
+}

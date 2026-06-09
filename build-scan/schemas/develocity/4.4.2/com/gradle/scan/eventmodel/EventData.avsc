@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "EventData",
+  "namespace": "com.gradle.scan.eventmodel",
+  "fields": []
+}

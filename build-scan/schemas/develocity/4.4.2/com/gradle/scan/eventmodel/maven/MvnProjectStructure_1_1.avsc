@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "MvnProjectStructure_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "topLevelProjectName",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

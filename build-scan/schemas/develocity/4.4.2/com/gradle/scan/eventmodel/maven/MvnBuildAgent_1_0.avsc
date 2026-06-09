@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "MvnBuildAgent_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "username", "type": ["null", "string"], "default": null },
+    { "name": "localHostname", "type": ["null", "string"], "default": null },
+    { "name": "publicHostname", "type": ["null", "string"], "default": null },
+    {
+      "name": "ipAddresses",
+      "type": ["null", { "type": "array", "items": "string" }],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "Component_2_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    {
+      "name": "selectionReasons",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

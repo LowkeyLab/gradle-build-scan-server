@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "AnnotationProcessorExecutionData_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "executions",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.AnnotationProcessorExecution_1_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

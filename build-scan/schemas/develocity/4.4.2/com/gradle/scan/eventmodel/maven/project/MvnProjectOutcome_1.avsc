@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnProjectOutcome_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.project",
+  "symbols": ["SKIPPED", "FAILED", "SUCCESS"]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnTestExecutorAssignmentReason_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.testdistribution",
+  "symbols": ["DEFAULT", "CONNECTION_TO_AGENT_LOST", "CONTAINER_RETRIED"]
+}

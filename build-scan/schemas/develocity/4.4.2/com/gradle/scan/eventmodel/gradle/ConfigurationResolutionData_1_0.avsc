@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionData_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "identities", "type": ["null", "string"], "default": null },
+    { "name": "components", "type": ["null", "string"], "default": null },
+    { "name": "dependencies", "type": ["null", "string"], "default": null },
+    { "name": "failures", "type": ["null", "string"], "default": null }
+  ]
+}

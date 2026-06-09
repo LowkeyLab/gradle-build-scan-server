@@ -1,0 +1,45 @@
+{
+  "type": "record",
+  "name": "MvnDependencyResolutionData_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "identities",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.dependencies.MvnComponentIdentity_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "dependencies",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.dependencies.MvnComponentDependency_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "components",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.maven.dependencies.MvnComponent_1_0"
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "failureIds",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    }
+  ]
+}

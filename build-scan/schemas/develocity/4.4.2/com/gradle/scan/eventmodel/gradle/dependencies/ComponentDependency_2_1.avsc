@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "ComponentDependency_2_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    {
+      "name": "attemptedReasons",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "attributes",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    {
+      "name": "capabilities",
+      "type": ["null", { "type": "array", "items": "long" }],
+      "default": null
+    },
+    { "name": "constraint", "type": "boolean" }
+  ]
+}

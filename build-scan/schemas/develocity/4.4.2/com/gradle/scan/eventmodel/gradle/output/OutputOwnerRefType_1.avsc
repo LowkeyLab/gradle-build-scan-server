@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "OutputOwnerRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.output",
+  "symbols": ["TASK", "PLANNED_TRANSFORM_STEP"]
+}

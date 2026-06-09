@@ -1,0 +1,15 @@
+{
+  "type": "enum",
+  "name": "TaskOutputCachingDisabledReason_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.task",
+  "symbols": [
+    "BUILD_CACHE_NOT_ENABLED",
+    "OUTPUT_CACHING_NOT_ENABLED",
+    "NO_OUTPUTS_DECLARED",
+    "MULTIPLE_OUTPUTS_DECLARED",
+    "OVERLAPPING_OUTPUTS",
+    "UNSATISFIED_PREDICATE_CACHE_IF",
+    "SATISFIED_PREDICATE_DO_NOT_CACHE_IF",
+    "UNKNOWN"
+  ]
+}

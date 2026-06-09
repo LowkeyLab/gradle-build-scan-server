@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "MvnBuiltInCacheReport_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.builtincache",
+  "fields": [
+    { "name": "buildId", "type": ["null", "string"], "default": null },
+    { "name": "report", "type": ["null", "string"], "default": null }
+  ]
+}

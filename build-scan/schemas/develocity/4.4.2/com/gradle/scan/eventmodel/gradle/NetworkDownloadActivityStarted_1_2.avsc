@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "NetworkDownloadActivityStarted_1_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "owner",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.network.NetworkDownloadActivityOwnerRef_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

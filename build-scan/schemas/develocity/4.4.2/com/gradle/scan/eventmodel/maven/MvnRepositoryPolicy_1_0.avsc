@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "MvnRepositoryPolicy_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "enabled", "type": "boolean" },
+    { "name": "updatePolicy", "type": ["null", "string"], "default": null },
+    { "name": "checksumPolicy", "type": ["null", "string"], "default": null }
+  ]
+}

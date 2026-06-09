@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnScopeIds_1_1",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "workspaceId", "type": ["null", "string"], "default": null }
+  ]
+}

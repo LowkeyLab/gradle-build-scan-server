@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "ProjectComponentIdentity_1_3",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [{ "name": "variantIdx", "type": ["null", "int"], "default": null }]
+}

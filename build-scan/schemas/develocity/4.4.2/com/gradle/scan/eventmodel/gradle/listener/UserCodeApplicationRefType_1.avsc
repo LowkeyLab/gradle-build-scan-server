@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "UserCodeApplicationRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.listener",
+  "symbols": ["SCRIPT", "PLUGIN"]
+}

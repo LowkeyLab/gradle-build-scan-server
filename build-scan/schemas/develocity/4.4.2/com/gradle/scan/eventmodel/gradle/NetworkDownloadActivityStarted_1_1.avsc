@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "NetworkDownloadActivityStarted_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "downloadType",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.network.NetworkDownloadType_1"
+      ],
+      "default": null
+    }
+  ]
+}

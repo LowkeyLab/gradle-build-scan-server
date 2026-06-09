@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteStoreFinished_1_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "rejectedReason",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.BuildCacheArtifactRejectedReason_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

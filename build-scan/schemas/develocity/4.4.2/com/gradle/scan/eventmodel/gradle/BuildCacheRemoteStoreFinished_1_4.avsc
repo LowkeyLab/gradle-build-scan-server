@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteStoreFinished_1_4",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "remoteCacheLocation",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

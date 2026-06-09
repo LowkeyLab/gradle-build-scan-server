@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "DeprecatedUsage_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "notice", "type": "long" },
+    { "name": "stackTrace", "type": ["null", "long"], "default": null },
+    { "name": "contextualAdvice", "type": ["null", "string"], "default": null },
+    {
+      "name": "owner",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.deprecation.DeprecatedUsageOwnerRef_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "TestExecutorAssigned_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.test",
+  "fields": [
+    { "name": "task", "type": "long" },
+    { "name": "id", "type": "long" },
+    { "name": "isRemote", "type": "boolean" },
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "hostname", "type": ["null", "string"], "default": null },
+    { "name": "poolId", "type": ["null", "string"], "default": null }
+  ]
+}

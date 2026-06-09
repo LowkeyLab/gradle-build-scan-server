@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionResult_2_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "failed", "type": "boolean" },
+    { "name": "root", "type": "long" },
+    {
+      "name": "identityToComponent",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "dependencyToFailure",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

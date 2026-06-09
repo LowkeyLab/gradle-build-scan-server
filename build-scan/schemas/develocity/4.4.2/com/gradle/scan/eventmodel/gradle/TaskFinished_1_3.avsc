@@ -1,0 +1,20 @@
+{
+  "type": "record",
+  "name": "TaskFinished_1_3",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "cachingDisabledReason",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.task.TaskOutputCachingDisabledReason_1"
+      ],
+      "default": null
+    },
+    {
+      "name": "cachingDisabledExplanation",
+      "type": ["null", "string"],
+      "default": null
+    }
+  ]
+}

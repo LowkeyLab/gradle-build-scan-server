@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "ConfigurationCacheCheckFingerprintStatus_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.configuration",
+  "symbols": ["NOT_FOUND", "VALID", "PARTIAL", "INVALID", "UNKNOWN"]
+}

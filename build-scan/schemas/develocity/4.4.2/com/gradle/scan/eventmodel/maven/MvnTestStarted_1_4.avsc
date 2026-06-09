@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "MvnTestStarted_1_4",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    {
+      "name": "executorRestriction",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.testdistribution.MvnTestExecutorRestriction_1"
+      ],
+      "default": null
+    },
+    { "name": "executorId", "type": "long" },
+    {
+      "name": "executorAssignmentReason",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.testdistribution.MvnTestExecutorAssignmentReason_1"
+      ],
+      "default": null
+    }
+  ]
+}

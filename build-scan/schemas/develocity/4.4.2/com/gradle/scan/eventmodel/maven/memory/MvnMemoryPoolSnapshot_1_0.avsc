@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "MvnMemoryPoolSnapshot_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.memory",
+  "fields": [
+    { "name": "name", "type": ["null", "string"], "default": null },
+    { "name": "heap", "type": "boolean" },
+    { "name": "init", "type": "long" },
+    { "name": "used", "type": "long" },
+    { "name": "committed", "type": "long" },
+    { "name": "max", "type": "long" }
+  ]
+}

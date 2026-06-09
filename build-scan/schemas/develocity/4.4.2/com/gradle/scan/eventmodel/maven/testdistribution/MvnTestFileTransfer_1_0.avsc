@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "MvnTestFileTransfer_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven.testdistribution",
+  "fields": [
+    {
+      "name": "path",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.maven.fileref.MvnFileRef_1_0"
+      ],
+      "default": null
+    },
+    { "name": "duration", "type": "long" },
+    { "name": "size", "type": "long" }
+  ]
+}

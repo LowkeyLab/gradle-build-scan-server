@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "FileRefRoots_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "rootPaths", "type": ["null", "string"], "default": null }
+  ]
+}

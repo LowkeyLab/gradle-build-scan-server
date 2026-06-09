@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "Project_2_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle.project",
+  "fields": [
+    {
+      "name": "projectDir",
+      "type": ["null", "com.gradle.scan.eventmodel.gradle.fileref.FileRef_1_0"],
+      "default": null
+    },
+    {
+      "name": "buildFile",
+      "type": ["null", "com.gradle.scan.eventmodel.gradle.fileref.FileRef_1_0"],
+      "default": null
+    },
+    { "name": "buildFileExists", "type": "boolean" }
+  ]
+}

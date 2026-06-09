@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "UserLink_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "label", "type": ["null", "string"], "default": null },
+    { "name": "url", "type": ["null", "string"], "default": null }
+  ]
+}

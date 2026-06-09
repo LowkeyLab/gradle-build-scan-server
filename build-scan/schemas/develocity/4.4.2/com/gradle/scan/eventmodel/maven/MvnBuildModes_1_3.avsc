@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "MvnBuildModes_1_3",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [{ "name": "resume", "type": ["null", "boolean"], "default": null }]
+}

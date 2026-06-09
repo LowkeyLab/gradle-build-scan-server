@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnTestType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.test",
+  "symbols": ["OTHER", "PARTITION", "ENGINE", "CLASS", "TEST"]
+}

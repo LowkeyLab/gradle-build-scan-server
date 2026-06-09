@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "BuildModes_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "taskOutputCache", "type": "boolean" }]
+}

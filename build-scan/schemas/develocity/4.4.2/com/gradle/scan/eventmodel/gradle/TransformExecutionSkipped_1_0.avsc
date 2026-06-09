@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "TransformExecutionSkipped_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "originBuildInvocationId",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "originBuildCacheKey",
+      "type": ["null", "bytes"],
+      "default": null
+    },
+    { "name": "originExecutionTime", "type": "long" }
+  ]
+}

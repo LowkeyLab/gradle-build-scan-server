@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "ProjectEvaluationStarted_1_2",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "parent",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.configuration.ConfigurationParentRef_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

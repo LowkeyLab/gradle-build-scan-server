@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "BasicMemoryStats_1_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "peakSnapshots",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.memory.MemoryPoolSnapshot_1_0"
+        }
+      ],
+      "default": null
+    },
+    { "name": "gcTime", "type": "long" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "MvnDependencyResolutionDownloadOwnerRefType_1",
+  "namespace": "com.gradle.scan.eventmodel.maven.dependencies",
+  "symbols": ["PROJECT", "PLUGIN"]
+}

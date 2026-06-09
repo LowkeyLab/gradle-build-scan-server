@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "name": "ArtifactResolutionSource_1",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "symbols": ["LOCAL_CACHE", "REMOTE_REPOSITORY"]
+}

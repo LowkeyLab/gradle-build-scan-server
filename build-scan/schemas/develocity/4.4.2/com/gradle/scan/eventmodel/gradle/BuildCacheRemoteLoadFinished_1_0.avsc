@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "BuildCacheRemoteLoadFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "hit", "type": ["null", "boolean"], "default": null },
+    { "name": "archiveSize", "type": ["null", "long"], "default": null },
+    {
+      "name": "failure",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.exception.ExceptionTree_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

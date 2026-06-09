@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "ConfigurationResolutionData_1_3",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    {
+      "name": "selectionDescriptors",
+      "type": ["null", "string"],
+      "default": null
+    },
+    { "name": "attributes", "type": ["null", "string"], "default": null },
+    { "name": "capabilities", "type": ["null", "string"], "default": null },
+    { "name": "variants", "type": ["null", "string"], "default": null }
+  ]
+}

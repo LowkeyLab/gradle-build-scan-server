@@ -1,0 +1,6 @@
+{
+  "type": "record",
+  "name": "NetworkDownloadActivityFinished_1_3",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [{ "name": "missing", "type": "boolean" }]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "ComponentDependency_2_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.dependencies",
+  "fields": [
+    { "name": "requested", "type": ["null", "long"], "default": null },
+    { "name": "to", "type": ["null", "long"], "default": null },
+    { "name": "attempted", "type": ["null", "long"], "default": null },
+    { "name": "attemptedReason", "type": ["null", "int"], "default": null }
+  ]
+}

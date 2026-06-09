@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "ProjectEvaluationFinished_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "projectPath", "type": ["null", "string"], "default": null },
+    {
+      "name": "failure",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.exception.ExceptionTree_1_0"
+      ],
+      "default": null
+    }
+  ]
+}

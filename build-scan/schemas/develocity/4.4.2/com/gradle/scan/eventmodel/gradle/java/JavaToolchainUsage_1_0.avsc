@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "JavaToolchainUsage_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.java",
+  "fields": [
+    { "name": "taskId", "type": "long" },
+    { "name": "toolName", "type": ["null", "string"], "default": null },
+    { "name": "toolchainId", "type": "long" }
+  ]
+}

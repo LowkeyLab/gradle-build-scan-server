@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "OutputOwnerRef_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle.output",
+  "fields": [
+    {
+      "name": "type",
+      "type": [
+        "null",
+        "com.gradle.scan.eventmodel.gradle.output.OutputOwnerRefType_1"
+      ],
+      "default": null
+    },
+    { "name": "id", "type": ["null", "string"], "default": null }
+  ]
+}

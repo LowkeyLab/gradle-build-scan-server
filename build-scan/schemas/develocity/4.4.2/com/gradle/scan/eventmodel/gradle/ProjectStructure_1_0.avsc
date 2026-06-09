@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "ProjectStructure_1_0",
+  "namespace": "com.gradle.scan.eventmodel.gradle",
+  "fields": [
+    { "name": "rootProjectName", "type": ["null", "string"], "default": null },
+    {
+      "name": "projects",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "com.gradle.scan.eventmodel.gradle.project.Project_2_0"
+        }
+      ],
+      "default": null
+    }
+  ]
+}

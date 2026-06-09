@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "MvnScopeIds_1_0",
+  "namespace": "com.gradle.scan.eventmodel.maven",
+  "fields": [
+    { "name": "buildInvocationId", "type": ["null", "string"], "default": null }
+  ]
+}
