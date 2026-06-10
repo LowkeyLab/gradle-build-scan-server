@@ -1,0 +1,70 @@
+# gazelle:exclude src
+load("@rules_kotlin//kotlin:core.bzl", "kt_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library", "kt_jvm_test")
+
+kt_kotlinc_options(
+    name = "context_parameter_opts",
+    x_context_parameters = True,
+)
+
+kt_jvm_library(
+    name = "kryo_model",
+    srcs = glob(["src/main/kotlin/**/*.kt"]),
+    kotlinc_opts = ":context_parameter_opts",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@maven//:io_arrow_kt_arrow_core",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+        "@maven//:org_ow2_asm_asm",
+    ],
+)
+
+kt_jvm_binary(
+    name = "generate",
+    main_class = "build.scan.tools.develocity.kryomodel.GenerateMainKt",
+    runtime_deps = [":kryo_model"],
+)
+
+kt_jvm_library(
+    name = "generated_models",
+    srcs = glob(
+        ["src/generated/kotlin/**/*.kt"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_test(
+    name = "kryo_model_test",
+    size = "medium",
+    srcs = glob(["src/test/kotlin/**/*.kt"]),
+    args = [
+        "execute",
+        "--select-class=build.scan.tools.develocity.kryomodel.KryoModelTest",
+    ],
+    data = glob(["src/generated/kotlin/**/*.kt"]) + [
+        "@maven//:com_gradle_develocity_gradle_plugin",
+    ],
+    kotlinc_opts = ":context_parameter_opts",
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    runtime_deps = [
+        "@maven//:com_gradle_develocity_gradle_plugin",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+    deps = [
+        ":generated_models",
+        ":kryo_model",
+        "@maven//:io_arrow_kt_arrow_core",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test_junit5",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_ow2_asm_asm",
+    ],
+)
+
+test_suite(
+    name = "all",
+    tests = [":kryo_model_test"],
+)
