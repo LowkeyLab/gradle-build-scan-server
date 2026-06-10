@@ -34,7 +34,7 @@ bazel_dep(name = "aspect_rules_js", version = "3.2.1")
 bazel_dep(name = "rules_angular")
 git_override(
     module_name = "rules_angular",
-    commit = "02e0d38eb29b2721128ca7e93ee694e68d4f06f6",
+    commit = "0571709fc1bf8174c94f4b01c87f50a3b3d3cf23",
     remote = "https://github.com/devversion/rules_angular.git",
 )
 
@@ -110,11 +110,11 @@ maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     artifacts = [
         "ch.qos.logback:logback-classic:1.5.34",
-        "io.arrow-kt:arrow-core:2.1.2",
-        "io.arrow-kt:arrow-fx-coroutines:2.1.2",
-        "io.arrow-kt:arrow-optics:2.1.2",
         "com.gradle:develocity-gradle-plugin:4.4.2",
-        "io.arrow-kt:arrow-resilience:2.1.2",
+        "io.arrow-kt:arrow-core:2.2.3",
+        "io.arrow-kt:arrow-fx-coroutines:2.2.3",
+        "io.arrow-kt:arrow-optics:2.2.3",
+        "io.arrow-kt:arrow-resilience:2.2.3",
         "io.ktor:ktor-server-core-jvm:3.5.0",
         "io.ktor:ktor-server-netty-jvm:3.5.0",
         "org.ow2.asm:asm:9.9",

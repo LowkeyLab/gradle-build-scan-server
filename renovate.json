@@ -10,6 +10,15 @@
   },
   "packageRules": [
     {
+      "matchManagers": ["bazel-module"],
+      "matchDatasources": ["maven"],
+      "postUpgradeTasks": {
+        "commands": ["env REPIN=1 bazel run @maven//:pin"],
+        "fileFilters": ["maven_install.json"],
+        "executionMode": "update"
+      }
+    },
+    {
       "matchManagers": ["cargo"],
       "postUpgradeTasks": {
         "commands": ["bazel mod deps --lockfile_mode=update"],
@@ -18,7 +27,7 @@
       }
     },
     {
-      "matchManagers": ["bazel_module"],
+      "matchManagers": ["bazel-module"],
       "matchPackageNames": ["bazelrc-preset"],
       "postUpgradeTasks": {
         "commands": ["bazel run @@//tools:preset.update"],
