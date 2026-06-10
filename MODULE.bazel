@@ -110,10 +110,10 @@ maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     artifacts = [
         "ch.qos.logback:logback-classic:1.5.34",
-        "io.arrow-kt:arrow-core:2.1.2",
-        "io.arrow-kt:arrow-fx-coroutines:2.1.2",
-        "io.arrow-kt:arrow-optics:2.1.2",
-        "io.arrow-kt:arrow-resilience:2.1.2",
+        "io.arrow-kt:arrow-core:2.2.3",
+        "io.arrow-kt:arrow-fx-coroutines:2.2.3",
+        "io.arrow-kt:arrow-optics:2.2.3",
+        "io.arrow-kt:arrow-resilience:2.2.3",
         "io.ktor:ktor-server-core-jvm:3.5.0",
         "io.ktor:ktor-server-netty-jvm:3.5.0",
     ],
