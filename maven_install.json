@@ -21,7 +21,7 @@
     "org.junit.jupiter:junit-jupiter-engine": -2028311080,
     "org.junit.jupiter:junit-jupiter-params": -1806987492,
     "org.junit.platform:junit-platform-console": 978890447,
-    "org.ow2.asm:asm": -221905796,
+    "org.ow2.asm:asm": -1147174173,
     "repositories": -1494350127
   },
   "__RESOLVED_ARTIFACTS_HASH": {
@@ -308,9 +308,9 @@
     "org.opentest4j:opentest4j": -1711174392,
     "org.opentest4j:opentest4j:jar:javadoc": -725251940,
     "org.opentest4j:opentest4j:jar:sources": -1740624156,
-    "org.ow2.asm:asm": -1385251582,
-    "org.ow2.asm:asm:jar:javadoc": -1482522264,
-    "org.ow2.asm:asm:jar:sources": 1195325834,
+    "org.ow2.asm:asm": -153858314,
+    "org.ow2.asm:asm:jar:javadoc": 579373334,
+    "org.ow2.asm:asm:jar:sources": 1372783843,
     "org.slf4j:slf4j-api": 500377983,
     "org.slf4j:slf4j-api:jar:javadoc": -1281384294,
     "org.slf4j:slf4j-api:jar:sources": 1751644771
@@ -1079,11 +1079,11 @@
     },
     "org.ow2.asm:asm": {
       "shasums": {
-        "jar": "03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4",
-        "javadoc": "ecbf6426843a98f2fa56fbb6b3992b3f2894faf424b44cad9758daf63f6d690b",
-        "sources": "e37000a2a0bc9f0bef373714ad7dde4082212351847b74618d483057a4ae186c"
+        "jar": "ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb",
+        "javadoc": "05684ed698d980c9a4b489ba42799a2f8f45f8fa19d36f8304652085bcfa3dae",
+        "sources": "cb29bf42b4008972c566944d377192aa1b2d90275b9cfa9a7fa86de669fde11c"
       },
-      "version": "9.9"
+      "version": "9.10.1"
     },
     "org.slf4j:slf4j-api": {
       "shasums": {
@@ -1107,14 +1107,20 @@
       "com.google.j2objc:j2objc-annotations",
       "org.checkerframework:checker-qual"
     ],
-    "io.arrow-kt:arrow-annotations-jvm": ["org.jetbrains.kotlin:kotlin-stdlib"],
-    "io.arrow-kt:arrow-atomic-jvm": ["org.jetbrains.kotlin:kotlin-stdlib"],
+    "io.arrow-kt:arrow-annotations-jvm": [
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "io.arrow-kt:arrow-atomic-jvm": [
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
     "io.arrow-kt:arrow-autoclose-jvm": [
       "io.arrow-kt:arrow-atomic-jvm",
       "io.arrow-kt:arrow-exception-utils-jvm",
       "org.jetbrains.kotlin:kotlin-stdlib"
     ],
-    "io.arrow-kt:arrow-core": ["io.arrow-kt:arrow-core-jvm"],
+    "io.arrow-kt:arrow-core": [
+      "io.arrow-kt:arrow-core-jvm"
+    ],
     "io.arrow-kt:arrow-core-jvm": [
       "io.arrow-kt:arrow-annotations-jvm",
       "io.arrow-kt:arrow-atomic-jvm",
@@ -1124,7 +1130,9 @@
     "io.arrow-kt:arrow-exception-utils-jvm": [
       "org.jetbrains.kotlin:kotlin-stdlib"
     ],
-    "io.arrow-kt:arrow-fx-coroutines": ["io.arrow-kt:arrow-fx-coroutines-jvm"],
+    "io.arrow-kt:arrow-fx-coroutines": [
+      "io.arrow-kt:arrow-fx-coroutines-jvm"
+    ],
     "io.arrow-kt:arrow-fx-coroutines-jvm": [
       "io.arrow-kt:arrow-autoclose-jvm",
       "io.arrow-kt:arrow-core-jvm",
@@ -1132,12 +1140,16 @@
       "org.jetbrains.kotlin:kotlin-stdlib",
       "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm"
     ],
-    "io.arrow-kt:arrow-optics": ["io.arrow-kt:arrow-optics-jvm"],
+    "io.arrow-kt:arrow-optics": [
+      "io.arrow-kt:arrow-optics-jvm"
+    ],
     "io.arrow-kt:arrow-optics-jvm": [
       "io.arrow-kt:arrow-core-jvm",
       "org.jetbrains.kotlin:kotlin-stdlib"
     ],
-    "io.arrow-kt:arrow-resilience": ["io.arrow-kt:arrow-resilience-jvm"],
+    "io.arrow-kt:arrow-resilience": [
+      "io.arrow-kt:arrow-resilience-jvm"
+    ],
     "io.arrow-kt:arrow-resilience-jvm": [
       "io.arrow-kt:arrow-fx-coroutines-jvm",
       "org.jetbrains.kotlin:kotlin-stdlib"
@@ -1309,7 +1321,9 @@
       "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
       "org.slf4j:slf4j-api"
     ],
-    "io.netty:netty-buffer": ["io.netty:netty-common"],
+    "io.netty:netty-buffer": [
+      "io.netty:netty-common"
+    ],
     "io.netty:netty-codec": [
       "io.netty:netty-buffer",
       "io.netty:netty-codec-base",
@@ -1366,7 +1380,9 @@
       "io.netty:netty-transport",
       "io.netty:netty-transport-native-unix-common"
     ],
-    "io.netty:netty-resolver": ["io.netty:netty-common"],
+    "io.netty:netty-resolver": [
+      "io.netty:netty-common"
+    ],
     "io.netty:netty-transport": [
       "io.netty:netty-buffer",
       "io.netty:netty-common",
@@ -1403,7 +1419,9 @@
       "io.netty:netty-common",
       "io.netty:netty-transport"
     ],
-    "net.java.dev.jna:jna-platform": ["net.java.dev.jna:jna"],
+    "net.java.dev.jna:jna-platform": [
+      "net.java.dev.jna:jna"
+    ],
     "org.apache.httpcomponents.client5:httpclient5": [
       "org.apache.httpcomponents.core5:httpcore5",
       "org.apache.httpcomponents.core5:httpcore5-h2",
@@ -1415,8 +1433,12 @@
     "org.jetbrains.kotlin:kotlin-reflect": [
       "org.jetbrains.kotlin:kotlin-stdlib"
     ],
-    "org.jetbrains.kotlin:kotlin-stdlib": ["org.jetbrains:annotations"],
-    "org.jetbrains.kotlin:kotlin-test": ["org.jetbrains.kotlin:kotlin-stdlib"],
+    "org.jetbrains.kotlin:kotlin-stdlib": [
+      "org.jetbrains:annotations"
+    ],
+    "org.jetbrains.kotlin:kotlin-test": [
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
     "org.jetbrains.kotlin:kotlin-test-junit5": [
       "org.jetbrains.kotlin:kotlin-test",
       "org.junit.jupiter:junit-jupiter-api",
@@ -1616,7 +1638,9 @@
       "com.google.common.xml",
       "com.google.thirdparty.publicsuffix"
     ],
-    "com.google.j2objc:j2objc-annotations": ["com.google.j2objc.annotations"],
+    "com.google.j2objc:j2objc-annotations": [
+      "com.google.j2objc.annotations"
+    ],
     "com.gradle:develocity-gradle-plugin": [
       "com.gradle.a.a.a",
       "com.gradle.b",
@@ -2162,15 +2186,24 @@
       "com.typesafe.config.impl",
       "com.typesafe.config.parser"
     ],
-    "io.arrow-kt:arrow-annotations-jvm": ["arrow", "arrow.optics"],
-    "io.arrow-kt:arrow-atomic-jvm": ["arrow.atomic"],
-    "io.arrow-kt:arrow-autoclose-jvm": ["arrow"],
+    "io.arrow-kt:arrow-annotations-jvm": [
+      "arrow",
+      "arrow.optics"
+    ],
+    "io.arrow-kt:arrow-atomic-jvm": [
+      "arrow.atomic"
+    ],
+    "io.arrow-kt:arrow-autoclose-jvm": [
+      "arrow"
+    ],
     "io.arrow-kt:arrow-core-jvm": [
       "arrow.core",
       "arrow.core.raise",
       "arrow.core.raise.context"
     ],
-    "io.arrow-kt:arrow-exception-utils-jvm": ["arrow.core"],
+    "io.arrow-kt:arrow-exception-utils-jvm": [
+      "arrow.core"
+    ],
     "io.arrow-kt:arrow-fx-coroutines-jvm": [
       "arrow.fx.coroutines",
       "arrow.fx.coroutines.await",
@@ -2183,8 +2216,12 @@
       "arrow.optics.regex.dsl",
       "arrow.optics.typeclasses"
     ],
-    "io.arrow-kt:arrow-resilience-jvm": ["arrow.resilience"],
-    "io.ktor:ktor-client-apache5-jvm": ["io.ktor.client.engine.apache5"],
+    "io.arrow-kt:arrow-resilience-jvm": [
+      "arrow.resilience"
+    ],
+    "io.ktor:ktor-client-apache5-jvm": [
+      "io.ktor.client.engine.apache5"
+    ],
     "io.ktor:ktor-client-cio-jvm": [
       "io.ktor.client.engine.cio",
       "io.ktor.client.plugins.websocket.cio"
@@ -2210,7 +2247,9 @@
       "io.ktor.client.statement",
       "io.ktor.client.utils"
     ],
-    "io.ktor:ktor-events-jvm": ["io.ktor.events"],
+    "io.ktor:ktor-events-jvm": [
+      "io.ktor.events"
+    ],
     "io.ktor:ktor-http-cio-jvm": [
       "io.ktor.http.cio",
       "io.ktor.http.cio.internals"
@@ -2252,7 +2291,9 @@
       "io.ktor.network.tls.extensions",
       "io.ktor.network.tls.platform"
     ],
-    "io.ktor:ktor-serialization-jvm": ["io.ktor.serialization"],
+    "io.ktor:ktor-serialization-jvm": [
+      "io.ktor.serialization"
+    ],
     "io.ktor:ktor-server-call-logging-jvm": [
       "io.ktor.server.plugins.calllogging"
     ],
@@ -2284,9 +2325,15 @@
       "io.ktor.server.testing.client",
       "io.ktor.server.testing.internal"
     ],
-    "io.ktor:ktor-server-websockets-jvm": ["io.ktor.server.websocket"],
-    "io.ktor:ktor-sse-jvm": ["io.ktor.sse"],
-    "io.ktor:ktor-test-dispatcher-jvm": ["io.ktor.test.dispatcher"],
+    "io.ktor:ktor-server-websockets-jvm": [
+      "io.ktor.server.websocket"
+    ],
+    "io.ktor:ktor-sse-jvm": [
+      "io.ktor.sse"
+    ],
+    "io.ktor:ktor-test-dispatcher-jvm": [
+      "io.ktor.test.dispatcher"
+    ],
     "io.ktor:ktor-utils-jvm": [
       "io.ktor.util",
       "io.ktor.util.cio",
@@ -2308,7 +2355,10 @@
       "io.ktor.websocket",
       "io.ktor.websocket.internals"
     ],
-    "io.netty:netty-buffer": ["io.netty.buffer", "io.netty.buffer.search"],
+    "io.netty:netty-buffer": [
+      "io.netty.buffer",
+      "io.netty.buffer.search"
+    ],
     "io.netty:netty-codec-base": [
       "io.netty.handler.codec",
       "io.netty.handler.codec.base64",
@@ -2317,7 +2367,9 @@
       "io.netty.handler.codec.serialization",
       "io.netty.handler.codec.string"
     ],
-    "io.netty:netty-codec-compression": ["io.netty.handler.codec.compression"],
+    "io.netty:netty-codec-compression": [
+      "io.netty.handler.codec.compression"
+    ],
     "io.netty:netty-codec-http": [
       "io.netty.handler.codec.http",
       "io.netty.handler.codec.http.cookie",
@@ -2329,9 +2381,15 @@
       "io.netty.handler.codec.rtsp",
       "io.netty.handler.codec.spdy"
     ],
-    "io.netty:netty-codec-http2": ["io.netty.handler.codec.http2"],
-    "io.netty:netty-codec-marshalling": ["io.netty.handler.codec.marshalling"],
-    "io.netty:netty-codec-protobuf": ["io.netty.handler.codec.protobuf"],
+    "io.netty:netty-codec-http2": [
+      "io.netty.handler.codec.http2"
+    ],
+    "io.netty:netty-codec-marshalling": [
+      "io.netty.handler.codec.marshalling"
+    ],
+    "io.netty:netty-codec-protobuf": [
+      "io.netty.handler.codec.protobuf"
+    ],
     "io.netty:netty-common": [
       "io.netty.util",
       "io.netty.util.collection",
@@ -2360,7 +2418,9 @@
       "io.netty.handler.timeout",
       "io.netty.handler.traffic"
     ],
-    "io.netty:netty-resolver": ["io.netty.resolver"],
+    "io.netty:netty-resolver": [
+      "io.netty.resolver"
+    ],
     "io.netty:netty-transport": [
       "io.netty.bootstrap",
       "io.netty.channel",
@@ -2375,9 +2435,15 @@
       "io.netty.channel.socket.nio",
       "io.netty.channel.socket.oio"
     ],
-    "io.netty:netty-transport-classes-epoll": ["io.netty.channel.epoll"],
-    "io.netty:netty-transport-classes-kqueue": ["io.netty.channel.kqueue"],
-    "io.netty:netty-transport-native-unix-common": ["io.netty.channel.unix"],
+    "io.netty:netty-transport-classes-epoll": [
+      "io.netty.channel.epoll"
+    ],
+    "io.netty:netty-transport-classes-kqueue": [
+      "io.netty.channel.kqueue"
+    ],
+    "io.netty:netty-transport-native-unix-common": [
+      "io.netty.channel.unix"
+    ],
     "net.bytebuddy:byte-buddy": [
       "net.bytebuddy",
       "net.bytebuddy.agent.builder",
@@ -2524,7 +2590,9 @@
       "org.apache.hc.core5.http2.protocol",
       "org.apache.hc.core5.http2.ssl"
     ],
-    "org.apiguardian:apiguardian-api": ["org.apiguardian.api"],
+    "org.apiguardian:apiguardian-api": [
+      "org.apiguardian.api"
+    ],
     "org.checkerframework:checker-qual": [
       "org.checkerframework.checker.builder.qual",
       "org.checkerframework.checker.calledmethods.qual",
@@ -2557,7 +2625,9 @@
       "org.checkerframework.dataflow.qual",
       "org.checkerframework.framework.qual"
     ],
-    "org.eclipse.jetty.alpn:alpn-api": ["org.eclipse.jetty.alpn"],
+    "org.eclipse.jetty.alpn:alpn-api": [
+      "org.eclipse.jetty.alpn"
+    ],
     "org.fusesource.jansi:jansi": [
       "org.fusesource.jansi",
       "org.fusesource.jansi.internal",
@@ -2684,7 +2754,9 @@
       "kotlin.time.jdk8",
       "kotlin.uuid"
     ],
-    "org.jetbrains.kotlin:kotlin-test": ["kotlin.test"],
+    "org.jetbrains.kotlin:kotlin-test": [
+      "kotlin.test"
+    ],
     "org.jetbrains.kotlin:kotlin-test-junit5": [
       "kotlin.test.junit5",
       "kotlin.test.junit5.annotations"
@@ -2739,7 +2811,9 @@
       "org.intellij.lang.annotations",
       "org.jetbrains.annotations"
     ],
-    "org.jspecify:jspecify": ["org.jspecify.annotations"],
+    "org.jspecify:jspecify": [
+      "org.jspecify.annotations"
+    ],
     "org.junit.jupiter:junit-jupiter-api": [
       "org.junit.jupiter.api",
       "org.junit.jupiter.api.condition",
@@ -2823,8 +2897,13 @@
     "org.opentest4j.reporting:open-test-reporting-tooling-spi": [
       "org.opentest4j.reporting.tooling.spi.htmlreport"
     ],
-    "org.opentest4j:opentest4j": ["org.opentest4j"],
-    "org.ow2.asm:asm": ["org.objectweb.asm", "org.objectweb.asm.signature"],
+    "org.opentest4j:opentest4j": [
+      "org.opentest4j"
+    ],
+    "org.ow2.asm:asm": [
+      "org.objectweb.asm",
+      "org.objectweb.asm.signature"
+    ],
     "org.slf4j:slf4j-api": [
       "org.slf4j",
       "org.slf4j.event",
@@ -3575,6 +3654,8 @@
       ]
     }
   },
-  "skipped": ["com.google.guava:listenablefuture:jar:javadoc"],
+  "skipped": [
+    "com.google.guava:listenablefuture:jar:javadoc"
+  ],
   "version": "3"
 }
