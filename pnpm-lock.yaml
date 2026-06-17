@@ -147,6 +147,9 @@ catalogs:
     apollo-angular:
       specifier: ^13.0.0
       version: 13.0.0
+    astro:
+      specifier: ^6.1.9
+      version: 6.4.8
     binary-search-bounds:
       specifier: ^2.0.0
       version: 2.0.5
@@ -297,9 +300,6 @@ catalogs:
     graphql:
       specifier: ^16.10.0
       version: 16.14.2
-    graphql-tag:
-      specifier: ^2.12.6
-      version: 2.12.6
     html2canvas:
       specifier: ^1.4.1
       version: 1.4.1
@@ -676,7 +676,7 @@ importers:
         version: 16.14.2
       graphql-tag:
         specifier: 'catalog:'
-        version: 2.12.6(graphql@16.14.2)
+        version: 2.12.7(graphql@16.14.2)
       html2canvas:
         specifier: 'catalog:'
         version: 1.4.1
@@ -4294,11 +4294,11 @@ packages:
   graphlib@2.1.8:
     resolution: {integrity: sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==}
 
-  graphql-tag@2.12.6:
-    resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
+  graphql-tag@2.12.7:
+    resolution: {integrity: sha512-xnE/NFzy+0eIesvAsREJZ284zTl/wYuBAvpsFSDhRGRdRHdnE90M21Q3xAWyYInb0J756c6x0pIQ62+vtvOs1Q==}
     engines: {node: '>=10'}
     peerDependencies:
-      graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+      graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
   graphql@16.14.2:
     resolution: {integrity: sha512-Chq1s4CY7jmh8gO2qvLIJyfCDIN+EHLFW/9iShnp1z8FjBQMoodWP1kDC36VAMXXIvAjj4ARa7ntfAV2BrjsbA==}
@@ -7106,7 +7106,7 @@ snapshots:
       '@wry/equality': 0.5.7
       '@wry/trie': 0.5.0
       graphql: 16.14.2
-      graphql-tag: 2.12.6(graphql@16.14.2)
+      graphql-tag: 2.12.7(graphql@16.14.2)
       optimism: 0.18.1
       rxjs: 7.8.2
       tslib: 2.8.1
@@ -10241,7 +10241,7 @@ snapshots:
     dependencies:
       lodash: 4.18.1
 
-  graphql-tag@2.12.6(graphql@16.14.2):
+  graphql-tag@2.12.7(graphql@16.14.2):
     dependencies:
       graphql: 16.14.2
       tslib: 2.8.1
