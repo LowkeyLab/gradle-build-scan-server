@@ -111,6 +111,9 @@ catalogs:
     '@antv/vendor':
       specifier: ^1.0.3
       version: 1.0.11
+    '@apollo/client':
+      specifier: ^4.0.0
+      version: 4.2.6
     '@astrojs/check':
       specifier: ^0.9.8
       version: 0.9.9
@@ -270,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.6.3
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -761,7 +761,7 @@ importers:
         version: 4.3.1
       daisyui:
         specifier: 'catalog:'
-        version: 5.6.3
+        version: 5.6.16
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -3836,8 +3836,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.6.3:
-    resolution: {integrity: sha512-QvdtXnQ/tD5a18Y/+NJkJ1+ggwRtMF84GHTHCCAto5SNqYwZj8SUQQviKMpe1cKR7vMo/evTBDExkYd19KloBQ==}
+  daisyui@5.6.16:
+    resolution: {integrity: sha512-A5/IrcFCXyfzQ7M2fnKVPfMbKCVu0xeM7/G22gK1XRcp2dgA39kvFOeEAK8f2KpJJQJ+s9Jc5pZoJoYsPEJ8JQ==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -9700,7 +9700,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.6.3: {}
+  daisyui@5.6.16: {}
 
   data-urls@7.0.0:
     dependencies:
