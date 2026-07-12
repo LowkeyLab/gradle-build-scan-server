@@ -273,6 +273,9 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
+    daisyui:
+      specifier: ^5.5.5
+      version: 5.6.18
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -339,9 +342,6 @@ catalogs:
     optimism:
       specifier: ^0.18.1
       version: 0.18.1
-    postcss:
-      specifier: ^8.5.3
-      version: 8.5.17
     postcss-cli:
       specifier: ^11.0.1
       version: 11.0.1
@@ -496,7 +496,7 @@ importers:
         version: 2.0.0
       '@antv/layout-wasm':
         specifier: 'catalog:'
-        version: 1.4.2(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))
+        version: 1.4.2(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))
       '@antv/scale':
         specifier: 'catalog:'
         version: 0.5.2
@@ -746,7 +746,7 @@ importers:
     devDependencies:
       '@angular/build':
         specifier: 'catalog:'
-        version: 21.2.19(@angular/compiler-cli@21.2.18(@angular/compiler@21.2.18)(typescript@5.9.3))(@angular/compiler@21.2.18)(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.18(@angular/common@21.2.18(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2)))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.32.0)(postcss@8.5.17)(tailwindcss@4.3.2)(terser@5.49.0)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.49.0)(yaml@2.9.0)))(yaml@2.9.0)
+        version: 21.2.19(@angular/compiler-cli@21.2.18(@angular/compiler@21.2.18)(typescript@5.9.3))(@angular/compiler@21.2.18)(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.18(@angular/common@21.2.18(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2)))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.32.0)(postcss@8.5.18)(tailwindcss@4.3.2)(terser@5.49.0)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.49.0)(yaml@2.9.0)))(yaml@2.9.0)
       '@angular/cli':
         specifier: 'catalog:'
         version: 21.2.19(@types/node@26.1.1)(chokidar@5.0.0)
@@ -767,10 +767,10 @@ importers:
         version: 29.1.1
       postcss:
         specifier: 'catalog:'
-        version: 8.5.17
+        version: 8.5.18
       postcss-cli:
         specifier: 'catalog:'
-        version: 11.0.1(jiti@2.7.0)(postcss@8.5.17)
+        version: 11.0.1(jiti@2.7.0)(postcss@8.5.18)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.2
@@ -5137,8 +5137,8 @@ packages:
     resolution: {integrity: sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA==}
     engines: {node: ^18.17.0 || >=20.5.0}
 
-  nanoid@3.3.15:
-    resolution: {integrity: sha512-y7Wygv/7mEOvxTuEQDB8StXdMRBWf1kR/tlhAzBRUFkB2jfcLOAxO/SHmOO2zgz1pVgK29/kyupn059/bCHdjA==}
+  nanoid@3.3.16:
+    resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -5429,8 +5429,8 @@ packages:
     resolution: {integrity: sha512-bIoJLOmjCO1S9XdY/DcnR5hJxvrDir1PbGChrzXG3vw0/FOliy/fA3dmdhQ441kah4gKv+TwckGzex6wNS5cnQ==}
     engines: {node: '>=4'}
 
-  postcss@8.5.17:
-    resolution: {integrity: sha512-J7EF+8X+CzRPaJPOv9Ck2wNWJvGnnl3PcNPAdGg6GTLjyVpyQ0yATMSXRFRV01BviT/9Gwuc3rjEyJbDJG9a4w==}
+  postcss@8.5.18:
+    resolution: {integrity: sha512-xdB1oSLHbz1vRWgCDalrCqEFTWzFlhqFC5tIHLMOSUIjhm3XXQ1qrFy8S/ESr1JYRRXqM3c1QFiMZUJdUTqyMQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   prelude-ls@1.2.1:
@@ -6662,7 +6662,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular/build@21.2.19(@angular/compiler-cli@21.2.18(@angular/compiler@21.2.18)(typescript@5.9.3))(@angular/compiler@21.2.18)(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.18(@angular/common@21.2.18(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2)))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.32.0)(postcss@8.5.17)(tailwindcss@4.3.2)(terser@5.49.0)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.49.0)(yaml@2.9.0)))(yaml@2.9.0)':
+  '@angular/build@21.2.19(@angular/compiler-cli@21.2.18(@angular/compiler@21.2.18)(typescript@5.9.3))(@angular/compiler@21.2.18)(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.18(@angular/common@21.2.18(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2)))(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.2)(@types/node@26.1.1)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.32.0)(postcss@8.5.18)(tailwindcss@4.3.2)(terser@5.49.0)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.10(@types/node@26.1.1)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.49.0)(yaml@2.9.0)))(yaml@2.9.0)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.19(chokidar@5.0.0)
@@ -6699,7 +6699,7 @@ snapshots:
       '@angular/core': 21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2)
       '@angular/platform-browser': 21.2.18(@angular/common@21.2.18(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.18(@angular/compiler@21.2.18)(rxjs@7.8.2)(zone.js@0.16.2))
       lmdb: 3.5.1
-      postcss: 8.5.17
+      postcss: 8.5.18
       tailwindcss: 4.3.2
       vitest: 4.1.10(@types/node@26.1.1)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.49.0)(yaml@2.9.0))
     transitivePeerDependencies:
@@ -6966,9 +6966,9 @@ snapshots:
 
   '@antv/hierarchy@0.7.1': {}
 
-  '@antv/layout-wasm@1.4.2(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))':
+  '@antv/layout-wasm@1.4.2(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))':
     dependencies:
-      '@antv/layout': 1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))
+      '@antv/layout': 1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))
       '@antv/util': 3.3.11
       comlink: 4.4.2
       tslib: 2.8.1
@@ -6976,12 +6976,12 @@ snapshots:
     transitivePeerDependencies:
       - workerize-loader
 
-  '@antv/layout@1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))':
+  '@antv/layout@1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))':
     dependencies:
       '@antv/event-emitter': 0.1.3
       '@antv/graphlib': 2.0.4
       '@antv/util': 3.3.11
-      '@naoak/workerize-transferable': 0.1.0(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))
+      '@naoak/workerize-transferable': 0.1.0(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))
       comlink: 4.4.2
       d3-force: 3.0.0
       d3-force-3d: 3.0.6
@@ -7689,8 +7689,8 @@ snapshots:
       hast-util-to-html: 9.0.5
       hast-util-to-text: 4.0.2
       hastscript: 9.0.1
-      postcss: 8.5.17
-      postcss-nested: 6.2.0(postcss@8.5.17)
+      postcss: 8.5.18
+      postcss-nested: 6.2.0(postcss@8.5.18)
       unist-util-visit: 5.1.0
       unist-util-visit-parents: 6.0.2
 
@@ -8087,9 +8087,9 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
-  '@naoak/workerize-transferable@0.1.0(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)))':
+  '@naoak/workerize-transferable@0.1.0(workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)))':
     dependencies:
-      workerize-loader: 2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17))
+      workerize-loader: 2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18))
 
   '@napi-rs/nice-android-arm-eabi@1.1.1':
     optional: true
@@ -8657,7 +8657,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.3.2
       '@tailwindcss/oxide': 4.3.2
-      postcss: 8.5.17
+      postcss: 8.5.18
       tailwindcss: 4.3.2
 
   '@tufjs/canonical-json@2.0.0': {}
@@ -9310,9 +9310,9 @@ snapshots:
       domhandler: 5.0.3
       htmlparser2: 10.1.0
       picocolors: 1.1.1
-      postcss: 8.5.17
+      postcss: 8.5.18
       postcss-media-query-parser: 0.2.3
-      postcss-safe-parser: 7.0.1(postcss@8.5.17)
+      postcss-safe-parser: 7.0.1(postcss@8.5.18)
 
   bidi-js@1.0.3:
     dependencies:
@@ -11361,17 +11361,17 @@ snapshots:
     dependencies:
       brace-expansion: 5.0.7
 
-  minimizer-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)):
+  minimizer-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.49.0
-      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)
+      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)
     optionalDependencies:
       esbuild: 0.28.1
       lightningcss: 1.32.0
-      postcss: 8.5.17
+      postcss: 8.5.18
 
   minipass-collect@2.0.1:
     dependencies:
@@ -11465,7 +11465,7 @@ snapshots:
 
   mute-stream@2.0.0: {}
 
-  nanoid@3.3.15: {}
+  nanoid@3.3.16: {}
 
   natural-compare@1.4.0: {}
 
@@ -11752,15 +11752,15 @@ snapshots:
 
   pkce-challenge@5.0.1: {}
 
-  postcss-cli@11.0.1(jiti@2.7.0)(postcss@8.5.17):
+  postcss-cli@11.0.1(jiti@2.7.0)(postcss@8.5.18):
     dependencies:
       chokidar: 3.6.0
       dependency-graph: 1.0.0
       fs-extra: 11.3.6
       picocolors: 1.1.1
-      postcss: 8.5.17
-      postcss-load-config: 5.1.0(jiti@2.7.0)(postcss@8.5.17)
-      postcss-reporter: 7.1.0(postcss@8.5.17)
+      postcss: 8.5.18
+      postcss-load-config: 5.1.0(jiti@2.7.0)(postcss@8.5.18)
+      postcss-reporter: 7.1.0(postcss@8.5.18)
       pretty-hrtime: 1.0.3
       read-cache: 1.0.0
       slash: 5.1.0
@@ -11770,39 +11770,39 @@ snapshots:
       - jiti
       - tsx
 
-  postcss-load-config@5.1.0(jiti@2.7.0)(postcss@8.5.17):
+  postcss-load-config@5.1.0(jiti@2.7.0)(postcss@8.5.18):
     dependencies:
       lilconfig: 3.1.3
       yaml: 2.9.0
     optionalDependencies:
       jiti: 2.7.0
-      postcss: 8.5.17
+      postcss: 8.5.18
 
   postcss-media-query-parser@0.2.3: {}
 
-  postcss-nested@6.2.0(postcss@8.5.17):
+  postcss-nested@6.2.0(postcss@8.5.18):
     dependencies:
-      postcss: 8.5.17
+      postcss: 8.5.18
       postcss-selector-parser: 6.1.4
 
-  postcss-reporter@7.1.0(postcss@8.5.17):
+  postcss-reporter@7.1.0(postcss@8.5.18):
     dependencies:
       picocolors: 1.1.1
-      postcss: 8.5.17
+      postcss: 8.5.18
       thenby: 1.4.1
 
-  postcss-safe-parser@7.0.1(postcss@8.5.17):
+  postcss-safe-parser@7.0.1(postcss@8.5.18):
     dependencies:
-      postcss: 8.5.17
+      postcss: 8.5.18
 
   postcss-selector-parser@6.1.4:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
 
-  postcss@8.5.17:
+  postcss@8.5.18:
     dependencies:
-      nanoid: 3.3.15
+      nanoid: 3.3.16
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -12664,7 +12664,7 @@ snapshots:
       esbuild: 0.28.1
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
-      postcss: 8.5.17
+      postcss: 8.5.18
       rollup: 4.62.2
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -12680,7 +12680,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.5
-      postcss: 8.5.17
+      postcss: 8.5.18
       rolldown: 1.1.5
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -12854,7 +12854,7 @@ snapshots:
 
   webpack-sources@3.5.1: {}
 
-  webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17):
+  webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18):
     dependencies:
       '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
@@ -12872,7 +12872,7 @@ snapshots:
       graceful-fs: 4.2.11
       loader-runner: 4.3.2
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17))
+      minimizer-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18))
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
@@ -12919,10 +12919,10 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)):
+  workerize-loader@2.0.2(webpack@5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)):
     dependencies:
       loader-utils: 2.0.4
-      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.17)
+      webpack: 5.108.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.18)
 
   wrap-ansi@6.2.0:
     dependencies:
