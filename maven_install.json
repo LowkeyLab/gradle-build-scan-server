@@ -7,7 +7,7 @@
     "com.google.errorprone:error_prone_annotations": -1035138750,
     "com.google.guava:guava": 1943808618,
     "com.google.j2objc:j2objc-annotations": 2003271689,
-    "com.gradle:develocity-gradle-plugin": 785385704,
+    "com.gradle:develocity-gradle-plugin": -1691624025,
     "io.arrow-kt:arrow-core": -478479751,
     "io.arrow-kt:arrow-fx-coroutines": -1886644526,
     "io.arrow-kt:arrow-optics": -526446816,
@@ -50,9 +50,9 @@
     "com.google.j2objc:j2objc-annotations": 248818742,
     "com.google.j2objc:j2objc-annotations:jar:javadoc": 59827002,
     "com.google.j2objc:j2objc-annotations:jar:sources": -378364028,
-    "com.gradle:develocity-gradle-plugin": -1888398813,
-    "com.gradle:develocity-gradle-plugin:jar:javadoc": -366470652,
-    "com.gradle:develocity-gradle-plugin:jar:sources": -1870294937,
+    "com.gradle:develocity-gradle-plugin": -1626148539,
+    "com.gradle:develocity-gradle-plugin:jar:javadoc": 1293184874,
+    "com.gradle:develocity-gradle-plugin:jar:sources": 2136733821,
     "com.typesafe:config": 163723576,
     "com.typesafe:config:jar:javadoc": 1309560691,
     "com.typesafe:config:jar:sources": 279947534,
@@ -391,11 +391,11 @@
     },
     "com.gradle:develocity-gradle-plugin": {
       "shasums": {
-        "jar": "65db47266623cd6b2f414422f86679ebddde4b5554e235b7fe332f5e86c3b7bd",
-        "javadoc": "5c9c20b360736a171f383832ad7f129530c04a80967cbc4e12edc2d48e09000e",
-        "sources": "d1a9c58fd6d508b65d1c7c864689b33610abbb9502ea86043bfba4fa5934b884"
+        "jar": "bd3b878babefd50886181bc8edaec20a426ea409e8ac63f924ffaf1c8693dce5",
+        "javadoc": "35a5e51a59d490eb2ed7226c9f38824930a82a46466dbee8b267e09978de6c31",
+        "sources": "1cfee93bca9b24bd906a6e22e43d4cfb1c6f0652bff60b9b7dd8eb82887701de"
       },
-      "version": "4.4.2"
+      "version": "4.5.0"
     },
     "com.typesafe:config": {
       "shasums": {
