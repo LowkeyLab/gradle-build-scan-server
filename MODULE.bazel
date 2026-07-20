@@ -115,8 +115,8 @@ maven.install(
         "io.arrow-kt:arrow-fx-coroutines:2.2.3",
         "io.arrow-kt:arrow-optics:2.2.3",
         "io.arrow-kt:arrow-resilience:2.2.3",
-        "io.ktor:ktor-server-core-jvm:3.5.0",
-        "io.ktor:ktor-server-netty-jvm:3.5.0",
+        "io.ktor:ktor-server-core-jvm:3.5.1",
+        "io.ktor:ktor-server-netty-jvm:3.5.1",
         "org.ow2.asm:asm:9.10.1",
     ],
     fetch_javadoc = True,
@@ -168,7 +168,7 @@ maven.artifact(
     testonly = True,
     artifact = "ktor-server-test-host-jvm",
     group = "io.ktor",
-    version = "3.5.0",
+    version = "3.5.1",
 )
 use_repo(maven, "maven")
 
