@@ -273,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.6.18
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -342,6 +339,9 @@ catalogs:
     optimism:
       specifier: ^0.18.1
       version: 0.18.1
+    postcss:
+      specifier: ^8.5.3
+      version: 8.5.21
     postcss-cli:
       specifier: ^11.0.1
       version: 11.0.1
@@ -761,7 +761,7 @@ importers:
         version: 4.3.2
       daisyui:
         specifier: 'catalog:'
-        version: 5.6.18
+        version: 5.7.0
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -3807,8 +3807,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.6.18:
-    resolution: {integrity: sha512-6y9rboRQl8fosnusy/5pg11yp+H0LtK3YdtfS4Vf2QVnaYOKasNdYm6hDxeiT6bwZPdl4WRPzVIlIApdo2ssBg==}
+  daisyui@5.7.0:
+    resolution: {integrity: sha512-2/kYbxaKtv349lPrTyxMKC9SHsyA7fBULMSabJljDE82D079cjqz+UyAzsogWgy4sTs5NDvD000acfcFqbO1XA==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -9731,7 +9731,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.6.18: {}
+  daisyui@5.7.0: {}
 
   data-urls@7.0.0:
     dependencies:
