@@ -109,7 +109,7 @@ use_repo(npm, "npm")
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     artifacts = [
-        "ch.qos.logback:logback-classic:1.5.38",
+        "ch.qos.logback:logback-classic:1.6.0",
         "com.gradle:develocity-gradle-plugin:4.5.0",
         "io.arrow-kt:arrow-core:2.2.3",
         "io.arrow-kt:arrow-fx-coroutines:2.2.3",
