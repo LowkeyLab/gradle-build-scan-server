@@ -12,6 +12,27 @@ catalogs:
     '@angular/cli':
       specifier: ~21.2.0
       version: 21.2.19
+    '@angular/common':
+      specifier: ^21.0.3
+      version: 21.2.19
+    '@angular/compiler':
+      specifier: ^21.0.3
+      version: 21.2.19
+    '@angular/compiler-cli':
+      specifier: ^21.0.2
+      version: 21.2.19
+    '@angular/core':
+      specifier: ^21.0.3
+      version: 21.2.19
+    '@angular/forms':
+      specifier: ^21.0.3
+      version: 21.2.19
+    '@angular/platform-browser':
+      specifier: ^21.0.3
+      version: 21.2.19
+    '@angular/router':
+      specifier: ^21.0.3
+      version: 21.2.19
     '@antv/algorithm':
       specifier: ^0.1.26
       version: 0.1.26
@@ -252,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.7.7
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -743,7 +761,7 @@ importers:
         version: 4.3.3
       daisyui:
         specifier: 'catalog:'
-        version: 5.7.7
+        version: 5.7.8
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -3787,8 +3805,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.7.7:
-    resolution: {integrity: sha512-k3fza99NburOj18SGqMmvMOoIP4iSKkw4PbaE8gCxNOvwoNdEg4HlKgNJjsh+00RijMVKNgOTNqw42FfOT5Ukw==}
+  daisyui@5.7.8:
+    resolution: {integrity: sha512-/r3QoXteCOSlbvUM7bfOTIkc3rq6WskDRKgdTIF7M3ufdnY8gXsAo/CfRUNM2La21Kpnr34PGyU3uDFJ6sGJog==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -9721,7 +9739,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.7.7: {}
+  daisyui@5.7.8: {}
 
   data-urls@7.0.0:
     dependencies:
