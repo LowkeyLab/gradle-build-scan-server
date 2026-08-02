@@ -117,6 +117,9 @@ catalogs:
     '@astrojs/check':
       specifier: ^0.9.8
       version: 0.9.10
+    '@astrojs/starlight':
+      specifier: ^0.41.0
+      version: 0.41.6
     '@babel/runtime':
       specifier: ^7.25.6
       version: 7.29.7
@@ -270,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.7.9
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -761,7 +761,7 @@ importers:
         version: 4.3.3
       daisyui:
         specifier: 'catalog:'
-        version: 5.7.9
+        version: 5.7.10
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -3848,8 +3848,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.7.9:
-    resolution: {integrity: sha512-oPL7yddYPQrMsDmYtxNqPGBYc+gqm14GTwu7cDxAaUq0bPg5ZcaeR/DVMgSwgo26InVn8AECbUBUCK0rMs96Kg==}
+  daisyui@5.7.10:
+    resolution: {integrity: sha512-PJgw+r/WpTMhEg8VJt4+XtkgGlN7D14sZFrIBENSS7mcUcBAA6AJHhhxrx1sUEG6YloTZSFHcEvIl/+JQpPK1A==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -9851,7 +9851,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.7.9: {}
+  daisyui@5.7.10: {}
 
   data-urls@7.0.0:
     dependencies:
