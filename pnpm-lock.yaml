@@ -111,9 +111,6 @@ catalogs:
     '@antv/vendor':
       specifier: ^1.0.3
       version: 1.0.11
-    '@apollo/client':
-      specifier: ^4.0.0
-      version: 4.2.11
     '@astrojs/check':
       specifier: ^0.9.8
       version: 0.9.10
@@ -147,6 +144,9 @@ catalogs:
     apollo-angular:
       specifier: ^13.0.0
       version: 13.0.0
+    astro:
+      specifier: ^7.0.0
+      version: 7.2.2
     binary-search-bounds:
       specifier: ^2.0.0
       version: 2.0.5
@@ -508,7 +508,7 @@ importers:
         version: 1.0.11
       '@apollo/client':
         specifier: 'catalog:'
-        version: 4.2.11(graphql@16.14.2)(rxjs@7.8.2)
+        version: 4.2.12(graphql@16.14.2)(rxjs@7.8.2)
       '@babel/runtime':
         specifier: 'catalog:'
         version: 7.29.7
@@ -529,7 +529,7 @@ importers:
         version: 0.5.0
       apollo-angular:
         specifier: 'catalog:'
-        version: 13.0.0(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)(zone.js@0.16.2))(@apollo/client@4.2.11(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2)
+        version: 13.0.0(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)(zone.js@0.16.2))(@apollo/client@4.2.12(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2)
       binary-search-bounds:
         specifier: 'catalog:'
         version: 2.0.5
@@ -1091,8 +1091,8 @@ packages:
   '@antv/vendor@1.0.11':
     resolution: {integrity: sha512-LmhPEQ+aapk3barntaiIxJ5VHno/Tyab2JnfdcPzp5xONh/8VSfed4bo/9xKo5HcUAEydko38vYLfj6lJliLiw==}
 
-  '@apollo/client@4.2.11':
-    resolution: {integrity: sha512-F8cS212Ju5PgRy9H7lHbwLbA5l7M4XhNq/oAOK4RHS7XIbd2Bj5PySzyc/S0EHf+dqUw9QD+i+Ie/JF2WRtoyA==}
+  '@apollo/client@4.2.12':
+    resolution: {integrity: sha512-+KS+LM/gZ58z92p9owZZpI54yCc27KfUi1HOtLrxmxz9kDIqUcp/zh+mNjCWCbNZkWGzWslvbbmXGGtTWT8nkw==}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -7259,7 +7259,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  '@apollo/client@4.2.11(graphql@16.14.2)(rxjs@7.8.2)':
+  '@apollo/client@4.2.12(graphql@16.14.2)(rxjs@7.8.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
       '@wry/caches': 1.0.1
@@ -9404,10 +9404,10 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.2
 
-  apollo-angular@13.0.0(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)(zone.js@0.16.2))(@apollo/client@4.2.11(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2):
+  apollo-angular@13.0.0(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)(zone.js@0.16.2))(@apollo/client@4.2.12(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2):
     dependencies:
       '@angular/core': 21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)(zone.js@0.16.2)
-      '@apollo/client': 4.2.11(graphql@16.14.2)(rxjs@7.8.2)
+      '@apollo/client': 4.2.12(graphql@16.14.2)(rxjs@7.8.2)
       graphql: 16.14.2
       rxjs: 7.8.2
       tslib: 2.8.1
