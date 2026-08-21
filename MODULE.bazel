@@ -189,7 +189,7 @@ oci_extension.pull(
 )
 oci_extension.pull(
     name = "distroless_java25",
-    digest = "sha256:b0a28197842ae2da49d1a224529a996585b10dcdc0fe49d25b8ae11d37efe84f",
+    digest = "sha256:d000221060080b5691b1521d3113f701bd3e0041c6b792a00cf9006d8d3b4ec0",
     image = "gcr.io/distroless/java25-debian13",
     platforms = [
         "linux/amd64",
