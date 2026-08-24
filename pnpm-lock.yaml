@@ -273,6 +273,9 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
+    daisyui:
+      specifier: ^5.5.5
+      version: 5.7.21
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
