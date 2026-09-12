@@ -25,7 +25,7 @@ bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.9.2", dev_dependenc
 bazel_dep(name = "gazelle_rust", dev_dependency = True)
 git_override(
     module_name = "gazelle_rust",
-    commit = "c26dc35e8aa2a4ad08fe87ed098285c83ca71b98",
+    commit = "747482bfad721b0fe7198c94491d76c32b263ac0",
     remote = "https://github.com/Calsign/gazelle_rust.git",
 )
 
