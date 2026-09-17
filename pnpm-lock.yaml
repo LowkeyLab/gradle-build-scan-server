@@ -147,6 +147,9 @@ catalogs:
     apollo-angular:
       specifier: ^13.0.0
       version: 13.0.0
+    astro:
+      specifier: ^7.0.0
+      version: 7.3.3
     binary-search-bounds:
       specifier: ^2.0.0
       version: 2.0.5
@@ -270,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.7.38
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -761,7 +761,7 @@ importers:
         version: 4.3.3
       daisyui:
         specifier: 'catalog:'
-        version: 5.7.38
+        version: 5.7.39
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -4041,8 +4041,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.7.38:
-    resolution: {integrity: sha512-ef3RIbteKVmlQ10ak0l4mu8F70pBJ2UBjDJNsA2vWlpNdErpHqfxddxK2ckNNYd7vQvTqP4a1A1vSsunlCGVOw==}
+  daisyui@5.7.39:
+    resolution: {integrity: sha512-+37UDZKyQPYH5TsZnTqxf38SYDpM4fr+DZGWHQF+Z2LH+hrBn8zuwB3qOJM142nuR1zhs+1/BBgSINfbfPaD1A==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -10154,7 +10154,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.7.38: {}
+  daisyui@5.7.39: {}
 
   data-urls@7.0.0:
     dependencies:
