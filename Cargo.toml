@@ -25,7 +25,7 @@ uuid = { version = "1.18.1", features = ["v4"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 thiserror = "2.0"
 flate2 = "1.0"
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate", "uuid"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "sqlite", "migrate", "uuid"] }
 juniper = "0.17"
 juniper_axum = "0.3"
 tower-http = { version = "0.7", features = ["cors", "fs"] }
