@@ -273,9 +273,6 @@ catalogs:
     dagre:
       specifier: ^0.8.5
       version: 0.8.5
-    daisyui:
-      specifier: ^5.5.5
-      version: 5.7.45
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
@@ -381,6 +378,9 @@ catalogs:
     typescript:
       specifier: ^5.9.3
       version: 5.9.3
+    typescript-eslint:
+      specifier: ^8.49.0
+      version: 8.71.0
     vite:
       specifier: ^8.0.0
       version: 8.3.1
@@ -761,7 +761,7 @@ importers:
         version: 4.3.3
       daisyui:
         specifier: 'catalog:'
-        version: 5.7.45
+        version: 5.7.46
       jsdom:
         specifier: 'catalog:'
         version: 29.1.1
@@ -4065,8 +4065,8 @@ packages:
   dagre@0.8.5:
     resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
 
-  daisyui@5.7.45:
-    resolution: {integrity: sha512-Pm7YGITPzrUjdDlzVMENwAOkE+NjD2HL22NIXAmb7agTkVlExzscp+pjnXVdGCXWgobe104dfE59mnQkCIb8oA==}
+  daisyui@5.7.46:
+    resolution: {integrity: sha512-z/tfVXLpLRe1ojGeokzxauHA9Ij5CGfk+83EdatQbFSVr02h5mUcp4nkgQJOw68wH1wAAPu/SY+MWbDdJG2R4w==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -4159,8 +4159,8 @@ packages:
   electron-to-chromium@1.5.438:
     resolution: {integrity: sha512-AN9xMU1hJiT65LkCUPL1DZm5TCbOPb2Qsm5pYwFLEXp6/qj9SdT4yMiqs7Qqstwvkn1zF7l36SRGt+s6XcJ0FA==}
 
-  electron-to-chromium@1.5.439:
-    resolution: {integrity: sha512-qu6QIPXhsb+CRcAiTMNjR4A1y/7tCYKkKjr5CZXRVih6qkDf79peZ2BpEU3qoDBNCRrcy3Mra3X9nG5oruuA7Q==}
+  electron-to-chromium@1.5.440:
+    resolution: {integrity: sha512-SghDzqdJokdz8zP8YNlvS74+CwLRoUPDGvP/gFA+HrKVw+pOshUAgx8pXR37xl/u16zGae746rFNWvZ/22kU2Q==}
 
   emmet@2.4.11:
     resolution: {integrity: sha512-23QPJB3moh/U9sT4rQzGgeyyGIrcM+GH5uVYg2C6wZIxAIJq7Ng3QLT79tl8FUwDXhyq9SusfknOrofAKqvgyQ==}
@@ -9834,7 +9834,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.11.26
       caniuse-lite: 1.0.30001813
-      electron-to-chromium: 1.5.439
+      electron-to-chromium: 1.5.440
       node-releases: 2.0.57
       update-browserslist-db: 1.3.3(browserslist@4.29.2)
 
@@ -10219,7 +10219,7 @@ snapshots:
       graphlib: 2.1.8
       lodash: 4.18.1
 
-  daisyui@5.7.45: {}
+  daisyui@5.7.46: {}
 
   data-urls@7.0.0:
     dependencies:
@@ -10298,7 +10298,7 @@ snapshots:
 
   electron-to-chromium@1.5.438: {}
 
-  electron-to-chromium@1.5.439: {}
+  electron-to-chromium@1.5.440: {}
 
   emmet@2.4.11:
     dependencies:
