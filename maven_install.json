@@ -7,7 +7,7 @@
     "com.google.errorprone:error_prone_annotations": -1035138750,
     "com.google.guava:guava": 1943808618,
     "com.google.j2objc:j2objc-annotations": 2003271689,
-    "com.gradle:develocity-gradle-plugin": 795888808,
+    "com.gradle:develocity-gradle-plugin": 806391912,
     "io.arrow-kt:arrow-core": -478479751,
     "io.arrow-kt:arrow-fx-coroutines": -1886644526,
     "io.arrow-kt:arrow-optics": -526446816,
@@ -51,9 +51,9 @@
     "com.google.j2objc:j2objc-annotations": 248818742,
     "com.google.j2objc:j2objc-annotations:jar:javadoc": 59827002,
     "com.google.j2objc:j2objc-annotations:jar:sources": -378364028,
-    "com.gradle:develocity-gradle-plugin": -825745498,
-    "com.gradle:develocity-gradle-plugin:jar:javadoc": 736922883,
-    "com.gradle:develocity-gradle-plugin:jar:sources": 204886567,
+    "com.gradle:develocity-gradle-plugin": 1144629952,
+    "com.gradle:develocity-gradle-plugin:jar:javadoc": 811734303,
+    "com.gradle:develocity-gradle-plugin:jar:sources": 22746599,
     "com.typesafe:config": 163723576,
     "com.typesafe:config:jar:javadoc": 1309560691,
     "com.typesafe:config:jar:sources": 279947534,
@@ -406,11 +406,11 @@
     },
     "com.gradle:develocity-gradle-plugin": {
       "shasums": {
-        "jar": "1d7b9aa7cacc4e14c5faae8cc893eadb5b74c2b8a289f4b1d570a3b9923634c3",
-        "javadoc": "49c42c8bd695c8eb6fe08fb716b705aae225941058aec5ad468e79969d3dd961",
+        "jar": "46f19d8d5f97e61085fe25cecd9d0a27e1a7e5c3810bf7815f9c90bf7dd00252",
+        "javadoc": "64a9e1e670fd9ed0bab7fd819d06a7ca0c3060b9b0cac737f08e12e67471020a",
         "sources": "cca6ef6923b9616f602ee0d20070c9948e43313409940c3be9792222725c6f28"
       },
-      "version": "4.5.1"
+      "version": "4.6.0"
     },
     "com.typesafe:config": {
       "shasums": {
@@ -1744,7 +1744,10 @@
       "com.gradle.develocity.agent.gradle.internal.util",
       "com.gradle.develocity.agent.gradle.scan",
       "com.gradle.develocity.agent.gradle.test",
+      "com.gradle.develocity.artifactcache.a",
+      "com.gradle.develocity.artifactcache.b",
       "com.gradle.develocity.artifactcache.gradle.projectregistry",
+      "com.gradle.develocity.artifactcache.restorerecord",
       "com.gradle.enterprise.a.a",
       "com.gradle.enterprise.a.a.a",
       "com.gradle.enterprise.agent.a",
