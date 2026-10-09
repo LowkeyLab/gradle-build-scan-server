@@ -21,7 +21,7 @@
     "org.junit.jupiter:junit-jupiter-engine": 1139260123,
     "org.junit.jupiter:junit-jupiter-params": 1360583711,
     "org.junit.platform:junit-platform-console": -148505646,
-    "org.ow2.asm:asm": -1147174173,
+    "org.ow2.asm:asm": -1173710175,
     "repositories": -1494350127
   },
   "__RESOLVED_ARTIFACTS_HASH": {
@@ -322,9 +322,9 @@
     "org.opentest4j:opentest4j": -1711174392,
     "org.opentest4j:opentest4j:jar:javadoc": -725251940,
     "org.opentest4j:opentest4j:jar:sources": -1740624156,
-    "org.ow2.asm:asm": -153858314,
-    "org.ow2.asm:asm:jar:javadoc": 579373334,
-    "org.ow2.asm:asm:jar:sources": 1372783843,
+    "org.ow2.asm:asm": -873652610,
+    "org.ow2.asm:asm:jar:javadoc": -285849141,
+    "org.ow2.asm:asm:jar:sources": -213462900,
     "org.slf4j:slf4j-api": 1965957737,
     "org.slf4j:slf4j-api:jar:javadoc": 1446095562,
     "org.slf4j:slf4j-api:jar:sources": 170272608
@@ -1122,11 +1122,11 @@
     },
     "org.ow2.asm:asm": {
       "shasums": {
-        "jar": "ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb",
-        "javadoc": "05684ed698d980c9a4b489ba42799a2f8f45f8fa19d36f8304652085bcfa3dae",
-        "sources": "cb29bf42b4008972c566944d377192aa1b2d90275b9cfa9a7fa86de669fde11c"
+        "jar": "5fe3b469b8646e5bc53a897840952d63b712d4923d2a7a26aebc585f1fec7676",
+        "javadoc": "326e6e665cdacb2b2e4e75f08a48a29d4a9525e0da203d45450f31109f7600ab",
+        "sources": "7e8b9bdad4f324cf7d968a06c561a31b7d6499439a4ca7456211824b3c8088af"
       },
-      "version": "9.10.1"
+      "version": "9.11"
     },
     "org.slf4j:slf4j-api": {
       "shasums": {
