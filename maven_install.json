@@ -8,10 +8,10 @@
     "com.google.guava:guava": 1943808618,
     "com.google.j2objc:j2objc-annotations": 2003271689,
     "com.gradle:develocity-gradle-plugin": 795888808,
-    "io.arrow-kt:arrow-core": -478479751,
-    "io.arrow-kt:arrow-fx-coroutines": -1886644526,
-    "io.arrow-kt:arrow-optics": -526446816,
-    "io.arrow-kt:arrow-resilience": 431656043,
+    "io.arrow-kt:arrow-core": -1148035017,
+    "io.arrow-kt:arrow-fx-coroutines": 1738767504,
+    "io.arrow-kt:arrow-optics": -1196002082,
+    "io.arrow-kt:arrow-resilience": -237899223,
     "io.ktor:ktor-server-core-jvm": 447418611,
     "io.ktor:ktor-server-netty-jvm": 1302582862,
     "io.ktor:ktor-server-test-host-jvm": 2035263202,
@@ -57,42 +57,42 @@
     "com.typesafe:config": 163723576,
     "com.typesafe:config:jar:javadoc": 1309560691,
     "com.typesafe:config:jar:sources": 279947534,
-    "io.arrow-kt:arrow-annotations-jvm": -120022321,
-    "io.arrow-kt:arrow-annotations-jvm:jar:javadoc": 454512467,
-    "io.arrow-kt:arrow-annotations-jvm:jar:sources": 230680660,
-    "io.arrow-kt:arrow-atomic-jvm": -2136575526,
-    "io.arrow-kt:arrow-atomic-jvm:jar:javadoc": 1449544976,
-    "io.arrow-kt:arrow-atomic-jvm:jar:sources": -1613939564,
-    "io.arrow-kt:arrow-autoclose-jvm": -1276740372,
-    "io.arrow-kt:arrow-autoclose-jvm:jar:javadoc": -411306520,
-    "io.arrow-kt:arrow-autoclose-jvm:jar:sources": -1479143480,
-    "io.arrow-kt:arrow-core": 900752750,
-    "io.arrow-kt:arrow-core-jvm": 1418120660,
-    "io.arrow-kt:arrow-core-jvm:jar:javadoc": 1173048463,
-    "io.arrow-kt:arrow-core-jvm:jar:sources": 1236444062,
-    "io.arrow-kt:arrow-core:jar:javadoc": 1173048463,
-    "io.arrow-kt:arrow-core:jar:sources": 2125884307,
-    "io.arrow-kt:arrow-exception-utils-jvm": 1602994796,
-    "io.arrow-kt:arrow-exception-utils-jvm:jar:javadoc": -250387881,
-    "io.arrow-kt:arrow-exception-utils-jvm:jar:sources": 1946221171,
-    "io.arrow-kt:arrow-fx-coroutines": 537437815,
-    "io.arrow-kt:arrow-fx-coroutines-jvm": -1941201432,
-    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:javadoc": -528733939,
-    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:sources": -1938318262,
-    "io.arrow-kt:arrow-fx-coroutines:jar:javadoc": -528733939,
-    "io.arrow-kt:arrow-fx-coroutines:jar:sources": -376183050,
-    "io.arrow-kt:arrow-optics": 2108260909,
-    "io.arrow-kt:arrow-optics-jvm": -1514845139,
-    "io.arrow-kt:arrow-optics-jvm:jar:javadoc": -1634867931,
-    "io.arrow-kt:arrow-optics-jvm:jar:sources": -197950656,
-    "io.arrow-kt:arrow-optics:jar:javadoc": -1634867931,
-    "io.arrow-kt:arrow-optics:jar:sources": -197950656,
-    "io.arrow-kt:arrow-resilience": 833273396,
-    "io.arrow-kt:arrow-resilience-jvm": -564929414,
-    "io.arrow-kt:arrow-resilience-jvm:jar:javadoc": 1641823826,
-    "io.arrow-kt:arrow-resilience-jvm:jar:sources": 2060839933,
-    "io.arrow-kt:arrow-resilience:jar:javadoc": 1641823826,
-    "io.arrow-kt:arrow-resilience:jar:sources": 2060839933,
+    "io.arrow-kt:arrow-annotations-jvm": -121276363,
+    "io.arrow-kt:arrow-annotations-jvm:jar:javadoc": 708212904,
+    "io.arrow-kt:arrow-annotations-jvm:jar:sources": 1016268872,
+    "io.arrow-kt:arrow-atomic-jvm": 222543452,
+    "io.arrow-kt:arrow-atomic-jvm:jar:javadoc": 1855649758,
+    "io.arrow-kt:arrow-atomic-jvm:jar:sources": -390887854,
+    "io.arrow-kt:arrow-autoclose-jvm": 385432446,
+    "io.arrow-kt:arrow-autoclose-jvm:jar:javadoc": 2136036226,
+    "io.arrow-kt:arrow-autoclose-jvm:jar:sources": -256091770,
+    "io.arrow-kt:arrow-core": 2114928443,
+    "io.arrow-kt:arrow-core-jvm": 1786147560,
+    "io.arrow-kt:arrow-core-jvm:jar:javadoc": 275656049,
+    "io.arrow-kt:arrow-core-jvm:jar:sources": -84518899,
+    "io.arrow-kt:arrow-core:jar:javadoc": 275656049,
+    "io.arrow-kt:arrow-core:jar:sources": 1070076088,
+    "io.arrow-kt:arrow-exception-utils-jvm": -332853522,
+    "io.arrow-kt:arrow-exception-utils-jvm:jar:javadoc": -595766383,
+    "io.arrow-kt:arrow-exception-utils-jvm:jar:sources": -1125694415,
+    "io.arrow-kt:arrow-fx-coroutines": -1658345461,
+    "io.arrow-kt:arrow-fx-coroutines-jvm": 1170890076,
+    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:javadoc": 1910000697,
+    "io.arrow-kt:arrow-fx-coroutines-jvm:jar:sources": -715266552,
+    "io.arrow-kt:arrow-fx-coroutines:jar:javadoc": 1910000697,
+    "io.arrow-kt:arrow-fx-coroutines:jar:sources": 846868660,
+    "io.arrow-kt:arrow-optics": -288567676,
+    "io.arrow-kt:arrow-optics-jvm": 1321578531,
+    "io.arrow-kt:arrow-optics-jvm:jar:javadoc": 929895002,
+    "io.arrow-kt:arrow-optics-jvm:jar:sources": 1025101054,
+    "io.arrow-kt:arrow-optics:jar:javadoc": 929895002,
+    "io.arrow-kt:arrow-optics:jar:sources": 1025101054,
+    "io.arrow-kt:arrow-resilience": -197196599,
+    "io.arrow-kt:arrow-resilience-jvm": 197091065,
+    "io.arrow-kt:arrow-resilience-jvm:jar:javadoc": 1179152306,
+    "io.arrow-kt:arrow-resilience-jvm:jar:sources": -1011075653,
+    "io.arrow-kt:arrow-resilience:jar:javadoc": 1179152306,
+    "io.arrow-kt:arrow-resilience:jar:sources": -1011075653,
     "io.ktor:ktor-client-apache5-jvm": 1794410283,
     "io.ktor:ktor-client-apache5-jvm:jar:javadoc": -1307506784,
     "io.ktor:ktor-client-apache5-jvm:jar:sources": -1771397436,
@@ -422,99 +422,99 @@
     },
     "io.arrow-kt:arrow-annotations-jvm": {
       "shasums": {
-        "jar": "5db812b43458d694a2d676491bdcd6eca04a44f3ae6336db3c71fce67be8e1bc",
-        "javadoc": "fd2dfe1ec7d6217320a9a1a3a838c0d88f5ea8a4d6b78add20e93141135bcb1f",
-        "sources": "a4825c79040982344bbceaf11cf9c8881cfe852ffd7fce3edc60d209f47cacdb"
+        "jar": "6c9949a0e845cb08b7818275002cbc7604c727800b9cba2b510e8d15a06b4c51",
+        "javadoc": "c1f6d4c43805e8542c4ffd3ca9fb3b27908b9067b7f01ecd61d6554f0e71f9c9",
+        "sources": "0edcce058ad65173264f73c8c331cf65f3dbcc8c4d73d4ffff13e8dd52894c54"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-atomic-jvm": {
       "shasums": {
         "jar": "9605a129250898db4a8e1011fb6faab1f1ade1dea290dae467eae2e60289f755",
-        "javadoc": "2404d9d8a2813aedc9bedc929ec6f203a55d5bfb2a77bc9159f8f1d083d5ed4a",
+        "javadoc": "5a834e22f2914d3d632924e6c89de48ce25ed14d74a1642cd88433e69377996e",
         "sources": "1d1a7089d1028bc29b007a246b2e18c6318e023ac657fd45414f0e895b3abf51"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-autoclose-jvm": {
       "shasums": {
-        "jar": "ed736250d5454712323a23b61414c4aa40e84d61906d647d9e682874b83667a2",
-        "javadoc": "f53615b6ac1aca19e0f9996cbe4cf393324e750225a5494bade02403ed764218",
+        "jar": "65a17d5793bba9496b7bb0976836370b223826d55038bc91f37e7a434f7a2d17",
+        "javadoc": "3829ee393fa6d23da7f4e328d90c3485b449f7dcbb1e397fc79ea332c7244987",
         "sources": "9b7139c8b245afa194d5b2973089466955257dc666d7fca25b52128ade3e319e"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-core": {
       "shasums": {
-        "jar": "28be3aace795d7783f1def2028188aec1623d4592d9fd6deedc4017a5679ed83",
-        "javadoc": "fb74e1c7c9f94e3d5b36bef5620a63a09c3531d5cc509bea834557de6a636772",
-        "sources": "fdbd6c692e143862db8e6b6dc21210cfdf824db3bd047a2889b019f4b9d50520"
+        "jar": "8c5fba808bbfefafc565b6bd46eff19ddf6746232292df920b04b56f243a0548",
+        "javadoc": "7d61a1248434509de6b2a6bc689f251f94284a1edd85c9a5a88e753d2108a3a2",
+        "sources": "6da272b6dbcc1d4b1ad00d41905a69f3a3b36341314c1c5be6a5de97fa7a306b"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-core-jvm": {
       "shasums": {
-        "jar": "a2d334ad01cf22cc534ff254788d1877e4df1564fd2b1101736a6c0e8d9a7a47",
-        "javadoc": "fb74e1c7c9f94e3d5b36bef5620a63a09c3531d5cc509bea834557de6a636772",
-        "sources": "21efbd0c7fc39bca2de6988333f14f68093df3020f5a1b1e1a6d1cd52e299d43"
+        "jar": "0723b35e5553aa5bfedd18e7652e0fe326dea8a4349eb9dd9066336480274f45",
+        "javadoc": "7d61a1248434509de6b2a6bc689f251f94284a1edd85c9a5a88e753d2108a3a2",
+        "sources": "4737f6a1965d11e0d31a13489623ae3ba26c2f8b4050cf2ea8bb193fc3622422"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-exception-utils-jvm": {
       "shasums": {
         "jar": "1a6604e1dbe1af48a743ed1923f4754b389933c9ef3ec8aad6b7543418196796",
-        "javadoc": "bd3df67fd980b64f1031fc87a2765b182588bbe61644d127bc2ba7676454b4de",
+        "javadoc": "35798e5d17c000c29194323b725bc77e170cd53ead7fbea1dc2ef004a53f11e1",
         "sources": "48a77aa5172e6d37db75cf4a0322d64501396f44c2a80b793d7bf643045bd4cb"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-fx-coroutines": {
       "shasums": {
-        "jar": "3d561596c83613a180b8f0bc762ddaceb147af02221c63dee95a1582bab402f4",
-        "javadoc": "55449d2dc3eeda17d043e790ecf48296156595bead605c2164a17bea16d8e2c0",
+        "jar": "d5b9d072f345db1847493fdda1bd56c9fc449206ebd5b70e46bc31db0d83f4b3",
+        "javadoc": "9444b9635d474d4385890f5662d4b278206c08572de60fa1a81baf8ddb343a25",
         "sources": "2abdfd58c546c9fe0e7df773c839a91588fcd09ef8cf84bf40c0c10884504348"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-fx-coroutines-jvm": {
       "shasums": {
-        "jar": "441d689c063afe0f5e9e5fdb35510ae7be7efdd232d0ea6970710dd972274741",
-        "javadoc": "55449d2dc3eeda17d043e790ecf48296156595bead605c2164a17bea16d8e2c0",
+        "jar": "42dc337808b9d64fb75e0145517afb49e2ac083139d03f1117aff03e43d095d4",
+        "javadoc": "9444b9635d474d4385890f5662d4b278206c08572de60fa1a81baf8ddb343a25",
         "sources": "7bb185a07c85fcc47bf6674a5be60a4e635c00fe67e04fcfcf2340b1f81bf913"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-optics": {
       "shasums": {
-        "jar": "9a96a9de7208e5a0e2c6e8aa5f632a20f481630718e5084ea1bb11d9acf12ba0",
-        "javadoc": "cfc266ef1071b99822e181947a447bb0266462dfc85da922c659bf4592eb6325",
+        "jar": "b62b39fde791a0b40a1e7d2e68dcc875809dc7105e0c4cf8a7836f6d8021f2af",
+        "javadoc": "d10c28a07b1fe3da27eecca91e091ed5841c1fc3a1b164bbc1a31ca8857f308a",
         "sources": "d0f647f6d59751b9877662d644d07e36111c66f0ab7a39ed17cfe8dcbe9df4a2"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-optics-jvm": {
       "shasums": {
-        "jar": "d3a99ab61599c0e87147aec2525deb608bed4404a12392bf69afaacaf030a9b7",
-        "javadoc": "cfc266ef1071b99822e181947a447bb0266462dfc85da922c659bf4592eb6325",
+        "jar": "145bcf1608011500623ee91216dc4fb26c5bf5627d67463d4589bd1876c3050d",
+        "javadoc": "d10c28a07b1fe3da27eecca91e091ed5841c1fc3a1b164bbc1a31ca8857f308a",
         "sources": "d0f647f6d59751b9877662d644d07e36111c66f0ab7a39ed17cfe8dcbe9df4a2"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-resilience": {
       "shasums": {
-        "jar": "d4c4b2118e5d10527884c749155d5a479a119b17e0a95d7f67f88a1ca64c3752",
-        "javadoc": "79d10fe8ecec6db250829a28353d25bef022780cdbd0c7ed80429a3aaa886dda",
+        "jar": "6ca203be27b23b6f10981b34bb0d04b1710c23f8462db605f43bbb445e6e1a51",
+        "javadoc": "29a7e7fba2e07b9310b601d1a9cd8f0182ea7140e365316948fde989326e6f64",
         "sources": "2f360df8215891d974c221cf1f325a8da1bb924f9ce0668d8d0ae92cfc9343c4"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.arrow-kt:arrow-resilience-jvm": {
       "shasums": {
-        "jar": "af1de618191780fb67926a1a740af505cf95e75cb5e79f589ec07a8b7d4139d7",
-        "javadoc": "79d10fe8ecec6db250829a28353d25bef022780cdbd0c7ed80429a3aaa886dda",
+        "jar": "5178f97ccf883c7ada45bdfa10a80d518b4f3b0bcced03a3b373185af9007ae8",
+        "javadoc": "29a7e7fba2e07b9310b601d1a9cd8f0182ea7140e365316948fde989326e6f64",
         "sources": "2f360df8215891d974c221cf1f325a8da1bb924f9ce0668d8d0ae92cfc9343c4"
       },
-      "version": "2.2.3"
+      "version": "2.3.0"
     },
     "io.ktor:ktor-client-apache5-jvm": {
       "shasums": {
