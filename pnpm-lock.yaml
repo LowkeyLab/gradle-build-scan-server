@@ -279,6 +279,9 @@ catalogs:
     delaunator:
       specifier: ^5.0.0
       version: 5.1.0
+    eslint:
+      specifier: ^10.0.0
+      version: 10.14.0
     eventemitter3:
       specifier: ^5.0.1
       version: 5.0.4
@@ -372,9 +375,6 @@ catalogs:
     text-segmentation:
       specifier: ^1.0.3
       version: 1.0.3
-    tslib:
-      specifier: ^2.3.0
-      version: 2.8.1
     typescript:
       specifier: ^5.9.3
       version: 5.9.3
@@ -736,7 +736,7 @@ importers:
         version: 1.0.3
       tslib:
         specifier: 'catalog:'
-        version: 2.8.1
+        version: 2.9.1
       wasm-feature-detect:
         specifier: 'catalog:'
         version: 1.9.0
@@ -746,7 +746,7 @@ importers:
     devDependencies:
       '@angular/build':
         specifier: 'catalog:'
-        version: 21.2.29(@angular/compiler-cli@21.2.25(@angular/compiler@21.2.25)(typescript@5.9.3))(@angular/compiler@21.2.25)(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.6.6)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.33.0)(postcss@8.5.32)(tailwindcss@4.3.3)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.12(@types/node@26.6.6)(jsdom@29.1.1)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.51.2)(yaml@2.9.1)))(yaml@2.9.1)
+        version: 21.2.29(@angular/compiler-cli@21.2.25(@angular/compiler@21.2.25)(typescript@5.9.3))(@angular/compiler@21.2.25)(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.6.6)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.33.0)(postcss@8.5.32)(tailwindcss@4.3.3)(terser@5.51.2)(tslib@2.9.1)(typescript@5.9.3)(vitest@4.1.12(@types/node@26.6.6)(jsdom@29.1.1)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.51.2)(yaml@2.9.1)))(yaml@2.9.1)
       '@angular/cli':
         specifier: 'catalog:'
         version: 21.2.29(@types/node@26.6.6)(chokidar@5.0.0)
@@ -5871,8 +5871,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tslib@2.8.1:
-    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
 
   tuf-js@4.1.0:
     resolution: {integrity: sha512-50QV99kCKH5P/Vs4E2Gzp7BopNV+KzTXqWeaxrfu5IQJBOULRsTIS9seSsOVT8ZnGXzCyx55nYWAi4qJzpZKEQ==}
@@ -6588,7 +6588,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular/build@21.2.29(@angular/compiler-cli@21.2.25(@angular/compiler@21.2.25)(typescript@5.9.3))(@angular/compiler@21.2.25)(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.6.6)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.33.0)(postcss@8.5.32)(tailwindcss@4.3.3)(terser@5.51.2)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.12(@types/node@26.6.6)(jsdom@29.1.1)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.51.2)(yaml@2.9.1)))(yaml@2.9.1)':
+  '@angular/build@21.2.29(@angular/compiler-cli@21.2.25(@angular/compiler@21.2.25)(typescript@5.9.3))(@angular/compiler@21.2.25)(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.6.6)(chokidar@5.0.0)(jiti@2.7.0)(lightningcss@1.33.0)(postcss@8.5.32)(tailwindcss@4.3.3)(terser@5.51.2)(tslib@2.9.1)(typescript@5.9.3)(vitest@4.1.12(@types/node@26.6.6)(jsdom@29.1.1)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.97.3)(terser@5.51.2)(yaml@2.9.1)))(yaml@2.9.1)':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@angular-devkit/architect': 0.2102.29(chokidar@5.0.0)
@@ -6616,7 +6616,7 @@ snapshots:
       semver: 7.7.4
       source-map-support: 0.5.21
       tinyglobby: 0.2.15
-      tslib: 2.8.1
+      tslib: 2.9.1
       typescript: 5.9.3
       undici: 7.30.1
       vite: 7.3.7(@types/node@26.6.6)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.97.3)(terser@5.51.2)(yaml@2.9.1)
@@ -6673,7 +6673,7 @@ snapshots:
     dependencies:
       '@angular/core': 21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@angular/compiler-cli@21.2.25(@angular/compiler@21.2.25)(typescript@5.9.3)':
     dependencies:
@@ -6684,7 +6684,7 @@ snapshots:
       convert-source-map: 1.9.0
       reflect-metadata: 0.2.2
       semver: 7.8.5
-      tslib: 2.8.1
+      tslib: 2.9.1
       yargs: 18.2.0
     optionalDependencies:
       typescript: 5.9.3
@@ -6693,12 +6693,12 @@ snapshots:
 
   '@angular/compiler@21.2.25':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)':
     dependencies:
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
     optionalDependencies:
       '@angular/compiler': 21.2.25
       zone.js: 0.16.3
@@ -6710,13 +6710,13 @@ snapshots:
       '@angular/platform-browser': 21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))
       '@standard-schema/spec': 1.1.0
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))':
     dependencies:
       '@angular/common': 21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2)
       '@angular/core': 21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@angular/router@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(@angular/platform-browser@21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)))(rxjs@7.8.2)':
     dependencies:
@@ -6724,12 +6724,12 @@ snapshots:
       '@angular/core': 21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3)
       '@angular/platform-browser': 21.2.25(@angular/common@21.2.25(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@21.2.25(@angular/compiler@21.2.25)(rxjs@7.8.2)(zone.js@0.16.3))
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/algorithm@0.1.26':
     dependencies:
       '@antv/util': 2.0.17
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/component@2.1.12':
     dependencies:
@@ -6748,7 +6748,7 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-canvas@2.2.2':
     dependencies:
@@ -6757,7 +6757,7 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-dom-mutation-observer-api@2.0.42':
     dependencies:
@@ -6772,7 +6772,7 @@ snapshots:
       '@babel/runtime': 7.29.10
       eventemitter3: 5.0.4
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-lite@2.7.2':
     dependencies:
@@ -6782,21 +6782,21 @@ snapshots:
       '@babel/runtime': 7.29.10
       eventemitter3: 5.0.4
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-math@3.0.1':
     dependencies:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-math@3.1.0':
     dependencies:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-canvas-path-generator@2.1.26':
     dependencies:
@@ -6804,7 +6804,7 @@ snapshots:
       '@antv/g-math': 3.0.1
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-canvas-picker@2.3.1':
     dependencies:
@@ -6815,7 +6815,7 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-canvas-renderer@2.5.1':
     dependencies:
@@ -6826,20 +6826,20 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-dom-interaction@2.1.31':
     dependencies:
       '@antv/g-lite': 2.5.1
       '@babel/runtime': 7.29.10
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-dragndrop@2.1.3':
     dependencies:
       '@antv/g-lite': 2.7.2
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-html-renderer@2.3.1':
     dependencies:
@@ -6847,7 +6847,7 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-plugin-image-loader@2.3.1':
     dependencies:
@@ -6855,14 +6855,14 @@ snapshots:
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g-web-animations-api@2.1.32':
     dependencies:
       '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
       '@babel/runtime': 7.29.10
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/g6@5.1.1':
     dependencies:
@@ -6897,7 +6897,7 @@ snapshots:
       '@antv/layout': 1.2.14-beta.7(workerize-loader@2.0.2(webpack@5.112.0(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.32)))
       '@antv/util': 3.3.11
       comlink: 4.4.2
-      tslib: 2.8.1
+      tslib: 2.9.1
       wasm-feature-detect: 1.9.0
     transitivePeerDependencies:
       - workerize-loader
@@ -6915,7 +6915,7 @@ snapshots:
       d3-quadtree: 3.0.1
       dagre: 0.8.5
       ml-matrix: 6.15.1
-      tslib: 2.8.1
+      tslib: 2.9.1
     transitivePeerDependencies:
       - workerize-loader
 
@@ -6932,7 +6932,7 @@ snapshots:
       d3-quadtree: 3.0.1
       dagre: 0.8.5
       ml-matrix: 6.15.1
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/scale@0.4.16':
     dependencies:
@@ -6949,13 +6949,13 @@ snapshots:
   '@antv/util@2.0.17':
     dependencies:
       csstype: 3.2.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/util@3.3.11':
     dependencies:
       fast-deep-equal: 3.1.3
       gl-matrix: 3.4.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@antv/vendor@1.0.11':
     dependencies:
@@ -7011,7 +7011,7 @@ snapshots:
       graphql-tag: 2.12.7(graphql@16.14.2)
       optimism: 0.18.1
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@asamuzakjp/css-color@5.1.11':
     dependencies:
@@ -7437,31 +7437,31 @@ snapshots:
   '@emnapi/core@1.11.1':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@1.11.3':
     dependencies:
       '@emnapi/wasi-threads': 1.2.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@emnapi/runtime@1.11.1':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.11.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@emnapi/wasi-threads@1.2.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@1.2.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@esbuild/aix-ppc64@0.28.1':
     optional: true
@@ -8592,7 +8592,7 @@ snapshots:
 
   '@tybys/wasm-util@0.10.4':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@types/chai@5.2.3':
     dependencies:
@@ -8965,19 +8965,19 @@ snapshots:
 
   '@wry/caches@1.0.1':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@wry/context@0.7.4':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@wry/equality@0.5.7':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@wry/trie@0.5.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@xtuc/ieee754@1.2.0': {}
 
@@ -9088,7 +9088,7 @@ snapshots:
       '@apollo/client': 4.3.5(graphql@16.14.2)(rxjs@7.8.2)
       graphql: 16.14.2
       rxjs: 7.8.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   arg@5.0.2: {}
 
@@ -10082,7 +10082,7 @@ snapshots:
   graphql-tag@2.12.7(graphql@16.14.2):
     dependencies:
       graphql: 16.14.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   graphql@16.14.2: {}
 
@@ -11122,7 +11122,7 @@ snapshots:
       '@wry/caches': 1.0.1
       '@wry/context': 0.7.4
       '@wry/trie': 0.5.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   optionator@0.9.4:
     dependencies:
@@ -11530,7 +11530,7 @@ snapshots:
 
   rxjs@7.8.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   safer-buffer@2.1.2: {}
 
@@ -11900,7 +11900,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tslib@2.8.1: {}
+  tslib@2.9.1: {}
 
   tuf-js@4.1.0:
     dependencies:
