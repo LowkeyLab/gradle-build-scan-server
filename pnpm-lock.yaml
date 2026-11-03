@@ -12,6 +12,27 @@ catalogs:
     '@angular/cli':
       specifier: ~21.2.0
       version: 21.2.29
+    '@angular/common':
+      specifier: ^21.0.3
+      version: 21.2.26
+    '@angular/compiler':
+      specifier: ^21.0.3
+      version: 21.2.26
+    '@angular/compiler-cli':
+      specifier: ^21.0.2
+      version: 21.2.26
+    '@angular/core':
+      specifier: ^21.0.3
+      version: 21.2.26
+    '@angular/forms':
+      specifier: ^21.0.3
+      version: 21.2.26
+    '@angular/platform-browser':
+      specifier: ^21.0.3
+      version: 21.2.26
+    '@angular/router':
+      specifier: ^21.0.3
+      version: 21.2.26
     '@antv/algorithm':
       specifier: ^0.1.26
       version: 0.1.26
@@ -90,9 +111,6 @@ catalogs:
     '@antv/vendor':
       specifier: ^1.0.3
       version: 1.0.11
-    '@apollo/client':
-      specifier: ^4.0.0
-      version: 4.3.5
     '@astrojs/check':
       specifier: ^0.9.8
       version: 0.9.12
@@ -490,7 +508,7 @@ importers:
         version: 1.0.11
       '@apollo/client':
         specifier: 'catalog:'
-        version: 4.3.5(graphql@16.14.2)(rxjs@7.8.2)
+        version: 4.3.6(graphql@16.14.2)(rxjs@7.8.2)
       '@babel/runtime':
         specifier: 'catalog:'
         version: 7.29.10
@@ -511,7 +529,7 @@ importers:
         version: 0.5.0
       apollo-angular:
         specifier: 'catalog:'
-        version: 13.0.0(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(@apollo/client@4.3.5(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2)
+        version: 13.0.0(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(@apollo/client@4.3.6(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2)
       binary-search-bounds:
         specifier: 'catalog:'
         version: 2.0.5
@@ -1073,8 +1091,8 @@ packages:
   '@antv/vendor@1.0.11':
     resolution: {integrity: sha512-LmhPEQ+aapk3barntaiIxJ5VHno/Tyab2JnfdcPzp5xONh/8VSfed4bo/9xKo5HcUAEydko38vYLfj6lJliLiw==}
 
-  '@apollo/client@4.3.5':
-    resolution: {integrity: sha512-phA1B82EisAHIjT6irj9Lm4I5516pASExgACUl8pzcnq5eGmNjBhImDgjSRHRt18u1Hrqw0uP71jKJtEjV/Fag==}
+  '@apollo/client@4.3.6':
+    resolution: {integrity: sha512-hGpMGPur4S5KJlWakVIKo5ly7Sp0dx+2yOiVz+gIG8S+D+deZO/Xi9mhSsdMTiGF2q1rAg5nymnQUJsctEAkKg==}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
       graphql-ws: ^5.5.5 || ^6.0.3
@@ -4009,6 +4027,10 @@ packages:
 
   enhanced-resolve@5.26.0:
     resolution: {integrity: sha512-9vhedylFonb2YGogzUKX6+Ja72gOJbN1QHAqdrvqLwhdl/QWbKopzoUC9EbQNVsAns/bx/4uyqalrQAoy1IByw==}
+    engines: {node: '>=10.13.0'}
+
+  enhanced-resolve@5.26.1:
+    resolution: {integrity: sha512-PPnnSJq3azKOIewXR/uppBV/6h98dprBJ/WaQ9Qgj10xX1lJLNfg+XShpbsrSqcDSy2yYYyhfXM1wWhftqgyzw==}
     engines: {node: '>=10.13.0'}
 
   entities@4.5.0:
@@ -6983,7 +7005,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  '@apollo/client@4.3.5(graphql@16.14.2)(rxjs@7.8.2)':
+  '@apollo/client@4.3.6(graphql@16.14.2)(rxjs@7.8.2)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
       '@wry/caches': 1.0.1
@@ -9064,10 +9086,10 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.2
 
-  apollo-angular@13.0.0(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(@apollo/client@4.3.5(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2):
+  apollo-angular@13.0.0(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3))(@apollo/client@4.3.6(graphql@16.14.2)(rxjs@7.8.2))(graphql@16.14.2)(rxjs@7.8.2):
     dependencies:
       '@angular/core': 21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)(zone.js@0.16.3)
-      '@apollo/client': 4.3.5(graphql@16.14.2)(rxjs@7.8.2)
+      '@apollo/client': 4.3.6(graphql@16.14.2)(rxjs@7.8.2)
       graphql: 16.14.2
       rxjs: 7.8.2
       tslib: 2.9.1
@@ -9715,6 +9737,11 @@ snapshots:
   encodeurl@2.0.0: {}
 
   enhanced-resolve@5.26.0:
+    dependencies:
+      graceful-fs: 4.2.11
+      tapable: 2.3.3
+
+  enhanced-resolve@5.26.1:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.3.3
@@ -12228,7 +12255,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       browserslist: 4.29.5
       chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.26.0
+      enhanced-resolve: 5.26.1
       es-module-lexer: 2.3.2
       events: 3.3.0
       graceful-fs: 4.2.11
