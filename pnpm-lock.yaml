@@ -126,9 +126,6 @@ catalogs:
     '@eslint/js':
       specifier: ^10.0.0
       version: 10.0.1
-    '@observablehq/plot':
-      specifier: ^0.6.17
-      version: 0.6.17
     '@tailwindcss/postcss':
       specifier: ^4.1.17
       version: 4.3.3
@@ -168,6 +165,9 @@ catalogs:
     css-line-break:
       specifier: ^2.1.0
       version: 2.1.0
+    d3:
+      specifier: ^7.9.0
+      version: 7.9.2
     d3-array:
       specifier: '3'
       version: 3.2.4
@@ -514,7 +514,7 @@ importers:
         version: 7.29.10
       '@observablehq/plot':
         specifier: 'catalog:'
-        version: 0.6.17
+        version: 0.6.19
       '@wry/caches':
         specifier: 'catalog:'
         version: 1.0.1
@@ -2336,8 +2336,8 @@ packages:
     resolution: {integrity: sha512-mGUWr1uMnf0le2TwfOZY4SFxZGXGfm4Jtay/nwAa2FLNAKXUoUwaGwBMNH36UHPtinWfTSJ3nqFQr0091CxVGg==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  '@observablehq/plot@0.6.17':
-    resolution: {integrity: sha512-/qaXP/7mc4MUS0s4cPPFASDRjtsWp85/TbfsciqDgU1HwYixbSbbytNuInD8AcTYC3xaxACgVX06agdfQy9W+g==}
+  '@observablehq/plot@0.6.19':
+    resolution: {integrity: sha512-8Tg8+doIBDKTG6gL9Px7Tws+Tuni+bwjhaJufAKR3V8HFi2dtGQf57fH0UKwOrMYgjmEdX2PP1E4LIi7gyhgYw==}
     engines: {node: '>=12'}
 
   '@oslojs/encoding@1.1.0':
@@ -8252,7 +8252,7 @@ snapshots:
       node-gyp: 12.4.0
       proc-log: 6.1.0
 
-  '@observablehq/plot@0.6.17':
+  '@observablehq/plot@0.6.19':
     dependencies:
       d3: 7.9.2
       interval-tree-1d: 1.0.4
