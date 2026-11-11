@@ -34,7 +34,7 @@ bazel_dep(name = "aspect_rules_js", version = "3.5.2")
 bazel_dep(name = "rules_angular")
 git_override(
     module_name = "rules_angular",
-    commit = "8c8cc7690ae041ded7c21ac9ba44634360775230",
+    commit = "8d91421845049c1e454728a41326f3351ed25130",
     remote = "https://github.com/devversion/rules_angular.git",
 )
 
