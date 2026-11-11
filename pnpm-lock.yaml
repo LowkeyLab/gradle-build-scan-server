@@ -147,6 +147,9 @@ catalogs:
     apollo-angular:
       specifier: ^13.0.0
       version: 13.0.0
+    astro:
+      specifier: ^7.0.0
+      version: 7.4.9
     binary-search-bounds:
       specifier: ^2.0.0
       version: 2.0.5
@@ -168,9 +171,6 @@ catalogs:
     d3:
       specifier: ^7.9.0
       version: 7.9.2
-    d3-array:
-      specifier: '3'
-      version: 3.2.4
     d3-axis:
       specifier: '3'
       version: 3.0.0
@@ -553,7 +553,7 @@ importers:
         version: 7.9.2
       d3-array:
         specifier: 'catalog:'
-        version: 3.2.4
+        version: 3.2.5
       d3-axis:
         specifier: 'catalog:'
         version: 3.0.0
@@ -3843,10 +3843,6 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
-
-  d3-array@3.2.4:
-    resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
-    engines: {node: '>=12'}
 
   d3-array@3.2.5:
     resolution: {integrity: sha512-Th8qGXoBalmWsstpkuhmBuTsBQIFqYOJtjlBvNVvBfJ8E3uYusBUwUR8HU20U0qKKQkgCvKyR1YjiozWadk5QA==}
@@ -7224,7 +7220,7 @@ snapshots:
       '@types/d3-shape': 3.2.0
       '@types/d3-time': 3.0.4
       '@types/d3-timer': 3.0.2
-      d3-array: 3.2.4
+      d3-array: 3.2.5
       d3-color: 3.1.0
       d3-dispatch: 3.0.1
       d3-dsv: 3.0.1
@@ -9775,10 +9771,6 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  d3-array@3.2.4:
-    dependencies:
-      internmap: 2.0.3
-
   d3-array@3.2.5:
     dependencies:
       internmap: 2.0.3
@@ -9819,11 +9811,11 @@ snapshots:
 
   d3-contour@4.0.2:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-contour@4.0.3:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-delaunay@6.0.4:
     dependencies:
@@ -9898,16 +9890,16 @@ snapshots:
   d3-geo-projection@4.0.0:
     dependencies:
       commander: 7.2.0
-      d3-array: 3.2.4
+      d3-array: 3.2.5
       d3-geo: 3.1.1
 
   d3-geo@3.1.1:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-geo@3.1.2:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-hierarchy@3.1.2: {}
 
@@ -9954,7 +9946,7 @@ snapshots:
 
   d3-scale@4.0.2:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
       d3-format: 3.1.2
       d3-interpolate: 3.0.1
       d3-time: 3.1.0
@@ -9962,7 +9954,7 @@ snapshots:
 
   d3-scale@4.0.3:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
       d3-format: 3.1.2
       d3-interpolate: 3.0.1
       d3-time: 3.1.0
@@ -9990,11 +9982,11 @@ snapshots:
 
   d3-time@3.1.0:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-time@3.1.1:
     dependencies:
-      d3-array: 3.2.4
+      d3-array: 3.2.5
 
   d3-timer@3.0.1: {}
 
