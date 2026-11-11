@@ -120,9 +120,6 @@ catalogs:
     '@astrojs/starlight':
       specifier: ^0.42.0
       version: 0.42.10
-    '@babel/runtime':
-      specifier: ^7.25.6
-      version: 7.29.13
     '@eslint/js':
       specifier: ^10.0.0
       version: 10.0.1
@@ -171,6 +168,9 @@ catalogs:
     d3:
       specifier: ^7.9.0
       version: 7.9.2
+    d3-array:
+      specifier: '3'
+      version: 3.2.5
     d3-axis:
       specifier: '3'
       version: 3.0.0
@@ -511,7 +511,7 @@ importers:
         version: 4.3.8(graphql@16.14.2)(rxjs@7.8.2)
       '@babel/runtime':
         specifier: 'catalog:'
-        version: 7.29.13
+        version: 7.29.14
       '@observablehq/plot':
         specifier: 'catalog:'
         version: 0.6.19
@@ -1339,8 +1339,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/runtime@7.29.13':
-    resolution: {integrity: sha512-v+oN26xP4YIlQsbQ/CbTH1WG5m/l/DjKKZNy/Kp3f/AFvbgt7Em/D0FeMM3O2hX0YzeN2M16W8lOpyhIkfCBcQ==}
+  '@babel/runtime@7.29.14':
+    resolution: {integrity: sha512-Y5tqevQaUAZhhj82BpYMNC1ssvLQTVAfwKdm8iy8qwmhvC2/CpcAu8OC+QEtjM7pMk7knx83u1Qj8gzkicyelw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.29.7':
@@ -6988,7 +6988,7 @@ snapshots:
     dependencies:
       '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
@@ -6997,21 +6997,21 @@ snapshots:
       '@antv/g-lite': 2.7.2
       '@antv/g-math': 3.1.0
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
   '@antv/g-dom-mutation-observer-api@2.0.42':
     dependencies:
       '@antv/g-lite': 2.5.1
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
 
   '@antv/g-lite@2.5.1':
     dependencies:
       '@antv/g-math': 3.0.1
       '@antv/util': 3.3.11
       '@antv/vendor': 1.0.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       eventemitter3: 5.0.4
       gl-matrix: 3.4.4
       tslib: 2.9.1
@@ -7021,7 +7021,7 @@ snapshots:
       '@antv/g-math': 3.1.0
       '@antv/util': 3.3.11
       '@antv/vendor': 1.0.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       eventemitter3: 5.0.4
       gl-matrix: 3.4.4
       tslib: 2.9.1
@@ -7029,14 +7029,14 @@ snapshots:
   '@antv/g-math@3.0.1':
     dependencies:
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
   '@antv/g-math@3.1.0':
     dependencies:
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
@@ -7045,7 +7045,7 @@ snapshots:
       '@antv/g-lite': 2.5.1
       '@antv/g-math': 3.0.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       tslib: 2.9.1
 
   '@antv/g-plugin-canvas-picker@2.3.1':
@@ -7055,7 +7055,7 @@ snapshots:
       '@antv/g-plugin-canvas-path-generator': 2.1.26
       '@antv/g-plugin-canvas-renderer': 2.5.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
@@ -7066,28 +7066,28 @@ snapshots:
       '@antv/g-plugin-canvas-path-generator': 2.1.26
       '@antv/g-plugin-image-loader': 2.3.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
   '@antv/g-plugin-dom-interaction@2.1.31':
     dependencies:
       '@antv/g-lite': 2.5.1
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       tslib: 2.9.1
 
   '@antv/g-plugin-dragndrop@2.1.3':
     dependencies:
       '@antv/g-lite': 2.7.2
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       tslib: 2.9.1
 
   '@antv/g-plugin-html-renderer@2.3.1':
     dependencies:
       '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
@@ -7095,7 +7095,7 @@ snapshots:
     dependencies:
       '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       tslib: 2.9.1
 
@@ -7103,7 +7103,7 @@ snapshots:
     dependencies:
       '@antv/g-lite': 2.5.1
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       tslib: 2.9.1
 
   '@antv/g6@5.1.1':
@@ -7124,7 +7124,7 @@ snapshots:
     dependencies:
       '@antv/g-lite': 2.7.2
       '@antv/util': 3.3.11
-      '@babel/runtime': 7.29.13
+      '@babel/runtime': 7.29.14
       gl-matrix: 3.4.4
       html2canvas: 1.4.1
 
@@ -7560,7 +7560,7 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.11
 
-  '@babel/runtime@7.29.13': {}
+  '@babel/runtime@7.29.14': {}
 
   '@babel/template@7.29.7':
     dependencies:
